@@ -1,0 +1,10 @@
+// Sequelize CLI configuration.
+// Points the CLI at our src/lib/db layout instead of the default root-level folders.
+const path = require("path");
+
+module.exports = {
+  config: path.resolve("src", "lib", "db", "config", "config.js"),
+  "models-path": path.resolve("src", "lib", "db", "models"),
+  "seeders-path": path.resolve("src", "lib", "db", "seeders"),
+  "migrations-path": path.resolve("src", "lib", "db", "migrations"),
+};

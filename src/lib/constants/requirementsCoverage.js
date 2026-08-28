@@ -1,0 +1,32 @@
+// Requirements traceability (requirements #104): maps each major
+// requirement to the module that implements it and its current status in
+// this build.
+export const REQUIREMENTS_COVERAGE = [
+  { requirement: "58k Marketing contacts, paginated", module: "Contacts", href: "/contacts", status: "Live" },
+  { requirement: "CSV import wizard + duplicate detection", module: "Contacts > Import", href: "/contacts/import", status: "Live" },
+  { requirement: "Segmentation builder", module: "Segments", href: "/segments", status: "Live" },
+  { requirement: "Campaign creation, sending, analytics", module: "Campaigns", href: "/campaigns", status: "Live" },
+  { requirement: "Visual automation workflow + simulation", module: "Automations", href: "/automations", status: "Live" },
+  { requirement: "WhatsApp conversations + reply-triggered automation", module: "Conversations", href: "/conversations", status: "Live" },
+  { requirement: "B2B companies", module: "Companies", href: "/companies", status: "Live" },
+  { requirement: "B2B pipeline (16-stage Kanban)", module: "Deals", href: "/deals", status: "Live" },
+  { requirement: "Multiple pipelines", module: "Deals > Pipeline selector", href: "/deals", status: "Live" },
+  { requirement: "Training / TNA / Proposal / Invoice / Payment", module: "Deal Detail", href: "/deals", status: "Live" },
+  { requirement: "Tasks", module: "Tasks", href: "/tasks", status: "Live" },
+  { requirement: "Meetings", module: "Meetings", href: "/meetings", status: "Live" },
+  { requirement: "Unified activity timeline", module: "Activities", href: "/activities", status: "Live" },
+  { requirement: "Rector / Executive dashboard", module: "Executive", href: "/executive", status: "Live" },
+  { requirement: "Marketing dashboard", module: "Marketing", href: "/marketing", status: "Live" },
+  { requirement: "IKL/HSM dashboard", module: "IKL/HSM", href: "/ikl-hsm", status: "Live" },
+  { requirement: "Department performance comparison", module: "Reports", href: "/reports/department-performance", status: "Live" },
+  { requirement: "Revenue reporting", module: "Reports > Revenue", href: "/reports/revenue", status: "Live" },
+  { requirement: "Users, roles & department-scoped RBAC", module: "Users / Roles", href: "/roles", status: "Live" },
+  { requirement: "Permission matrix editor", module: "Roles & Permissions", href: "/roles", status: "Live" },
+  { requirement: "Integrations (native / third-party / API)", module: "Integrations", href: "/integrations", status: "Live" },
+  { requirement: "API keys & webhooks", module: "API & Webhooks", href: "/api-webhooks", status: "Live" },
+  { requirement: "Audit logs", module: "Audit Logs", href: "/audit-logs", status: "Live" },
+  { requirement: "Settings (security, retention, lead scoring, custom data)", module: "Settings", href: "/settings", status: "Live" },
+  { requirement: "Demo Center - 4 mandatory scenarios", module: "Demo Center", href: "/demo-center", status: "Live" },
+  { requirement: "Plan evaluation matrix", module: "Demo Center > Plan Evaluation", href: "/demo-center/evaluation", status: "Demo" },
+  { requirement: "Pricing calculator", module: "Demo Center > Pricing", href: "/demo-center/pricing", status: "Demo" },
+];

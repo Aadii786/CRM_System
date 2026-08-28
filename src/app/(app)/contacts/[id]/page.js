@@ -1,0 +1,75 @@
+import { notFound } from "next/navigation";
+import { requireUserWithPermission } from "@/lib/auth/requireUser";
+import { hasPermission } from "@/lib/permissions/rbac";
+import { getContactById, getContactTimeline, getContactRelated } from "@/lib/services/contactService";
+import PageHeader from "@/components/common/PageHeader";
+import Badge from "@/components/ui/Badge";
+import Tabs from "@/components/ui/Tabs";
+import Avatar from "@/components/ui/Avatar";
+import ContactHeaderActions from "@/components/contacts/ContactHeaderActions";
+import ContactOverview from "@/components/contacts/ContactOverview";
+import ContactEngagement from "@/components/contacts/ContactEngagement";
+import ContactTimeline from "@/components/contacts/ContactTimeline";
+import ContactRelated from "@/components/contacts/ContactRelated";
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  return { title: `Contact ${id}` };
+}
+
+export default async function ContactDetailPage({ params }) {
+  const user = await requireUserWithPermission("contacts.view");
+  const { id } = await params;
+
+  const contactRaw = await getContactById(user, id);
+  if (!contactRaw) notFound();
+  const contact = contactRaw.get({ plain: true });
+
+  const [timelineRaw, related] = await Promise.all([
+    getContactTimeline(user, id),
+    getContactRelated(user, id),
+  ]);
+  const timeline = timelineRaw.map((a) => a.get({ plain: true }));
+  const deals = related.deals.map((d) => d.get({ plain: true }));
+  const tasks = related.tasks.map((t) => t.get({ plain: true }));
+  const meetings = related.meetings.map((m) => m.get({ plain: true }));
+  const campaignRecipients = related.campaignRecipients.map((r) => r.get({ plain: true }));
+  const conversation = related.conversation ? related.conversation.get({ plain: true }) : null;
+
+  return (
+    <div>
+      <PageHeader breadcrumbs={[{ label: "Contacts", href: "/contacts" }, { label: `${contact.firstName} ${contact.lastName}` }]} />
+
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3.5">
+          <Avatar name={`${contact.firstName} ${contact.lastName}`} size="lg" />
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-semibold text-ink">{contact.firstName} {contact.lastName}</h1>
+              <Badge status={contact.status} />
+            </div>
+            <p className="text-sm text-ink-muted mt-0.5">
+              {contact.jobTitle ? `${contact.jobTitle} · ` : ""}{contact.email}
+              {contact.Company && ` · ${contact.Company.name}`}
+            </p>
+          </div>
+        </div>
+        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} />
+      </div>
+
+      <Tabs
+        tabs={[
+          { key: "overview", label: "Overview" },
+          { key: "engagement", label: "Engagement" },
+          { key: "timeline", label: "Timeline", count: timeline.length },
+          { key: "related", label: "Related" },
+        ]}
+      >
+        <ContactOverview contact={contact} />
+        <ContactEngagement contact={contact} campaignRecipients={campaignRecipients} />
+        <ContactTimeline activities={timeline} />
+        <ContactRelated deals={deals} tasks={tasks} meetings={meetings} conversation={conversation} />
+      </Tabs>
+    </div>
+  );
+}
