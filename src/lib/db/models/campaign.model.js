@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
       senderEmail: DataTypes.STRING(190),
       replyTo: DataTypes.STRING(190),
       bodyHtml: DataTypes.TEXT("long"),
+      // Drag-and-drop email builder's element tree (positions/sizes/content
+      // per block) - kept alongside bodyHtml so a campaign can be reopened
+      // and edited visually, not just as flattened HTML.
+      bodyDesign: DataTypes.JSON,
       segmentId: DataTypes.INTEGER,
       departmentId: { type: DataTypes.INTEGER, allowNull: false },
       createdBy: DataTypes.INTEGER,

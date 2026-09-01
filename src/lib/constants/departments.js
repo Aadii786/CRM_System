@@ -9,18 +9,27 @@ const DEPARTMENTS = [
     name: "University (Executive)",
     description: "University-wide executive scope used by the Rector and Central Administrator.",
     isUniversityWide: true,
+    senderName: "University Rector's Office",
+    senderEmail: "rectors.office@university.edu.pk",
+    replyTo: "rectors.office@university.edu.pk",
   },
   {
     key: "marketing",
     name: "Marketing & Lead Department",
     description: "Owns contact database, campaigns, segments and lead nurturing automation.",
     isUniversityWide: false,
+    senderName: "University Admissions Office",
+    senderEmail: "admissions@university.edu.pk",
+    replyTo: "admissions@university.edu.pk",
   },
   {
     key: "ikl-hsm",
     name: "IKL / HSM",
     description: "B2B corporate, government and institutional training CRM.",
     isUniversityWide: false,
+    senderName: "IKL/HSM Corporate Training",
+    senderEmail: "ikl.hsm@university.edu.pk",
+    replyTo: "ikl.hsm@university.edu.pk",
   },
 ];
 

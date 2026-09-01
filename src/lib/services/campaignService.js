@@ -5,6 +5,7 @@ import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permission
 import { departmentIdsForKeys, departmentByKey } from "./departmentService";
 import { buildSegmentWhere } from "./segmentService";
 import { recordAudit } from "./auditService";
+import { renderEmailDesignToHtml } from "@/lib/emailDesign/render";
 
 const { Campaign, Segment, SegmentCondition, User, Contact, CampaignRecipient, CampaignEvent } = db;
 
@@ -59,13 +60,19 @@ export async function createCampaign(user, payload) {
     recipientsCount = segment?.contactCount || 0;
   }
 
+  // Every department sends campaigns from its own identity - fall back to
+  // the creating user's department defaults (Settings > Departments) rather
+  // than a single hardcoded university address, so Marketing, IKL/HSM and
+  // any future department each look like they're mailing from themselves.
+  const bodyDesign = Array.isArray(payload.bodyDesign) ? payload.bodyDesign : [];
   const campaign = await Campaign.create({
     name: payload.name,
     subject: payload.subject,
-    senderName: payload.senderName || "University Admissions Office",
-    senderEmail: payload.senderEmail || "admissions@university.edu.pk",
-    replyTo: payload.replyTo || payload.senderEmail || "admissions@university.edu.pk",
-    bodyHtml: payload.bodyHtml || `<h1>${payload.subject}</h1><p>${payload.bodyText || ""}</p>`,
+    senderName: payload.senderName || dept.senderName || "University Admissions Office",
+    senderEmail: payload.senderEmail || dept.senderEmail || "admissions@university.edu.pk",
+    replyTo: payload.replyTo || dept.replyTo || payload.senderEmail || dept.senderEmail || "admissions@university.edu.pk",
+    bodyDesign,
+    bodyHtml: renderEmailDesignToHtml(bodyDesign, { subject: payload.subject }),
     segmentId: payload.segmentId || null,
     departmentId: dept.id,
     createdBy: user.id,

@@ -6,13 +6,19 @@ import * as campaignService from "@/lib/services/campaignService";
 
 export async function createCampaignAction(_prevState, formData) {
   const user = await requireUser();
+  let bodyDesign = [];
+  try {
+    bodyDesign = JSON.parse(formData.get("bodyDesign")?.toString() || "[]");
+  } catch {
+    bodyDesign = [];
+  }
   const payload = {
     name: formData.get("name")?.toString().trim(),
     subject: formData.get("subject")?.toString().trim(),
     senderName: formData.get("senderName")?.toString().trim(),
     senderEmail: formData.get("senderEmail")?.toString().trim(),
     replyTo: formData.get("replyTo")?.toString().trim(),
-    bodyText: formData.get("bodyText")?.toString().trim(),
+    bodyDesign,
     segmentId: formData.get("segmentId") || null,
     schedule: formData.get("schedule")?.toString() || null,
   };

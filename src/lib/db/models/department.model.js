@@ -28,6 +28,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      // Each department sends campaigns from its own identity (Marketing,
+      // IKL/HSM and any future department all use their own email, not a
+      // shared university address). New campaigns for this department
+      // default to these unless overridden per-campaign. Editable from
+      // Settings > Departments by that department's own manager or a
+      // Central CRM Administrator - see departmentService.js.
+      senderName: DataTypes.STRING(150),
+      senderEmail: DataTypes.STRING(190),
+      replyTo: DataTypes.STRING(190),
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

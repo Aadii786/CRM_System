@@ -74,6 +74,16 @@ export default async function CampaignDetailPage({ params }) {
         </Card>
       </div>
 
+      <Card className="mb-6">
+        <h3 className="text-sm font-semibold text-ink mb-4">Email Preview</h3>
+        <iframe
+          title="Email preview"
+          srcDoc={campaign.bodyHtml || "<p>(no content)</p>"}
+          className="w-full rounded-md border border-border bg-white"
+          style={{ height: 480 }}
+        />
+      </Card>
+
       <Card padding="none">
         <div className="p-5 pb-0">
           <h3 className="text-sm font-semibold text-ink mb-1">Recipients</h3>

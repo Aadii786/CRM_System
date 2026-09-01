@@ -6,25 +6,27 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Field, { Input, Textarea, Select } from "@/components/ui/Field";
+import Field, { Input, Select } from "@/components/ui/Field";
 import Badge from "@/components/ui/Badge";
 import { createCampaignAction } from "@/actions/campaigns";
 import { useToast } from "@/components/ui/Toast";
+import EmailBuilder from "@/components/campaigns/EmailBuilder/EmailBuilder";
+import { renderEmailDesignToHtml } from "@/lib/emailDesign/render";
 
 const STEPS = ["Campaign Details", "Audience", "Email Content", "Schedule", "Review & Send"];
 
 const initialState = { error: null };
 
-export default function CampaignWizard({ segments }) {
+export default function CampaignWizard({ segments, defaultSender }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [form, setForm] = useState({
     name: "",
     subject: "",
-    senderName: "University Admissions Office",
-    senderEmail: "admissions@university.edu.pk",
-    replyTo: "admissions@university.edu.pk",
+    senderName: defaultSender?.senderName || "University Admissions Office",
+    senderEmail: defaultSender?.senderEmail || "admissions@university.edu.pk",
+    replyTo: defaultSender?.replyTo || defaultSender?.senderEmail || "admissions@university.edu.pk",
     segmentId: segments[0]?.id || "",
-    bodyText: "Hi {{firstName}},\n\nWe're excited to share more about our upcoming programs...",
+    bodyDesign: [],
     schedule: "",
   });
   const [state, formAction, pending] = useActionState(createCampaignAction, initialState);
@@ -114,15 +116,8 @@ export default function CampaignWizard({ segments }) {
         )}
 
         {stepIndex === 2 && (
-          <div className="max-w-lg">
-            <Field label="Email Body" htmlFor="bodyText" hint="Use {{firstName}} to personalize the email for each recipient.">
-              <Textarea id="bodyText" rows={8} value={form.bodyText} onChange={(e) => update({ bodyText: e.target.value })} />
-            </Field>
-            <div className="mt-4 rounded-md border border-border bg-surface-alt p-4">
-              <p className="text-xs text-ink-muted mb-1.5">Preview</p>
-              <p className="text-sm font-semibold text-ink">{form.subject || "(no subject)"}</p>
-              <p className="text-sm text-ink-secondary whitespace-pre-line mt-1">{form.bodyText.replace("{{firstName}}", "John")}</p>
-            </div>
+          <div>
+            <EmailBuilder elements={form.bodyDesign} onChange={(bodyDesign) => update({ bodyDesign })} />
           </div>
         )}
 
@@ -135,25 +130,36 @@ export default function CampaignWizard({ segments }) {
         )}
 
         {stepIndex === 4 && (
-          <form action={formAction} className="max-w-lg flex flex-col gap-4">
+          <form action={formAction} className="flex flex-col gap-4">
             <input type="hidden" name="name" value={form.name} />
             <input type="hidden" name="subject" value={form.subject} />
             <input type="hidden" name="senderName" value={form.senderName} />
             <input type="hidden" name="senderEmail" value={form.senderEmail} />
             <input type="hidden" name="replyTo" value={form.replyTo} />
             <input type="hidden" name="segmentId" value={form.segmentId} />
-            <input type="hidden" name="bodyText" value={form.bodyText} />
+            <input type="hidden" name="bodyDesign" value={JSON.stringify(form.bodyDesign)} />
             <input type="hidden" name="schedule" value={form.schedule} />
 
-            <dl className="divide-y divide-border rounded-md border border-border">
+            <dl className="max-w-lg divide-y divide-border rounded-md border border-border">
               <ReviewRow label="Name" value={form.name} />
               <ReviewRow label="Subject" value={form.subject} />
               <ReviewRow label="Audience" value={`${selectedSegment?.name || "—"} (${(selectedSegment?.contactCount || 0).toLocaleString()})`} />
               <ReviewRow label="Sender" value={`${form.senderName} <${form.senderEmail}>`} />
               <ReviewRow label="Schedule" value={form.schedule ? new Date(form.schedule).toLocaleString() : <Badge tone="neutral">Save as draft</Badge>} />
             </dl>
+
+            <div>
+              <p className="text-xs text-ink-muted mb-1.5">Email Preview</p>
+              <iframe
+                title="Email preview"
+                srcDoc={renderEmailDesignToHtml(form.bodyDesign, { subject: form.subject })}
+                className="w-full rounded-md border border-border bg-white"
+                style={{ height: 420 }}
+              />
+            </div>
+
             {state?.error && <p className="text-sm text-danger">{state.error}</p>}
-            <div className="flex justify-between">
+            <div className="flex justify-between max-w-lg">
               <Button type="button" variant="ghost" icon={ArrowLeft} onClick={back}>Back</Button>
               <Button type="submit" variant="primary" loading={pending}>
                 {form.schedule ? "Schedule Campaign" : "Save as Draft"}
@@ -165,7 +171,12 @@ export default function CampaignWizard({ segments }) {
         {stepIndex < 4 && (
           <div className="flex justify-between mt-6">
             <Button variant="ghost" icon={ArrowLeft} onClick={back} disabled={stepIndex === 0}>Back</Button>
-            <Button variant="primary" iconRight={ArrowRight} onClick={next} disabled={stepIndex === 0 && (!form.name || !form.subject)}>
+            <Button
+              variant="primary"
+              iconRight={ArrowRight}
+              onClick={next}
+              disabled={(stepIndex === 0 && (!form.name || !form.subject)) || (stepIndex === 2 && form.bodyDesign.length === 0)}
+            >
               Continue
             </Button>
           </div>

@@ -1,4 +1,5 @@
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
+import { hasPermission } from "@/lib/permissions/rbac";
 import { getAllSettings, listCustomObjects } from "@/lib/services/settingsService";
 import { listDepartments } from "@/lib/services/departmentService";
 import { listPipelines } from "@/lib/services/dealService";
@@ -7,6 +8,7 @@ import Tabs from "@/components/ui/Tabs";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import LeadScoringSettings from "@/components/admin/LeadScoringSettings";
+import DepartmentSenderIdentity from "@/components/admin/DepartmentSenderIdentity";
 
 export const metadata = { title: "Settings" };
 
@@ -49,16 +51,18 @@ export default async function SettingsPage() {
         </Card>
 
         <Card padding="none">
-          <div className="divide-y divide-border">
-            {departments.map((d) => (
-              <div key={d.id} className="flex items-center justify-between px-5 py-3.5">
-                <div>
-                  <p className="text-sm font-medium text-ink">{d.name}</p>
-                  <p className="text-xs text-ink-muted">{d.description}</p>
-                </div>
-                <Badge tone={d.isUniversityWide ? "primary" : "neutral"}>{d.isUniversityWide ? "University-wide" : "Department"}</Badge>
-              </div>
-            ))}
+          <div className="p-5 pb-0">
+            <h3 className="text-sm font-semibold text-ink">Departments</h3>
+            <p className="text-xs text-ink-muted mt-0.5">
+              Every department sends campaigns from its own sender identity - editable by that department&apos;s own manager/executive, or by a Central CRM Administrator.
+            </p>
+          </div>
+          <div className="divide-y divide-border mt-3">
+            {departments.map((d) => {
+              const sameOrUniversityWide = user.department?.isUniversityWide || user.department?.key === d.key;
+              const canEdit = hasPermission(user, "departments.manage") || (hasPermission(user, "campaigns.create") && sameOrUniversityWide);
+              return <DepartmentSenderIdentity key={d.id} department={d} canEdit={canEdit} />;
+            })}
           </div>
         </Card>
 
