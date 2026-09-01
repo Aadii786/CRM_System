@@ -9,6 +9,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { updateTaskStatusAction } from "@/actions/tasks";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/utils/format";
+import { TASK_STATUSES } from "@/lib/constants/crm";
 
 export default function TasksList({ tasks, canEdit }) {
   const [isPending, startTransition] = useTransition();
@@ -19,13 +20,14 @@ export default function TasksList({ tasks, canEdit }) {
     return <EmptyState title="No tasks found" description="Tasks you create or that are assigned to you will appear here." />;
   }
 
-  function toggleComplete(task) {
+  function setStatus(task, status) {
+    if (status === task.status) return;
     startTransition(async () => {
       const fd = new FormData();
       fd.set("id", task.id);
-      fd.set("status", task.status === "Completed" ? "Pending" : "Completed");
+      fd.set("status", status);
       await updateTaskStatusAction(fd);
-      push(task.status === "Completed" ? "Task reopened." : "Task completed.");
+      push(`"${task.title}" marked ${status}.`);
       // revalidatePath() inside the server action invalidates the cache,
       // but only a form bound directly to a "use server" action gets the
       // resulting UI refresh automatically - an imperative call like this
@@ -34,6 +36,10 @@ export default function TasksList({ tasks, canEdit }) {
       // visibly do something).
       router.refresh();
     });
+  }
+
+  function toggleComplete(task) {
+    setStatus(task, task.status === "Completed" ? "Pending" : "Completed");
   }
 
   return (
@@ -64,7 +70,21 @@ export default function TasksList({ tasks, canEdit }) {
             </p>
           </div>
           <Badge tone={task.priority === "Urgent" ? "danger" : task.priority === "High" ? "warning" : "neutral"}>{task.priority}</Badge>
-          <Badge status={task.status} />
+          {canEdit ? (
+            <select
+              value={task.status}
+              onChange={(e) => setStatus(task, e.target.value)}
+              disabled={isPending}
+              aria-label={`Status for ${task.title}`}
+              className="h-7 rounded-md border border-border-strong bg-surface px-1.5 text-xs font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60"
+            >
+              {TASK_STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          ) : (
+            <Badge status={task.status} />
+          )}
           <span className="text-xs text-ink-muted w-20 text-right shrink-0">{formatDate(task.dueDate)}</span>
         </div>
       ))}
