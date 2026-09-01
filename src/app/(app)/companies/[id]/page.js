@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
+import { hasPermission } from "@/lib/permissions/rbac";
 import { getCompanyById, getCompanyRelated } from "@/lib/services/companyService";
+import { listDocuments } from "@/lib/services/documentService";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Avatar from "@/components/ui/Avatar";
 import Tabs from "@/components/ui/Tabs";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
+import DocumentsPanel from "@/components/documents/DocumentsPanel";
 import { Pencil, Building2, Handshake, GraduationCap } from "lucide-react";
 import { formatDate, formatDateTime, formatCurrencyPKR } from "@/lib/utils/format";
 
@@ -24,13 +27,17 @@ export default async function CompanyDetailPage({ params }) {
   if (!companyRaw) notFound();
   const company = companyRaw.get({ plain: true });
 
-  const relatedRaw = await getCompanyRelated(user, id);
+  const [relatedRaw, documentsRaw] = await Promise.all([
+    getCompanyRelated(user, id),
+    listDocuments(user, "company", id),
+  ]);
   const contacts = relatedRaw.contacts.map((c) => c.get({ plain: true }));
   const deals = relatedRaw.deals.map((d) => d.get({ plain: true }));
   const tasks = relatedRaw.tasks.map((t) => t.get({ plain: true }));
   const meetings = relatedRaw.meetings.map((m) => m.get({ plain: true }));
   const trainingPrograms = relatedRaw.trainingPrograms.map((t) => t.get({ plain: true }));
   const activities = relatedRaw.activities.map((a) => a.get({ plain: true }));
+  const documents = documentsRaw.map((d) => d.get({ plain: true }));
 
   return (
     <div>
@@ -58,6 +65,7 @@ export default async function CompanyDetailPage({ params }) {
           { key: "training", label: "Training Programs", count: trainingPrograms.length },
           { key: "activity", label: "Activity" },
           { key: "tasks-meetings", label: "Tasks & Meetings" },
+          { key: "documents", label: "Documents", count: documents.length },
         ]}
       >
         <div className="grid lg:grid-cols-2 gap-5">
@@ -167,6 +175,14 @@ export default async function CompanyDetailPage({ params }) {
             )}
           </div>
         </div>
+
+        <DocumentsPanel
+          relatedType="company"
+          relatedId={company.id}
+          documents={documents}
+          canManage={hasPermission(user, "companies.update")}
+          revalidatePathValue={`/companies/${company.id}`}
+        />
       </Tabs>
     </div>
   );

@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
+import { hasPermission } from "@/lib/permissions/rbac";
 import { getDealById, getDealRelated } from "@/lib/services/dealService";
+import { listDocuments } from "@/lib/services/documentService";
 import db from "@/lib/db";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Tabs from "@/components/ui/Tabs";
 import EmptyState from "@/components/ui/EmptyState";
 import StageMoveSelect from "@/components/deals/StageMoveSelect";
+import DocumentsPanel from "@/components/documents/DocumentsPanel";
 import { formatCurrencyPKR, formatCurrencyFull, formatDate, formatDateTime } from "@/lib/utils/format";
 import { GraduationCap, FileText, CreditCard } from "lucide-react";
 
@@ -33,7 +36,10 @@ export default async function DealDetailPage({ params }) {
   if (!dealRaw) notFound();
   const deal = dealRaw.get({ plain: true });
 
-  const relatedRaw = await getDealRelated(user, id);
+  const [relatedRaw, documentsRaw] = await Promise.all([
+    getDealRelated(user, id),
+    listDocuments(user, "deal", id),
+  ]);
   const tasks = relatedRaw.tasks.map((t) => t.get({ plain: true }));
   const meetings = relatedRaw.meetings.map((m) => m.get({ plain: true }));
   const notes = relatedRaw.notes.map((n) => n.get({ plain: true }));
@@ -42,6 +48,7 @@ export default async function DealDetailPage({ params }) {
   const tnas = relatedRaw.tnas.map((t) => t.get({ plain: true }));
   const proposals = relatedRaw.proposals.map((p) => p.get({ plain: true }));
   const invoices = relatedRaw.invoices.map((i) => i.get({ plain: true }));
+  const documents = documentsRaw.map((d) => d.get({ plain: true }));
 
   return (
     <div>
@@ -72,6 +79,7 @@ export default async function DealDetailPage({ params }) {
           { key: "proposals", label: "Proposals", count: proposals.length },
           { key: "financial", label: "Financial", count: invoices.length },
           { key: "activity", label: "Activity" },
+          { key: "documents", label: "Documents", count: documents.length },
         ]}
       >
         <div className="grid lg:grid-cols-2 gap-5">
@@ -190,6 +198,14 @@ export default async function DealDetailPage({ params }) {
             ))}
           </div>
         )}
+
+        <DocumentsPanel
+          relatedType="deal"
+          relatedId={deal.id}
+          documents={documents}
+          canManage={hasPermission(user, "deals.update")}
+          revalidatePathValue={`/deals/${deal.id}`}
+        />
       </Tabs>
     </div>
   );

@@ -10,8 +10,9 @@ import Button from "@/components/ui/Button";
 import { updateMeetingStatusAction } from "@/actions/meetings";
 import { useToast } from "@/components/ui/Toast";
 import { formatDateTime } from "@/lib/utils/format";
+import MeetingDocumentsButton from "./MeetingDocumentsButton";
 
-export default function MeetingsList({ meetings, showComplete }) {
+export default function MeetingsList({ meetings, showComplete, canManageDocuments }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function MeetingsList({ meetings, showComplete }) {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Badge status={m.status} />
+            <MeetingDocumentsButton meeting={m} canManage={canManageDocuments} />
             {showComplete && m.status === "Scheduled" && (
               <Button variant="secondary" size="sm" icon={CheckCircle2} loading={isPending} onClick={() => complete(m.id)}>
                 Complete

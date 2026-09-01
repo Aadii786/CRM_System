@@ -61,6 +61,7 @@ const modelDefiners = [
   require("./customObject.model.js"),
   require("./customObjectRecord.model.js"),
   require("./setting.model.js"),
+  require("./document.model.js"),
 ];
 
 const db = {};

@@ -20,6 +20,9 @@
 # production
 /build
 
+# uploaded documents (local disk storage - see src/lib/services/fileStorage.js)
+/uploads
+
 # misc
 .DS_Store
 *.pem

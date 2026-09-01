@@ -25,8 +25,8 @@ export default async function MeetingsPage() {
         actions={hasPermission(user, "meetings.create") && <NewMeetingButton />}
       />
       <Tabs tabs={[{ key: "upcoming", label: "Upcoming", count: upcoming.length }, { key: "past", label: "Completed", count: completed.length }]}>
-        <MeetingsList meetings={upcoming} showComplete />
-        <MeetingsList meetings={completed} />
+        <MeetingsList meetings={upcoming} showComplete canManageDocuments={hasPermission(user, "meetings.update")} />
+        <MeetingsList meetings={completed} canManageDocuments={hasPermission(user, "meetings.update")} />
       </Tabs>
     </div>
   );
