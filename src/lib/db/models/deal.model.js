@@ -5,6 +5,10 @@ module.exports = (sequelize, DataTypes) => {
     "Deal",
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      // Human-facing tracking number for the query/lead, e.g. "IKL-2026-0001"
+      // (IKL requirements doc: "each query should be assigned a unique
+      // reference/lead number for tracking purposes").
+      referenceNumber: { type: DataTypes.STRING(30), unique: true },
       name: { type: DataTypes.STRING(200), allowNull: false },
       pipelineId: { type: DataTypes.INTEGER, allowNull: false },
       stageId: { type: DataTypes.INTEGER, allowNull: false },

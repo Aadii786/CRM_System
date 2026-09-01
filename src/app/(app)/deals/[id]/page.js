@@ -56,6 +56,7 @@ export default async function DealDetailPage({ params }) {
 
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
+          {deal.referenceNumber && <p className="text-xs font-mono text-ink-muted mb-1">{deal.referenceNumber}</p>}
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-xl font-semibold text-ink">{deal.name}</h1>
             <Badge status={deal.status}>{deal.status}</Badge>

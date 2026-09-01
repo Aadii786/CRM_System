@@ -31,7 +31,7 @@ export async function globalSearch(user, query) {
       ? Company.findAll({ where: { departmentId: { [Op.in]: deptIds }, name: like }, limit: 5 })
       : [],
     hasPermission(user, "deals.view") && deptIds.length
-      ? Deal.findAll({ where: { departmentId: { [Op.in]: deptIds }, name: like }, limit: 5 })
+      ? Deal.findAll({ where: { departmentId: { [Op.in]: deptIds }, [Op.or]: [{ name: like }, { referenceNumber: like }] }, limit: 5 })
       : [],
     hasPermission(user, "campaigns.view") && deptIds.length
       ? Campaign.findAll({ where: { departmentId: { [Op.in]: deptIds }, name: like }, limit: 5 })
@@ -44,7 +44,7 @@ export async function globalSearch(user, query) {
   return {
     contacts: contacts.map((c) => ({ id: c.id, label: `${c.firstName} ${c.lastName}`, sub: c.email, href: `/contacts/${c.id}` })),
     companies: companies.map((c) => ({ id: c.id, label: c.name, sub: c.industry, href: `/companies/${c.id}` })),
-    deals: deals.map((d) => ({ id: d.id, label: d.name, sub: `PKR ${Number(d.value).toLocaleString()}`, href: `/deals/${d.id}` })),
+    deals: deals.map((d) => ({ id: d.id, label: d.name, sub: d.referenceNumber || `PKR ${Number(d.value).toLocaleString()}`, href: `/deals/${d.id}` })),
     campaigns: campaigns.map((c) => ({ id: c.id, label: c.name, sub: c.status, href: `/campaigns/${c.id}` })),
     tasks: tasks.map((t) => ({ id: t.id, label: t.title, sub: t.status, href: `/tasks/${t.id}` })),
     conversations: [],

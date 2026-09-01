@@ -22,8 +22,11 @@ export default function ContactRelated({ deals, tasks, meetings, conversation })
         {deals.length > 0 && (
           <ul className="flex flex-col gap-2.5">
             {deals.map((d) => (
-              <li key={d.id} className="flex items-center justify-between text-sm">
-                <Link href={`/deals/${d.id}`} className="text-primary hover:underline truncate">{d.name}</Link>
+              <li key={d.id} className="flex items-center justify-between text-sm gap-2">
+                <span className="min-w-0">
+                  <Link href={`/deals/${d.id}`} className="text-primary hover:underline truncate block">{d.name}</Link>
+                  {d.referenceNumber && <span className="text-[11px] font-mono text-ink-muted">{d.referenceNumber}</span>}
+                </span>
                 <span className="flex items-center gap-2 shrink-0">
                   <Badge tone="neutral">{d.stage?.name}</Badge>
                   <span className="text-ink-secondary tabular-nums">{formatCurrencyPKR(d.value)}</span>

@@ -4,12 +4,29 @@ import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
+import { referencePrefixFor, formatReferenceNumber } from "@/lib/constants/departments";
 
 const { Pipeline, PipelineStage, Deal, Company, Contact, User, Department, Task, Meeting, Note, Activity, TrainingProgram, TNA, Proposal, Invoice, Payment } = db;
 
 async function scopedDepartmentIds(user) {
   const keys = getAccessibleDepartmentKeys(user, ["ikl-hsm"]);
   return departmentIdsForKeys(keys);
+}
+
+/**
+ * Generates the next "IKL-2026-0001"-style reference number for a new
+ * query/deal, scoped per department per year. Not airtight against a
+ * concurrent double-create (rare in this demo), but the DB-level unique
+ * index on reference_number is the actual safety net.
+ */
+async function generateReferenceNumber(departmentKey, departmentId) {
+  const prefix = referencePrefixFor(departmentKey);
+  const year = new Date().getFullYear();
+  const count = await Deal.count({
+    where: { departmentId, referenceNumber: { [Op.like]: `${prefix}-${year}-%` } },
+    paranoid: false,
+  });
+  return formatReferenceNumber(prefix, year, count + 1);
 }
 
 export async function listPipelines(user) {
@@ -115,8 +132,11 @@ export async function createDeal(user, payload) {
   const stage = await PipelineStage.findByPk(payload.stageId);
   if (!stage) throw new Error("Invalid stage.");
   const pipeline = await Pipeline.findByPk(stage.pipelineId);
+  const department = await Department.findByPk(pipeline.departmentId);
+  const referenceNumber = await generateReferenceNumber(department.key, pipeline.departmentId);
 
   const deal = await Deal.create({
+    referenceNumber,
     name: payload.name,
     pipelineId: pipeline.id,
     stageId: stage.id,

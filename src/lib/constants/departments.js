@@ -24,4 +24,24 @@ const DEPARTMENTS = [
   },
 ];
 
-module.exports = { DEPARTMENTS };
+// Reference-number prefix per department (requirements: unique lead/query
+// number per query, e.g. "IKL-2026-0001"). Used both when seeding demo
+// deals and when a real deal is created through the app - kept as a plain
+// data map here so both CommonJS (seeders) and ESM (app) code share the
+// exact same source of truth.
+const REFERENCE_PREFIX = {
+  "ikl-hsm": "IKL",
+  marketing: "MKT",
+  university: "UNI",
+};
+
+function referencePrefixFor(departmentKey) {
+  return REFERENCE_PREFIX[departmentKey] || departmentKey.slice(0, 3).toUpperCase();
+}
+
+/** e.g. formatReferenceNumber("IKL", 2026, 42) -> "IKL-2026-0042" */
+function formatReferenceNumber(prefix, year, sequence) {
+  return `${prefix}-${year}-${String(sequence).padStart(4, "0")}`;
+}
+
+module.exports = { DEPARTMENTS, REFERENCE_PREFIX, referencePrefixFor, formatReferenceNumber };

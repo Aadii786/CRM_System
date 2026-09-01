@@ -3,6 +3,19 @@
 const { createRng, pick, pickWeighted, intBetween, dateWithinDays } = require("./lib/random");
 const { idMapByColumn } = require("./lib/lookup");
 const { LEAD_SOURCES } = require("../../constants/crm");
+const { referencePrefixFor, formatReferenceNumber } = require("../../constants/departments");
+
+// Per-department-per-year running counter for reference numbers
+// ("IKL-2026-0001") - mirrors the same numbering scheme dealService.js
+// uses for real deals created through the app later.
+const referenceCounters = {};
+function nextReferenceNumber(departmentKey, createdAt) {
+  const prefix = referencePrefixFor(departmentKey);
+  const year = createdAt.getFullYear();
+  const key = `${prefix}-${year}`;
+  referenceCounters[key] = (referenceCounters[key] || 0) + 1;
+  return formatReferenceNumber(prefix, year, referenceCounters[key]);
+}
 
 const TRAINING_TYPES_FOR_DEALS = ["ODC", "OB", "OEP", "CP"];
 
@@ -51,8 +64,10 @@ module.exports = {
       const contactId = companyContacts.length ? pick(rng, companyContacts) : null;
       const status = stage.is_won ? "won" : stage.is_lost ? "lost" : "open";
       const value = intBetween(rng, 150000, 4500000);
+      const createdAt = dateWithinDays(rng, 300, 5);
 
       rows.push({
+        reference_number: nextReferenceNumber("ikl-hsm", createdAt),
         name: `${company.name} - ${trainingType || "Consultancy"} Engagement`,
         pipeline_id: pipeline.id,
         stage_id: stage.id,
@@ -68,7 +83,7 @@ module.exports = {
         training_type: trainingType,
         status,
         last_activity_at: dateWithinDays(rng, 30),
-        created_at: dateWithinDays(rng, 300, 5),
+        created_at: createdAt,
         updated_at: now,
       });
     }

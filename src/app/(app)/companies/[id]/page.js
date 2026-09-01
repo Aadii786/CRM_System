@@ -108,8 +108,11 @@ export default async function CompanyDetailPage({ params }) {
           <div className="flex flex-col gap-2.5">
             {deals.map((d) => (
               <Link key={d.id} href={`/deals/${d.id}`} className="flex items-center justify-between rounded-lg border border-border bg-surface p-3.5 hover:border-primary-border transition-colors">
-                <span className="text-sm font-medium text-ink">{d.name}</span>
-                <span className="flex items-center gap-2.5">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-ink">{d.name}</span>
+                  {d.referenceNumber && <span className="text-[11px] font-mono text-ink-muted">{d.referenceNumber}</span>}
+                </span>
+                <span className="flex items-center gap-2.5 shrink-0">
                   <Badge tone="neutral">{d.stage?.name}</Badge>
                   <span className="text-sm text-ink-secondary tabular-nums">{formatCurrencyPKR(d.value)}</span>
                 </span>

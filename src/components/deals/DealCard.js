@@ -8,6 +8,7 @@ export default function DealCard({ deal, stages, onMoved, canMove, indent }) {
   return (
     <div className={["rounded-lg border border-border bg-surface p-3.5 hover:border-primary-border hover:shadow-sm transition-all", indent ? "pl-6" : ""].join(" ")}>
       <Link href={`/deals/${deal.id}`} className="block">
+        {deal.referenceNumber && <p className="text-[11px] font-mono text-ink-muted mb-0.5">{deal.referenceNumber}</p>}
         <p className="text-sm font-medium text-ink mb-1 line-clamp-2">{deal.name}</p>
         <p className="text-xs text-ink-muted mb-2.5">{deal.Company?.name || "—"}</p>
 
