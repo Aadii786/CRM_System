@@ -33,14 +33,18 @@ export default async function DealsPage({ searchParams }) {
     Object.entries(board.byStage).map(([stageId, deals]) => [stageId, deals.map((d) => d.get({ plain: true }))])
   );
 
-  const totalValue = Object.values(byStage).flat().reduce((sum, d) => sum + Number(d.value), 0);
-  const totalDeals = Object.values(byStage).flat().length;
+  const allDeals = Object.values(byStage).flat();
+  const openDeals = allDeals.filter((d) => d.status === "open");
+  const totalValue = openDeals.reduce((sum, d) => sum + Number(d.value), 0);
+  const totalDeals = openDeals.length;
+  const rejectedCount = allDeals.filter((d) => d.status === "lost").length;
+  const wonCount = allDeals.filter((d) => d.status === "won").length;
 
   return (
     <div>
       <PageHeader
         title="Deals & Pipelines"
-        description={`${totalDeals} open deals worth ${formatCurrencyPKR(totalValue)} in this pipeline.`}
+        description={`${totalDeals} open deals worth ${formatCurrencyPKR(totalValue)} in this pipeline · ${wonCount} won · ${rejectedCount} rejected`}
         actions={hasPermission(user, "deals.create") && <Button href="/deals/new" variant="primary" icon={Plus}>Create Deal</Button>}
       />
 

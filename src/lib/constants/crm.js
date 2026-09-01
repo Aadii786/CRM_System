@@ -75,6 +75,12 @@ const IKL_HSM_PIPELINE_STAGES = [
   { key: "payment_pending", name: "Payment Pending", probability: 95 },
   { key: "payment_received", name: "Payment Received", probability: 99, isWon: false },
   { key: "completed", name: "Completed", probability: 100, isWon: true },
+  // A query can be rejected from any stage of evaluation (IKL requirements
+  // doc: query status must include Received -> Under Discussion ->
+  // Evaluated -> Accepted/Rejected) - reachable via the stage dropdown or
+  // drag-and-drop from wherever the deal currently sits, same as "Lost" on
+  // the Consultancy pipeline below.
+  { key: "rejected", name: "Rejected", probability: 0, isLost: true },
 ];
 
 // Simpler consultancy-only pipeline, to demonstrate the multi-pipeline

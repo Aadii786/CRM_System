@@ -52,8 +52,12 @@ export async function getPipelineBoard(user, pipelineId) {
   });
   if (!pipeline) return null;
 
+  // Every deal in the pipeline, not just open ones - otherwise a deal
+  // moved to a won/lost terminal stage (e.g. "Completed", "Rejected")
+  // would immediately vanish from the board instead of visibly sitting in
+  // that column.
   const deals = await Deal.findAll({
-    where: { pipelineId, status: "open" },
+    where: { pipelineId },
     include: [
       { model: Company, attributes: ["id", "name"] },
       { model: Contact, as: "contact", attributes: ["id", "firstName", "lastName"] },
