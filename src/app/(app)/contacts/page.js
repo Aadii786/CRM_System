@@ -55,12 +55,16 @@ export default async function ContactsPage({ searchParams }) {
         description="University-wide contact database - search, segment and manage every lead across the platform."
         actions={
           <>
-            <Button href="/contacts/import" variant="secondary" icon={Upload}>
-              Import
-            </Button>
-            <Button href="/api/contacts/export" variant="secondary" icon={Download}>
-              Export
-            </Button>
+            {hasPermission(user, "contacts.import") && (
+              <Button href="/contacts/import" variant="secondary" icon={Upload}>
+                Import
+              </Button>
+            )}
+            {hasPermission(user, "contacts.export") && (
+              <Button href="/api/contacts/export" variant="secondary" icon={Download}>
+                Export
+              </Button>
+            )}
             {hasPermission(user, "contacts.create") && (
               <Button href="/contacts/new" variant="primary" icon={UserPlus}>
                 Create Contact

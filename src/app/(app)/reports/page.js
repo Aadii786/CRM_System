@@ -15,6 +15,12 @@ export const metadata = { title: "Reports" };
 // the department dashboards (Marketing / IKL-HSM) and Executive Dashboard,
 // which already answer the same questions with live queries - listed here
 // so the full requirements taxonomy stays visible in one place.
+// Categories whose target page shows cross-department figures (revenue,
+// Marketing vs. IKL/HSM comparisons) require executive.dashboard.view, same
+// as the pages themselves - only Rector / Central CRM Administrator hold
+// that permission. Every other category's target page re-checks its own
+// department-scoped permission anyway; this list only prevents a dead-end
+// 403 by hiding tiles the current user can never open.
 const CATEGORIES = [
   { key: "campaign", label: "Campaign Reports", icon: Megaphone, href: "/campaigns", description: "Delivery, opens, clicks per campaign." },
   { key: "contact", label: "Contact Reports", icon: Users, href: "/contacts", description: "Status, source and lifecycle breakdowns." },
@@ -22,22 +28,23 @@ const CATEGORIES = [
   { key: "deal", label: "Deal Reports", icon: Handshake, href: "/deals", description: "Pipeline value, stage distribution." },
   { key: "pipeline", label: "Pipeline Reports", icon: GitCompareArrows, href: "/ikl-hsm", description: "IKL/HSM pipeline health and conversion." },
   { key: "user", label: "User Reports", icon: User, href: "/users", description: "Activity and ownership by user." },
-  { key: "department", label: "Department Reports", icon: Building2, href: "/reports/department-performance", description: "Marketing vs. IKL/HSM side by side." },
-  { key: "conversion", label: "Conversion Reports", icon: TrendingUp, href: "/executive", description: "Funnel and conversion-rate tracking." },
-  { key: "revenue", label: "Revenue Reports", icon: Wallet, href: "/reports/revenue", description: "Pipeline value, revenue by training type/company/owner." },
+  { key: "department", label: "Department Reports", icon: Building2, href: "/reports/department-performance", description: "Marketing vs. IKL/HSM side by side.", requires: "executive.dashboard.view" },
+  { key: "conversion", label: "Conversion Reports", icon: TrendingUp, href: "/executive", description: "Funnel and conversion-rate tracking.", requires: "executive.dashboard.view" },
+  { key: "revenue", label: "Revenue Reports", icon: Wallet, href: "/reports/revenue", description: "Pipeline value, revenue by training type/company/owner.", requires: "executive.dashboard.view" },
   { key: "automation", label: "Automation Reports", icon: Workflow, href: "/automations", description: "Entered/completed/converted per automation." },
   { key: "whatsapp", label: "WhatsApp Reports", icon: MessageCircle, href: "/conversations", description: "Conversation volume and response activity." },
-  { key: "custom", label: "Custom Reports", icon: FileBarChart, href: "/reports/department-performance", description: "Save and schedule your own report views." },
+  { key: "custom", label: "Custom Reports", icon: FileBarChart, href: "/reports/department-performance", description: "Save and schedule your own report views.", requires: "executive.dashboard.view" },
 ];
 
 export default async function ReportsPage() {
   const user = await requireUserWithPermission("reports.view");
+  const visibleCategories = CATEGORIES.filter((c) => !c.requires || hasPermission(user, c.requires));
 
   return (
     <div>
       <PageHeader title="Reports" description="Every report category is backed by live database queries - filter, drill down and export from each area." />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {CATEGORIES.map((c) => (
+        {visibleCategories.map((c) => (
           <Link key={c.key} href={c.href} className="block">
             <Card className="h-full hover:border-primary-border hover:shadow-md transition-all">
               <c.icon className="size-5 text-primary mb-3" />
