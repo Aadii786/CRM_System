@@ -29,6 +29,7 @@ const PERMISSIONS = [
   { key: "deals.update", module: "deals", description: "Edit deals" },
   { key: "deals.delete", module: "deals", description: "Delete deals" },
   { key: "deals.move_stage", module: "deals", description: "Move a deal between pipeline stages" },
+  { key: "deals.approve", module: "deals", description: "Approve a B2B deal to proceed from Approval into Execution" },
 
   // Training / financial (IKL-HSM)
   { key: "training.manage", module: "training", description: "Manage training programs, TNA, trainers" },

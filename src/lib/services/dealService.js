@@ -1,7 +1,7 @@
 import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
-import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
+import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys, hasPermission } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
 import { referencePrefixFor, formatReferenceNumber } from "@/lib/constants/departments";
@@ -171,7 +171,16 @@ export async function moveDealStage(user, dealId, stageId) {
   const stage = await PipelineStage.findByPk(stageId);
   if (!stage) throw new Error("Invalid stage.");
 
-  const previousStageName = (await PipelineStage.findByPk(deal.stageId))?.name;
+  const previousStage = await PipelineStage.findByPk(deal.stageId);
+  // Approval gate: leaving the "Approval" stage requires deals.approve
+  // (IKL/HSM Managers only) - Executives can move a deal INTO Approval,
+  // but only a Manager can release it from there into Execution or
+  // anywhere else.
+  if (previousStage?.key === "approval" && !hasPermission(user, "deals.approve")) {
+    throw new Error("Only an IKL/HSM Manager can approve a deal out of the Approval stage.");
+  }
+
+  const previousStageName = previousStage?.name;
   const status = stage.isWon ? "won" : stage.isLost ? "lost" : "open";
 
   await deal.update({

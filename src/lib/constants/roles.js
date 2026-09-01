@@ -95,6 +95,7 @@ const IKL_HSM_MANAGER_PERMISSIONS = [
   "deals.update",
   "deals.delete",
   "deals.move_stage",
+  "deals.approve",
   "training.manage",
   "proposals.manage",
   "invoices.manage",

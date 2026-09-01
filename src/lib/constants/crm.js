@@ -69,6 +69,12 @@ const IKL_HSM_PIPELINE_STAGES = [
   { key: "final_proposal", name: "Final Proposal", probability: 50 },
   { key: "proposal_sent", name: "Proposal Sent", probability: 60 },
   { key: "accepted", name: "Accepted", probability: 75 },
+  // Explicit approval gate (IKL requirements doc's proposed workflow:
+  // "...B2B Plan/Proposal -> Approval -> Initiation & Execution...").
+  // Moving a deal OUT of this stage requires the deals.approve permission,
+  // which only IKL/HSM Managers hold - Executives can advance a deal INTO
+  // Approval, but only a Manager can release it into Execution.
+  { key: "approval", name: "Approval", probability: 80 },
   { key: "execution", name: "Execution", probability: 85 },
   { key: "feedback", name: "Feedback", probability: 90 },
   { key: "invoice", name: "Invoice", probability: 92 },

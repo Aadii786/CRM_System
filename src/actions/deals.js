@@ -31,7 +31,16 @@ export async function moveDealStageAction(formData) {
   const user = await requireUser();
   const dealId = formData.get("dealId");
   const stageId = formData.get("stageId");
-  await dealService.moveDealStage(user, dealId, stageId);
-  revalidatePath("/deals");
-  revalidatePath(`/deals/${dealId}`);
+  try {
+    await dealService.moveDealStage(user, dealId, stageId);
+    revalidatePath("/deals");
+    revalidatePath(`/deals/${dealId}`);
+    return { success: true };
+  } catch (err) {
+    // Callers (drag-and-drop / the stage dropdown) apply an optimistic
+    // update before this resolves - they need a real error back so they
+    // can revert it, e.g. an Executive trying to move a deal out of the
+    // Approval stage without deals.approve.
+    return { error: err.message || "Could not move deal." };
+  }
 }

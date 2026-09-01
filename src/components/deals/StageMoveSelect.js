@@ -20,12 +20,18 @@ export default function StageMoveSelect({ dealId, currentStageId, stages, onMove
   function handleChange(e) {
     const stageId = e.target.value;
     if (stageId === String(currentStageId)) return;
+    const previousStageId = currentStageId;
     onMoved?.(dealId, Number(stageId));
     startTransition(async () => {
       const fd = new FormData();
       fd.set("dealId", dealId);
       fd.set("stageId", stageId);
-      await moveDealStageAction(fd);
+      const result = await moveDealStageAction(fd);
+      if (result?.error) {
+        onMoved?.(dealId, previousStageId); // revert the optimistic move
+        push(result.error, { type: "error" });
+        return;
+      }
       const stageName = stages.find((s) => String(s.id) === stageId)?.name;
       push(`Deal moved to ${stageName}.`);
       router.refresh();

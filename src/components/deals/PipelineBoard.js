@@ -90,7 +90,12 @@ export default function PipelineBoard({ pipeline, byStage, canDrag }) {
     const fd = new FormData();
     fd.set("dealId", dealId);
     fd.set("stageId", toStageId);
-    moveDealStageAction(fd).then(() => {
+    moveDealStageAction(fd).then((result) => {
+      if (result?.error) {
+        applyLocalMove(dealId, toStageId, fromStageId); // revert the drag
+        push(result.error, { type: "error" });
+        return;
+      }
       push(`Deal moved to ${stageName}.`);
       router.refresh();
     });
