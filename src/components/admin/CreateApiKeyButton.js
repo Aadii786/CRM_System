@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Copy, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -16,6 +17,7 @@ export default function CreateApiKeyButton() {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef(null);
   const { push } = useToast();
+  const router = useRouter();
 
   function handleSubmit(formData) {
     startTransition(async () => {
@@ -27,6 +29,7 @@ export default function CreateApiKeyButton() {
       setError(null);
       setRawKey(result.rawKey);
       push("API key created.");
+      router.refresh();
     });
   }
 

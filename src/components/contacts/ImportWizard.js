@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Upload, ArrowRight, ArrowLeft, CheckCircle2, AlertTriangle, Copy, Loader2, FileCheck } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -50,6 +51,7 @@ export default function ImportWizard({ departmentKey }) {
   const [importing, setImporting] = useState(false);
   const [summary, setSummary] = useState(null);
   const { push } = useToast();
+  const router = useRouter();
 
   const step = STEPS[stepIndex].key;
 
@@ -105,6 +107,7 @@ export default function ImportWizard({ departmentKey }) {
     setImporting(false);
     setStepIndex(5);
     push(`Imported ${result.importedRows.toLocaleString()} contacts.`);
+    router.refresh();
   }
 
   function reset() {

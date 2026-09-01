@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { moveDealStageAction } from "@/actions/deals";
 import { useToast } from "@/components/ui/Toast";
 
@@ -8,6 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 export default function StageMoveSelect({ dealId, currentStageId, stages }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   function handleChange(e) {
     const stageId = e.target.value;
@@ -19,6 +21,7 @@ export default function StageMoveSelect({ dealId, currentStageId, stages }) {
       await moveDealStageAction(fd);
       const stageName = stages.find((s) => String(s.id) === stageId)?.name;
       push(`Deal moved to ${stageName}.`);
+      router.refresh();
     });
   }
 

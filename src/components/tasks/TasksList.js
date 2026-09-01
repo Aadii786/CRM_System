@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Circle } from "lucide-react";
 import Badge from "@/components/ui/Badge";
@@ -12,6 +13,7 @@ import { formatDate } from "@/lib/utils/format";
 export default function TasksList({ tasks, canEdit }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   if (tasks.length === 0) {
     return <EmptyState title="No tasks found" description="Tasks you create or that are assigned to you will appear here." />;
@@ -24,6 +26,13 @@ export default function TasksList({ tasks, canEdit }) {
       fd.set("status", task.status === "Completed" ? "Pending" : "Completed");
       await updateTaskStatusAction(fd);
       push(task.status === "Completed" ? "Task reopened." : "Task completed.");
+      // revalidatePath() inside the server action invalidates the cache,
+      // but only a form bound directly to a "use server" action gets the
+      // resulting UI refresh automatically - an imperative call like this
+      // one needs an explicit router.refresh() to actually re-render with
+      // the new data (requirements #61: every interactive action must
+      // visibly do something).
+      router.refresh();
     });
   }
 

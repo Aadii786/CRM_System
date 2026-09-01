@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Trash2, Users } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
@@ -30,11 +31,13 @@ export default function SegmentBuilder({ open, onClose, departmentKey }) {
   const [isPending, startTransition] = useTransition();
   const [state, formAction, pending] = useActionState(createSegmentAction, initialState);
   const { push } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (state?.success) {
       push("Segment created.");
       onClose();
+      router.refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect, useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { Mail, MessageCircle, CheckSquare, Pencil } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -14,6 +15,7 @@ export default function ContactHeaderActions({ contact, canEdit }) {
   const [waOpen, setWaOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function handleSendEmail() {
     startTransition(async () => {
@@ -21,6 +23,7 @@ export default function ContactHeaderActions({ contact, canEdit }) {
       fd.set("contactId", contact.id);
       await sendDemoEmailAction(fd);
       push(`Demo email sent to ${contact.firstName} ${contact.lastName}. Lead score updated.`);
+      router.refresh();
     });
   }
 
@@ -50,6 +53,7 @@ export default function ContactHeaderActions({ contact, canEdit }) {
 function WhatsappModal({ contact, open, onClose }) {
   const { push } = useToast();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const [message, setMessage] = useState(
     `Hi ${contact.firstName}, following up on your interest in our programs - happy to answer any questions!`
   );
@@ -62,6 +66,7 @@ function WhatsappModal({ contact, open, onClose }) {
       await sendDemoWhatsappAction(fd);
       push("WhatsApp message sent (demo). Added to the conversation.");
       onClose();
+      router.refresh();
     });
   }
 
@@ -82,12 +87,14 @@ const taskInitialState = { error: null };
 
 function TaskModal({ contact, open, onClose }) {
   const { push } = useToast();
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(createTaskAction, taskInitialState);
 
   useEffect(() => {
     if (state?.success) {
       push("Task created.");
       onClose();
+      router.refresh();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);

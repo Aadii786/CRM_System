@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Phone, MessageCircle } from "lucide-react";
 import Badge from "@/components/ui/Badge";
@@ -14,6 +15,7 @@ import { useToast } from "@/components/ui/Toast";
 export default function ContactsTable({ contacts, canEdit }) {
   const [selected, setSelected] = useState(new Set());
   const { push } = useToast();
+  const router = useRouter();
 
   if (contacts.length === 0) {
     return (
@@ -43,6 +45,7 @@ export default function ContactsTable({ contacts, canEdit }) {
     await bulkUpdateContactStatusAction(formData);
     push(`${selected.size} contact(s) updated to ${status}.`);
     setSelected(new Set());
+    router.refresh();
   }
 
   const allChecked = selected.size > 0 && selected.size === contacts.length;

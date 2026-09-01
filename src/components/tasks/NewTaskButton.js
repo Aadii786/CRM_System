@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -14,6 +15,7 @@ export default function NewTaskButton() {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef(null);
   const { push } = useToast();
+  const router = useRouter();
 
   function handleSubmit(formData) {
     startTransition(async () => {
@@ -26,6 +28,10 @@ export default function NewTaskButton() {
       push("Task created.");
       setOpen(false);
       formRef.current?.reset();
+      // See TasksList.js for why this is necessary: revalidatePath() alone
+      // doesn't refresh an already-mounted page when the action was called
+      // imperatively rather than via a native form-action binding.
+      router.refresh();
     });
   }
 

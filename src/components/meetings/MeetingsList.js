@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin, CheckCircle2 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import EmptyState from "@/components/ui/EmptyState";
@@ -13,6 +14,7 @@ import { formatDateTime } from "@/lib/utils/format";
 export default function MeetingsList({ meetings, showComplete }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   if (meetings.length === 0) {
     return <EmptyState title="No meetings" description="Meetings will appear here once scheduled." />;
@@ -25,6 +27,7 @@ export default function MeetingsList({ meetings, showComplete }) {
       fd.set("status", "Completed");
       await updateMeetingStatusAction(fd);
       push("Meeting marked completed.");
+      router.refresh();
     });
   }
 

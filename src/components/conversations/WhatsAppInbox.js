@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Send, UserCheck, MessageCircle, RefreshCcw } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
@@ -18,6 +19,7 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
   const [replyText, setReplyText] = useState("");
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   const filtered = useMemo(() => {
     return conversations.filter((c) => {
@@ -39,6 +41,7 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
       await replyInConversationAction(fd);
       setReplyText("");
       push("Message sent.");
+      router.refresh();
     });
   }
 
@@ -49,6 +52,7 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
       fd.set("conversationId", selected.id);
       await simulateInboundReplyAction(fd);
       push("Simulated inbound reply - contact auto-qualified.");
+      router.refresh();
     });
   }
 
@@ -60,6 +64,7 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
       fd.set("assigneeId", userId);
       await assignConversationAction(fd);
       push("Conversation assigned.");
+      router.refresh();
     });
   }
 

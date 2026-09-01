@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Field";
@@ -11,6 +12,7 @@ import { formatDate, timeAgo } from "@/lib/utils/format";
 export default function UsersTable({ users, roles, canManage }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   function toggleStatus(u) {
     startTransition(async () => {
@@ -19,6 +21,7 @@ export default function UsersTable({ users, roles, canManage }) {
       fd.set("status", u.status === "active" ? "disabled" : "active");
       await toggleUserStatusAction(fd);
       push(`${u.name} ${u.status === "active" ? "disabled" : "enabled"}.`);
+      router.refresh();
     });
   }
 
@@ -29,6 +32,7 @@ export default function UsersTable({ users, roles, canManage }) {
       fd.set("roleKey", roleKey);
       await updateUserRoleAction(fd);
       push(`Role updated for ${u.name}.`);
+      router.refresh();
     });
   }
 

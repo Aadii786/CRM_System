@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { toggleIntegrationAction } from "@/actions/admin";
@@ -12,6 +13,7 @@ const STATUS_TONE = { connected: "success", disconnected: "neutral", config_requ
 export default function IntegrationCard({ integration, canManage }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   function toggle() {
     startTransition(async () => {
@@ -19,6 +21,7 @@ export default function IntegrationCard({ integration, canManage }) {
       fd.set("key", integration.key);
       await toggleIntegrationAction(fd);
       push(`${integration.name} ${integration.status === "connected" ? "disconnected" : "connected"} (demo).`);
+      router.refresh();
     });
   }
 

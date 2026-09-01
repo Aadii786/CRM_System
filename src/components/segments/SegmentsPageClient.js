@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Filter, Trash2, Users } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -12,6 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 export default function SegmentsPageClient({ segments, departmentKey, canManage }) {
   const [open, setOpen] = useState(false);
   const { push } = useToast();
+  const router = useRouter();
 
   return (
     <div>
@@ -41,6 +43,7 @@ export default function SegmentsPageClient({ segments, departmentKey, canManage 
                     action={async (fd) => {
                       await deleteSegmentAction(fd);
                       push(`Segment "${s.name}" deleted.`);
+                      router.refresh();
                     }}
                   >
                     <input type="hidden" name="id" value={s.id} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
@@ -12,6 +13,7 @@ export default function LeadScoringSettings({ rules, threshold }) {
   const [localThreshold, setLocalThreshold] = useState(threshold);
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
+  const router = useRouter();
 
   function updatePoints(idx, points) {
     setLocalRules((prev) => prev.map((r, i) => (i === idx ? { ...r, points: Number(points) } : r)));
@@ -32,6 +34,7 @@ export default function LeadScoringSettings({ rules, threshold }) {
       await updateSettingAction(fd2);
 
       push("Lead scoring settings saved.");
+      router.refresh();
     });
   }
 
