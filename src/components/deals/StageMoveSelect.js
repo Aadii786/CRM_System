@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import { moveDealStageAction } from "@/actions/deals";
 import { useToast } from "@/components/ui/Toast";
 
-/** Move-stage dropdown (requirements #83): deliberately not drag-and-drop. */
-export default function StageMoveSelect({ dealId, currentStageId, stages }) {
+/**
+ * Move-stage dropdown - kept alongside drag-and-drop as the keyboard/touch
+ * -accessible way to change a deal's stage (requirements #83 originally
+ * asked for this instead of drag-and-drop; the board now supports both).
+ * `onMoved` lets an ancestor Kanban board update its own optimistic state
+ * immediately, the same way a drag-and-drop move does.
+ */
+export default function StageMoveSelect({ dealId, currentStageId, stages, onMoved }) {
   const [isPending, startTransition] = useTransition();
   const { push } = useToast();
   const router = useRouter();
@@ -14,6 +20,7 @@ export default function StageMoveSelect({ dealId, currentStageId, stages }) {
   function handleChange(e) {
     const stageId = e.target.value;
     if (stageId === String(currentStageId)) return;
+    onMoved?.(dealId, Number(stageId));
     startTransition(async () => {
       const fd = new FormData();
       fd.set("dealId", dealId);
@@ -31,6 +38,7 @@ export default function StageMoveSelect({ dealId, currentStageId, stages }) {
       onChange={handleChange}
       disabled={isPending}
       onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
       className="h-7 rounded-md border border-border-strong bg-surface px-1.5 text-xs font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60"
     >
       {stages.map((s) => (

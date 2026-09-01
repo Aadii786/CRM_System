@@ -48,7 +48,7 @@ export default async function DealsPage({ searchParams }) {
         <PipelineSelect pipelines={pipelines} currentId={selectedId} />
       </div>
 
-      <PipelineBoard pipeline={pipeline} byStage={byStage} />
+      <PipelineBoard pipeline={pipeline} byStage={byStage} canDrag={hasPermission(user, "deals.move_stage")} />
     </div>
   );
 }
