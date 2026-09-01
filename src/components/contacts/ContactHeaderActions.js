@@ -9,6 +9,7 @@ import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { sendDemoEmailAction, sendDemoWhatsappAction } from "@/actions/engagement";
 import { createTaskAction } from "@/actions/tasks";
+import LogCallButton from "@/components/common/LogCallButton";
 
 export default function ContactHeaderActions({ contact, canEdit }) {
   const { push } = useToast();
@@ -37,6 +38,7 @@ export default function ContactHeaderActions({ contact, canEdit }) {
       <Button variant="secondary" icon={CheckSquare} onClick={() => setTaskOpen(true)}>
         Add Task
       </Button>
+      <LogCallButton contactId={contact.id} revalidatePathValue={`/contacts/${contact.id}`} />
       <Button variant="secondary" icon={Mail} onClick={handleSendEmail} loading={isPending}>
         Send Email
       </Button>

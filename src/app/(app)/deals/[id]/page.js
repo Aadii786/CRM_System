@@ -11,6 +11,7 @@ import Tabs from "@/components/ui/Tabs";
 import EmptyState from "@/components/ui/EmptyState";
 import StageMoveSelect from "@/components/deals/StageMoveSelect";
 import DocumentsPanel from "@/components/documents/DocumentsPanel";
+import LogCallButton from "@/components/common/LogCallButton";
 import { formatCurrencyPKR, formatCurrencyFull, formatDate, formatDateTime } from "@/lib/utils/format";
 import { GraduationCap, FileText, CreditCard } from "lucide-react";
 
@@ -67,9 +68,12 @@ export default async function DealDetailPage({ params }) {
             {deal.contact && ` · ${deal.contact.firstName} ${deal.contact.lastName}`}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-semibold text-ink tabular-nums">{formatCurrencyFull(deal.value)}</p>
-          <p className="text-xs text-ink-muted">{deal.probability}% probability</p>
+        <div className="flex items-start gap-4">
+          <div className="text-right">
+            <p className="text-2xl font-semibold text-ink tabular-nums">{formatCurrencyFull(deal.value)}</p>
+            <p className="text-xs text-ink-muted">{deal.probability}% probability</p>
+          </div>
+          <LogCallButton dealId={deal.id} revalidatePathValue={`/deals/${deal.id}`} />
         </div>
       </div>
 
