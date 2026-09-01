@@ -230,3 +230,33 @@ your own MySQL instance before treating the dataset as final.
   creation, and never persisted or retrievable again.
 - `SESSION_SECRET`, `DB_PASSWORD` and all other secrets live only in `.env.local`
   (git-ignored) and are read via `process.env` in server-only files.
+
+## 13. Automated overdue-task reminders
+
+There's no always-on background worker in this deployment, so overdue-task
+detection is real but runs two ways rather than a true 24/7 scheduler:
+
+1. **Opportunistically** whenever the app is used - the app shell layout calls
+   `reconcileOverdueTasksThrottled()` (throttled to at most once a minute) on every
+   render, so overdue tasks get flipped and notified within a minute of anyone
+   using the app.
+2. **On a real schedule** via `/api/cron/reminders` - point any scheduler at this
+   URL (Vercel Cron is pre-configured in `vercel.json` to hit it hourly). Set
+   `CRON_SECRET` in your environment and Vercel will automatically send it as a
+   Bearer token; locally the endpoint stays open for easy manual testing:
+   ```bash
+   curl http://localhost:3000/api/cron/reminders
+   ```
+
+Either path writes real rows (`tasks.status = 'Overdue'`, a new `Notification`) -
+nothing here is seeded/fake data.
+
+## 14. Document storage in production
+
+`src/lib/services/fileStorage.js` saves uploaded files to a local `uploads/`
+directory. That works for local development and a traditional always-on server,
+but **does not persist on Vercel or any other serverless platform** - the
+filesystem there is ephemeral per request. Before deploying anywhere serverless,
+swap `fileStorage.js` for a real object storage provider (Vercel Blob, S3, etc.);
+every call site (`documentService.js`) goes through that one file, so nothing
+else needs to change.
