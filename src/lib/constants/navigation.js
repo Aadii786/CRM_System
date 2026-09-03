@@ -59,20 +59,21 @@ export function getNavSections(user) {
     {
       title: "Administration",
       items: [
+        {
+          label: "Departments",
+          href: "/departments",
+          icon: "Building2",
+          // Super Admin manages every department here (create/deactivate,
+          // assign heads); a department's own manager reaches just their
+          // own row (edit sender identity) without needing settings.view.
+          show: () => hasPermission(user, "departments.manage") || hasPermission(user, "campaigns.create"),
+        },
         { label: "Users", href: "/users", icon: "Users", show: () => hasPermission(user, "users.view") },
         { label: "Roles & Permissions", href: "/roles", icon: "ShieldCheck", show: () => hasPermission(user, "roles.view") },
         { label: "Integrations", href: "/integrations", icon: "Plug", show: () => hasPermission(user, "integrations.view") },
         { label: "API & Webhooks", href: "/api-webhooks", icon: "KeyRound", show: () => hasPermission(user, "api.manage") },
         { label: "Audit Logs", href: "/audit-logs", icon: "ScrollText", show: () => hasPermission(user, "audit_logs.view") },
-        {
-          label: "Settings",
-          href: "/settings",
-          icon: "Settings",
-          // Also visible to anyone who can only reach the Departments tab
-          // (their own department's sender identity/head/team) even
-          // without full settings.view - see settings/page.js.
-          show: () => hasPermission(user, "settings.view") || hasPermission(user, "departments.manage") || hasPermission(user, "campaigns.create"),
-        },
+        { label: "Settings", href: "/settings", icon: "Settings", show: () => hasPermission(user, "settings.view") },
       ],
     },
     {
