@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Field, { Input, Select } from "@/components/ui/Field";
 import Button from "@/components/ui/Button";
 import { createCompanyAction, updateCompanyAction } from "@/actions/companies";
-import { ORGANIZATION_TYPES, LEAD_SOURCES } from "@/lib/constants/crm";
+import { ORGANIZATION_TYPES, LEAD_SOURCES, COMPANY_SIZES } from "@/lib/constants/crm";
 import { useToast } from "@/components/ui/Toast";
 
 const initialState = { error: null };
@@ -40,6 +40,12 @@ export default function CompanyForm({ company }) {
           <Input id="industry" name="industry" defaultValue={company?.industry} />
         </Field>
       </div>
+      <Field label="Company Size" htmlFor="companySize">
+        <Select id="companySize" name="companySize" defaultValue={company?.companySize || ""}>
+          <option value="">Select a size</option>
+          {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s} employees</option>)}
+        </Select>
+      </Field>
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Website" htmlFor="website">
           <Input id="website" name="website" placeholder="https://" defaultValue={company?.website} />

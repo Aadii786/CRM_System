@@ -9,6 +9,7 @@ function toPayload(formData) {
     name: formData.get("name")?.toString().trim(),
     organizationType: formData.get("organizationType")?.toString(),
     industry: formData.get("industry")?.toString().trim() || null,
+    companySize: formData.get("companySize")?.toString() || null,
     website: formData.get("website")?.toString().trim() || null,
     phone: formData.get("phone")?.toString().trim() || null,
     email: formData.get("email")?.toString().trim() || null,

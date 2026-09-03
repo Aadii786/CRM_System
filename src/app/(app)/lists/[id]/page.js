@@ -6,6 +6,7 @@ import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Pagination from "@/components/ui/Pagination";
 import ContactsTable from "@/components/contacts/ContactsTable";
+import AddContactsToListButton from "@/components/lists/AddContactsToListButton";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -24,14 +25,24 @@ export default async function ListDetailPage({ params, searchParams }) {
 
   const { data: membersRaw, pagination } = await getListMembers(user, id, { page, limit: 25 });
   const members = membersRaw.map((c) => c.get({ plain: true }));
+  const canManage = hasPermission(user, "lists.update");
 
   return (
     <div>
       <PageHeader
-        breadcrumbs={[{ label: "Lists", href: "/lists" }, { label: list.name }]}
+        breadcrumbs={[
+          { label: "Folders", href: "/folders" },
+          ...(list.folder ? [{ label: list.folder.name, href: `/folders/${list.folder.id}` }] : []),
+          { label: list.name },
+        ]}
         title={list.name}
-        description={`In folder "${list.folder?.name || "—"}"`}
-        actions={<Badge tone="primary">{list.contactCount.toLocaleString()} contacts</Badge>}
+        description={list.description || `${list.folder?.Company?.name ? `Company: ${list.folder.Company.name} · ` : ""}Folder: ${list.folder?.name || "—"}`}
+        actions={
+          <>
+            <Badge tone="primary">{list.contactCount.toLocaleString()} contacts</Badge>
+            {canManage && <AddContactsToListButton listId={list.id} />}
+          </>
+        }
       />
       <ContactsTable contacts={members} canEdit={hasPermission(user, "contacts.update")} />
       <div className="mt-4">

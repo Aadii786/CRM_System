@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       name: { type: DataTypes.STRING(150), allowNull: false },
       departmentId: { type: DataTypes.INTEGER, allowNull: false },
+      // A folder scoped to a company organizes that company's contacts
+      // (Company -> Folder -> List -> Contact). Left null, a folder is a
+      // general, department-wide bucket not tied to any one company.
+      companyId: DataTypes.INTEGER,
       createdBy: DataTypes.INTEGER,
     },
     { tableName: "list_folders" }
@@ -17,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
 
   ListFolder.associate = (models) => {
     ListFolder.belongsTo(models.Department, { foreignKey: "departmentId" });
+    ListFolder.belongsTo(models.Company, { foreignKey: "companyId" });
     ListFolder.belongsTo(models.User, { foreignKey: "createdBy", as: "creator" });
     ListFolder.hasMany(models.ContactList, { foreignKey: "folderId", as: "lists" });
   };

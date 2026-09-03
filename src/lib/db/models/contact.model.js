@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       city: DataTypes.STRING(100),
       country: { type: DataTypes.STRING(100), defaultValue: "Pakistan" },
       companyId: DataTypes.INTEGER,
+      contactType: { type: DataTypes.ENUM("Lead", "Prospect", "Customer", "Partner", "Other"), defaultValue: "Lead" },
       departmentId: { type: DataTypes.INTEGER, allowNull: false },
       ownerId: DataTypes.INTEGER,
       source: { type: DataTypes.STRING(40), defaultValue: "Other" },

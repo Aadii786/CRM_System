@@ -7,14 +7,14 @@ import {
   CalendarDays, Megaphone, Filter, Workflow, MessageCircle, LineChart,
   FileBarChart, GitCompareArrows, ShieldCheck, Plug, KeyRound, ScrollText,
   Settings, PlayCircle, Landmark, Briefcase, PanelLeftClose, PanelLeftOpen, X,
-  GraduationCap, ListChecks,
+  GraduationCap, ListChecks, FolderOpen,
 } from "lucide-react";
 
 const ICONS = {
   LayoutDashboard, Users, Building2, Handshake, Activity, CheckSquare,
   CalendarDays, Megaphone, Filter, Workflow, MessageCircle, LineChart,
   FileBarChart, GitCompareArrows, ShieldCheck, Plug, KeyRound, ScrollText,
-  Settings, PlayCircle, Landmark, Briefcase, ListChecks,
+  Settings, PlayCircle, Landmark, Briefcase, ListChecks, FolderOpen,
 };
 
 function NavLink({ item, collapsed, onNavigate }) {

@@ -24,6 +24,7 @@ function toPayload(formData) {
     country: formData.get("country")?.toString().trim() || "Pakistan",
     companyId: formData.get("companyId")?.toString() || null,
     ownerId: formData.get("ownerId")?.toString() || null,
+    contactType: formData.get("contactType")?.toString() || null,
     source: formData.get("source")?.toString() || "Other",
     status: formData.get("status")?.toString() || "New",
     departmentKey: formData.get("departmentKey")?.toString() || undefined,
@@ -51,6 +52,9 @@ export async function createContactAction(_prevState, formData) {
     revalidatePath("/contacts");
     return { success: true, id: contact.id };
   } catch (err) {
+    if (err instanceof contactService.DuplicateContactError) {
+      return { error: err.message, duplicateContactId: err.existingContactId };
+    }
     return { error: err.message || "Could not create contact." };
   }
 }
@@ -82,6 +86,20 @@ export async function deleteContactAction(formData) {
   const id = formData.get("id");
   await contactService.deleteContact(user, id);
   revalidatePath("/contacts");
+}
+
+export async function setContactListsAction(formData) {
+  const user = await requireUser();
+  const contactId = formData.get("contactId");
+  const listIds = formData.getAll("listIds").map(String);
+  try {
+    const { setContactLists } = await import("@/lib/services/listService");
+    await setContactLists(user, contactId, listIds);
+    revalidatePath(`/contacts/${contactId}`);
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not update lists." };
+  }
 }
 
 export async function bulkUpdateContactStatusAction(formData) {

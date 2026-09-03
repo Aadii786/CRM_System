@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Plus, Trash2, FolderPlus } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Drawer from "@/components/ui/Drawer";
-import Field, { Input, Select } from "@/components/ui/Field";
+import Field, { Input, Select, Textarea } from "@/components/ui/Field";
 import DataTable from "@/components/ui/DataTable";
 import EmptyState from "@/components/ui/EmptyState";
 import { createFolderAction, createListAction, deleteListAction } from "@/actions/lists";
@@ -55,6 +55,7 @@ export default function ListsPageClient({ folders, lists, canManage, canDelete }
             { key: "name", header: "List", render: (l) => <Link href={`/lists/${l.id}`} className="font-medium text-primary hover:underline">{l.name}</Link> },
             { key: "id", header: "ID", render: (l) => `#${l.id}` },
             { key: "folder", header: "Folder", render: (l) => l.folder?.name || "—" },
+            { key: "company", header: "Company", render: (l) => l.folder?.Company?.name || <span className="text-ink-muted">General</span> },
             { key: "contactCount", header: "Contacts", render: (l) => l.contactCount.toLocaleString() },
             { key: "createdAt", header: "Creation date", render: (l) => formatDate(l.createdAt) },
             ...(canDelete
@@ -104,6 +105,7 @@ function DeleteListButton({ id, name }) {
 
 function CreateListDrawer({ open, onClose, folders }) {
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [folderId, setFolderId] = useState(folders[0]?.id ? String(folders[0].id) : "");
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
@@ -152,6 +154,7 @@ function CreateListDrawer({ open, onClose, folders }) {
     startTransition(async () => {
       const fd = new FormData();
       fd.set("name", name);
+      fd.set("description", description);
       fd.set("folderId", folderId);
       const result = await createListAction(fd);
       if (result?.error) {
@@ -180,6 +183,10 @@ function CreateListDrawer({ open, onClose, folders }) {
       <div className="flex flex-col gap-4">
         <Field label="Name of the list" htmlFor="list-name" required>
           <Input id="list-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter a list name" autoFocus />
+        </Field>
+
+        <Field label="Description" htmlFor="list-desc">
+          <Textarea id="list-desc" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What this list is for" />
         </Field>
 
         <Field label="Folder" htmlFor="list-folder" required>

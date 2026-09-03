@@ -36,6 +36,7 @@ export function getNavSections(user) {
       title: "Marketing",
       items: [
         { label: "Campaigns", href: "/campaigns", icon: "Megaphone", show: () => hasPermission(user, "campaigns.view") },
+        { label: "Folders", href: "/folders", icon: "FolderOpen", show: () => hasPermission(user, "lists.view") },
         { label: "Lists", href: "/lists", icon: "ListChecks", show: () => hasPermission(user, "lists.view") },
         { label: "Segments", href: "/segments", icon: "Filter", show: () => hasPermission(user, "segments.view") },
         { label: "Automations", href: "/automations", icon: "Workflow", show: () => hasPermission(user, "automations.view") },

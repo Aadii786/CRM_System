@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "Corporate",
       },
       industry: DataTypes.STRING(120),
+      companySize: DataTypes.STRING(30),
       website: DataTypes.STRING(255),
       phone: DataTypes.STRING(40),
       email: DataTypes.STRING(190),
@@ -51,6 +52,7 @@ module.exports = (sequelize, DataTypes) => {
     Company.hasMany(models.Meeting, { foreignKey: "companyId" });
     Company.hasMany(models.TrainingProgram, { foreignKey: "companyId" });
     Company.hasMany(models.Note, { foreignKey: "companyId" });
+    Company.hasMany(models.ListFolder, { foreignKey: "companyId", as: "folders" });
   };
 
   return Company;

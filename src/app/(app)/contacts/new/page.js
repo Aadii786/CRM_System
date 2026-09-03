@@ -3,7 +3,7 @@ import { getAccessibleDepartmentKeys, hasPermission } from "@/lib/permissions/rb
 import { listDepartments } from "@/lib/services/departmentService";
 import { getCompanies } from "@/lib/services/companyService";
 import { listUsers } from "@/lib/services/userService";
-import { listLists } from "@/lib/services/listService";
+import { listLists, listFolders } from "@/lib/services/listService";
 import PageHeader from "@/components/common/PageHeader";
 import Card from "@/components/ui/Card";
 import ContactForm from "@/components/contacts/ContactForm";
@@ -19,14 +19,16 @@ export default async function NewContactPage() {
     .map((d) => ({ key: d.key, name: d.name }));
 
   const canSeeLists = hasPermission(user, "lists.view");
-  const [{ data: companiesRaw }, usersRaw, listsRaw] = await Promise.all([
+  const [{ data: companiesRaw }, usersRaw, listsRaw, foldersRaw] = await Promise.all([
     getCompanies(user, { page: 1, limit: 300 }),
     listUsers(user).catch(() => []),
     canSeeLists ? listLists(user) : Promise.resolve([]),
+    canSeeLists ? listFolders(user) : Promise.resolve([]),
   ]);
   const companies = companiesRaw.map((c) => ({ id: c.id, name: c.name }));
   const owners = usersRaw.map((u) => ({ id: u.id, name: u.name }));
   const lists = listsRaw.map((l) => l.get({ plain: true }));
+  const folders = foldersRaw.map((f) => f.get({ plain: true }));
 
   return (
     <div>
@@ -36,7 +38,7 @@ export default async function NewContactPage() {
         description="Add a new contact to the CRM."
       />
       <Card className="max-w-2xl">
-        <ContactForm departments={departments} companies={companies} owners={owners} lists={lists} />
+        <ContactForm departments={departments} companies={companies} owners={owners} lists={lists} folders={folders} />
       </Card>
     </div>
   );

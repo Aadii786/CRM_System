@@ -143,12 +143,26 @@ export async function getContactRelated(user, contactId) {
   return { deals, tasks, meetings, campaignRecipients, conversation };
 }
 
+/** Thrown by createContact when the email already exists in the same department - carries the existing contact's id so the caller can offer "View Existing Contact" instead of silently failing. */
+export class DuplicateContactError extends Error {
+  constructor(existingContactId) {
+    super("A contact with this email already exists.");
+    this.name = "DuplicateContactError";
+    this.existingContactId = existingContactId;
+  }
+}
+
 export async function createContact(user, payload) {
   requirePermission(user, "contacts.create");
   const deptIds = await scopedDepartmentIds(user);
   const dept = await departmentByKey(payload.departmentKey || user.department?.key);
   if (!dept || !deptIds.includes(dept.id)) {
     throw new Error("You cannot create a contact in that department.");
+  }
+
+  if (payload.email) {
+    const existing = await Contact.findOne({ where: { email: payload.email, departmentId: dept.id } });
+    if (existing) throw new DuplicateContactError(existing.id);
   }
 
   const contact = await Contact.create({
@@ -164,6 +178,7 @@ export async function createContact(user, payload) {
     detectedLanguage: payload.detectedLanguage || null,
     doubleOptIn: payload.doubleOptIn || "No",
     optIn: payload.optIn || "Unknown",
+    contactType: payload.contactType || "Lead",
     jobTitle: payload.jobTitle || null,
     city: payload.city || null,
     country: payload.country || "Pakistan",
@@ -213,6 +228,7 @@ export async function updateContact(user, id, payload) {
     detectedLanguage: payload.detectedLanguage ?? contact.detectedLanguage,
     doubleOptIn: payload.doubleOptIn ?? contact.doubleOptIn,
     optIn: payload.optIn ?? contact.optIn,
+    contactType: payload.contactType ?? contact.contactType,
     jobTitle: payload.jobTitle ?? contact.jobTitle,
     city: payload.city ?? contact.city,
     country: payload.country ?? contact.country,

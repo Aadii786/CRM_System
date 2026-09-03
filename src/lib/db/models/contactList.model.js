@@ -10,6 +10,8 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       name: { type: DataTypes.STRING(150), allowNull: false },
+      description: DataTypes.STRING(255),
+      status: { type: DataTypes.ENUM("Active", "Archived"), defaultValue: "Active" },
       folderId: { type: DataTypes.INTEGER, allowNull: false },
       departmentId: { type: DataTypes.INTEGER, allowNull: false },
       createdBy: DataTypes.INTEGER,

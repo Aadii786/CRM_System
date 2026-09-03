@@ -68,6 +68,8 @@ const CONTACT_TIMEZONES = [
 ];
 
 const DETECTED_LANGUAGES = ["English", "Urdu", "Arabic", "French", "Chinese", "Other"];
+const COMPANY_SIZES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
+const CONTACT_TYPES = ["Lead", "Prospect", "Customer", "Partner", "Other"];
 const DOUBLE_OPT_IN_OPTIONS = ["Yes", "No"];
 const OPT_IN_OPTIONS = ["Opted In", "Opted Out", "Unknown"];
 
@@ -125,6 +127,8 @@ module.exports = {
   DETECTED_LANGUAGES,
   DOUBLE_OPT_IN_OPTIONS,
   OPT_IN_OPTIONS,
+  COMPANY_SIZES,
+  CONTACT_TYPES,
   TRAINING_TYPES,
   ORGANIZATION_TYPES,
   TASK_PRIORITIES,

@@ -4,6 +4,7 @@ import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { getCompanyById, getCompanyRelated } from "@/lib/services/companyService";
 import { listDocuments } from "@/lib/services/documentService";
+import { getCompanyHierarchy } from "@/lib/services/listService";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Avatar from "@/components/ui/Avatar";
@@ -11,7 +12,7 @@ import Tabs from "@/components/ui/Tabs";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
 import DocumentsPanel from "@/components/documents/DocumentsPanel";
-import { Pencil, Building2, Handshake, GraduationCap } from "lucide-react";
+import { Pencil, Building2, Handshake, GraduationCap, FolderOpen } from "lucide-react";
 import { formatDate, formatDateTime, formatCurrencyPKR } from "@/lib/utils/format";
 
 export async function generateMetadata({ params }) {
@@ -27,9 +28,11 @@ export default async function CompanyDetailPage({ params }) {
   if (!companyRaw) notFound();
   const company = companyRaw.get({ plain: true });
 
-  const [relatedRaw, documentsRaw] = await Promise.all([
+  const canSeeLists = hasPermission(user, "lists.view");
+  const [relatedRaw, documentsRaw, foldersRaw] = await Promise.all([
     getCompanyRelated(user, id),
     listDocuments(user, "company", id),
+    canSeeLists ? getCompanyHierarchy(user, id) : Promise.resolve([]),
   ]);
   const contacts = relatedRaw.contacts.map((c) => c.get({ plain: true }));
   const deals = relatedRaw.deals.map((d) => d.get({ plain: true }));
@@ -38,6 +41,7 @@ export default async function CompanyDetailPage({ params }) {
   const trainingPrograms = relatedRaw.trainingPrograms.map((t) => t.get({ plain: true }));
   const activities = relatedRaw.activities.map((a) => a.get({ plain: true }));
   const documents = documentsRaw.map((d) => d.get({ plain: true }));
+  const folders = foldersRaw.map((f) => f.get({ plain: true }));
 
   return (
     <div>
@@ -62,6 +66,7 @@ export default async function CompanyDetailPage({ params }) {
           { key: "overview", label: "Overview" },
           { key: "contacts", label: "Contacts", count: contacts.length },
           { key: "deals", label: "Deals", count: deals.length },
+          { key: "folders", label: "Folders & Lists", count: folders.length },
           { key: "training", label: "Training Programs", count: trainingPrograms.length },
           { key: "activity", label: "Activity" },
           { key: "tasks-meetings", label: "Tasks & Meetings" },
@@ -117,6 +122,39 @@ export default async function CompanyDetailPage({ params }) {
                   <span className="text-sm text-ink-secondary tabular-nums">{formatCurrencyPKR(d.value)}</span>
                 </span>
               </Link>
+            ))}
+          </div>
+        )}
+
+        {!canSeeLists ? (
+          <EmptyState icon={FolderOpen} title="Not available" description="You don't have permission to view lists." />
+        ) : folders.length === 0 ? (
+          <EmptyState
+            icon={FolderOpen}
+            title="No folders yet"
+            description="Organize this company's contacts into Folders and Lists (Company → Folder → List → Contact)."
+            action={<Button href="/folders" variant="primary" icon={FolderOpen}>Go to Folders</Button>}
+          />
+        ) : (
+          <div className="flex flex-col gap-4">
+            {folders.map((f) => (
+              <div key={f.id} className="rounded-lg border border-border bg-surface p-4">
+                <Link href={`/folders/${f.id}`} className="flex items-center gap-2 text-sm font-semibold text-ink hover:text-primary mb-2.5">
+                  <FolderOpen className="size-4 text-primary" /> {f.name}
+                </Link>
+                {f.lists.length === 0 ? (
+                  <p className="text-xs text-ink-muted pl-6">No lists in this folder yet.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1.5 pl-6">
+                    {f.lists.map((l) => (
+                      <li key={l.id} className="flex items-center justify-between text-sm">
+                        <Link href={`/lists/${l.id}`} className="text-primary hover:underline">{l.name}</Link>
+                        <span className="text-ink-muted tabular-nums">{l.contactCount.toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ))}
           </div>
         )}
