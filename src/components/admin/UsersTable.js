@@ -2,12 +2,14 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2, RotateCcw } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Field";
 import { toggleUserStatusAction, updateUserRoleAction } from "@/actions/admin";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate, timeAgo } from "@/lib/utils/format";
+import EditUserButton from "@/components/admin/EditUserButton";
 
 export default function UsersTable({ users, roles, canManage }) {
   const [isPending, startTransition] = useTransition();
@@ -15,16 +17,20 @@ export default function UsersTable({ users, roles, canManage }) {
   const router = useRouter();
 
   function toggleStatus(u) {
+    const deleting = u.status === "active";
+    if (deleting && !window.confirm(`Delete ${u.name}? This revokes their login access immediately - their records stay intact and this can be undone from here.`)) {
+      return;
+    }
     startTransition(async () => {
       const fd = new FormData();
       fd.set("id", u.id);
-      fd.set("status", u.status === "active" ? "disabled" : "active");
+      fd.set("status", deleting ? "disabled" : "active");
       const result = await toggleUserStatusAction(fd);
       if (result?.error) {
         push(result.error, { type: "error" });
         return;
       }
-      push(`${u.name} ${u.status === "active" ? "disabled" : "enabled"}.`);
+      push(`${u.name} ${deleting ? "deleted" : "restored"}.`);
       router.refresh();
     });
   }
@@ -81,19 +87,26 @@ export default function UsersTable({ users, roles, canManage }) {
               </td>
               <td className="px-4 py-3 text-ink-secondary">{u.Department?.name || "—"}</td>
               <td className="px-4 py-3">
-                <Badge tone={u.status === "active" ? "success" : "neutral"}>{u.status}</Badge>
+                <Badge tone={u.status === "active" ? "success" : "danger"}>{u.status === "active" ? "active" : "deleted"}</Badge>
               </td>
               <td className="px-4 py-3 text-ink-secondary">{timeAgo(u.lastActiveAt)}</td>
               <td className="px-4 py-3 text-ink-secondary">{formatDate(u.createdAt)}</td>
               {canManage && (
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => toggleStatus(u)}
-                    disabled={isPending}
-                    className="text-xs font-medium text-primary hover:text-primary-hover"
-                  >
-                    {u.status === "active" ? "Disable" : "Enable"}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <EditUserButton user={u} />
+                    <button
+                      onClick={() => toggleStatus(u)}
+                      disabled={isPending}
+                      title={u.status === "active" ? "Delete user" : "Restore user"}
+                      className={[
+                        "p-1.5 rounded hover:bg-surface-alt",
+                        u.status === "active" ? "text-ink-muted hover:text-danger" : "text-ink-muted hover:text-success",
+                      ].join(" ")}
+                    >
+                      {u.status === "active" ? <Trash2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
+                    </button>
+                  </div>
                 </td>
               )}
             </tr>

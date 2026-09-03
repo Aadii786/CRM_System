@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Lock } from "lucide-react";
 import { toggleRolePermissionAction } from "@/actions/admin";
 import { useToast } from "@/components/ui/Toast";
 
@@ -36,7 +36,18 @@ export default function PermissionMatrix({ roles, permissions, canManage }) {
       fd.set("permissionId", perm.id);
       fd.set("enabled", String(enabled));
       const result = await toggleRolePermissionAction(fd);
-      if (result?.error) push(result.error, { type: "error" });
+      if (result?.error) {
+        // Revert the optimistic toggle above - the server rejected it.
+        setMatrix((prev) => {
+          const next = { ...prev, [role.id]: new Set(prev[role.id]) };
+          if (enabled) next[role.id].delete(perm.id);
+          else next[role.id].add(perm.id);
+          return next;
+        });
+        push(result.error, { type: "error" });
+        return;
+      }
+      push(`${enabled ? "Granted" : "Revoked"} ${perm.key} for ${role.name}.`);
     });
   }
 
@@ -47,7 +58,12 @@ export default function PermissionMatrix({ roles, permissions, canManage }) {
           <tr>
             <th className="px-4 py-2.5 text-left font-medium sticky left-0 bg-surface-alt">Permission</th>
             {roles.map((r) => (
-              <th key={r.id} className="px-3 py-2.5 text-center font-medium whitespace-nowrap">{r.name}</th>
+              <th key={r.id} className="px-3 py-2.5 text-center font-medium whitespace-nowrap">
+                {r.name}
+                {r.key === "CENTRAL_CRM_ADMINISTRATOR" && (
+                  <Lock className="size-3 inline-block ml-1 text-ink-muted align-[-1px]" title="Always retains full access - not editable, so it can never be locked out of managing every other role" />
+                )}
+              </th>
             ))}
           </tr>
         </thead>

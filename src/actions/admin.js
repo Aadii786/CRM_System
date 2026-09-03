@@ -28,6 +28,22 @@ export async function createUserAction(_prevState, formData) {
   }
 }
 
+export async function updateUserDetailsAction(formData) {
+  const user = await requireUser();
+  const id = formData.get("id");
+  try {
+    await userService.updateUserDetails(user, id, {
+      name: formData.get("name")?.toString(),
+      email: formData.get("email")?.toString(),
+      jobTitle: formData.get("jobTitle")?.toString(),
+    });
+    revalidatePath("/users");
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not update user." };
+  }
+}
+
 export async function toggleUserStatusAction(formData) {
   const user = await requireUser();
   const id = formData.get("id");

@@ -91,11 +91,56 @@ async function loadTargetInOwnDepartment(actingUser, id) {
   return target;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Update (the "U" in CRUD, alongside createUser/updateUserRole/
+ * updateUserStatus): edits a user's own profile fields. Department and
+ * role changes go through their dedicated, more tightly-guarded functions
+ * above - this one deliberately can't touch either.
+ */
+export async function updateUserDetails(actingUser, id, { name, email, jobTitle }) {
+  requirePermission(actingUser, "users.manage");
+  const target = await loadTargetInOwnDepartment(actingUser, id);
+
+  const cleanName = name?.trim();
+  const cleanEmail = email?.trim().toLowerCase();
+  if (!cleanName) throw new Error("Name is required.");
+  if (!cleanEmail || !EMAIL_RE.test(cleanEmail)) throw new Error("A valid email is required.");
+  if (cleanEmail !== target.email) {
+    const clash = await User.findOne({ where: { email: cleanEmail } });
+    if (clash) throw new Error("Another user already has this email.");
+  }
+
+  await target.update({ name: cleanName, email: cleanEmail, jobTitle: jobTitle?.trim() || null });
+  await recordAudit({ userId: actingUser.id, action: `Updated user ${target.email}`, module: "users", resourceType: "User", resourceId: id, departmentId: target.departmentId });
+  return target;
+}
+
+/**
+ * Delete (the "D" in CRUD) - also used to restore. A real destructive
+ * delete would either be blocked by foreign keys (deals/tasks/campaigns/
+ * audit logs the user created/owns) or silently orphan that historical
+ * data, so "delete" here means fully revoking login access while keeping
+ * every record they ever touched intact and correctly attributed -
+ * reversible, matching this platform's own soft-delete convention (see
+ * departmentService.setDepartmentStatus).
+ */
 export async function updateUserStatus(actingUser, id, status) {
   requirePermission(actingUser, "users.manage");
   const target = await loadTargetInOwnDepartment(actingUser, id);
+  if (status === "disabled" && String(target.id) === String(actingUser.id)) {
+    throw new Error("You can't delete your own account.");
+  }
   await target.update({ status });
-  await recordAudit({ userId: actingUser.id, action: `User ${status === "disabled" ? "disabled" : "enabled"}: ${target.email}`, module: "users", resourceType: "User", resourceId: id, departmentId: target.departmentId });
+  await recordAudit({
+    userId: actingUser.id,
+    action: `${status === "disabled" ? "Deleted" : "Restored"} user ${target.email}`,
+    module: "users",
+    resourceType: "User",
+    resourceId: id,
+    departmentId: target.departmentId,
+  });
   return target;
 }
 

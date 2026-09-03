@@ -16,7 +16,7 @@ export default async function RolesPage() {
     <div>
       <PageHeader
         title="Roles & Permissions"
-        description="The centralized permission matrix (requirements #44). Central CRM Administrator always retains full access."
+        description="Click any ✓/✗ to grant or revoke a permission for that role - saves immediately, no separate Save button. The Central CRM Administrator column (🔒) always retains full access and can't be edited, so it can never lock itself out - every other role is fully editable."
       />
       <PermissionMatrix roles={roles} permissions={permissions} canManage={hasPermission(user, "roles.manage")} />
     </div>
