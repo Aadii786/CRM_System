@@ -157,6 +157,13 @@ export async function createContact(user, payload) {
     email: payload.email,
     phone: payload.phone || null,
     whatsappNumber: payload.whatsappNumber || null,
+    landlineNumber: payload.landlineNumber || null,
+    externalId: payload.externalId || null,
+    linkedin: payload.linkedin || null,
+    timezone: payload.timezone || null,
+    detectedLanguage: payload.detectedLanguage || null,
+    doubleOptIn: payload.doubleOptIn || "No",
+    optIn: payload.optIn || "Unknown",
     jobTitle: payload.jobTitle || null,
     city: payload.city || null,
     country: payload.country || "Pakistan",
@@ -176,6 +183,11 @@ export async function createContact(user, payload) {
     occurredAt: new Date(),
   });
 
+  if (payload.listIds?.length) {
+    const { setContactLists } = await import("./listService");
+    await setContactLists(user, contact.id, payload.listIds).catch(() => {});
+  }
+
   await recordAudit({ userId: user.id, action: "Created contact", module: "contacts", resourceType: "Contact", resourceId: contact.id, departmentId: dept.id });
 
   return contact;
@@ -194,6 +206,13 @@ export async function updateContact(user, id, payload) {
     email: payload.email ?? contact.email,
     phone: payload.phone ?? contact.phone,
     whatsappNumber: payload.whatsappNumber ?? contact.whatsappNumber,
+    landlineNumber: payload.landlineNumber ?? contact.landlineNumber,
+    externalId: payload.externalId ?? contact.externalId,
+    linkedin: payload.linkedin ?? contact.linkedin,
+    timezone: payload.timezone ?? contact.timezone,
+    detectedLanguage: payload.detectedLanguage ?? contact.detectedLanguage,
+    doubleOptIn: payload.doubleOptIn ?? contact.doubleOptIn,
+    optIn: payload.optIn ?? contact.optIn,
     jobTitle: payload.jobTitle ?? contact.jobTitle,
     city: payload.city ?? contact.city,
     country: payload.country ?? contact.country,
@@ -203,6 +222,11 @@ export async function updateContact(user, id, payload) {
     status: payload.status ?? contact.status,
     lastActivityAt: new Date(),
   });
+
+  if (payload.listIds !== undefined) {
+    const { setContactLists } = await import("./listService");
+    await setContactLists(user, contact.id, payload.listIds).catch(() => {});
+  }
 
   if (payload.status && payload.status !== previousStatus) {
     await Activity.create({

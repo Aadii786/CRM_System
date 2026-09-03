@@ -18,6 +18,16 @@ module.exports = (sequelize, DataTypes) => {
       email: { type: DataTypes.STRING(190), allowNull: false },
       phone: DataTypes.STRING(40),
       whatsappNumber: DataTypes.STRING(40),
+      landlineNumber: DataTypes.STRING(40),
+      // Brevo-style external system id, for de-duplicating contacts on
+      // re-import from a source system - not enforced unique, since the
+      // same contact can legitimately carry different ids across imports.
+      externalId: DataTypes.STRING(190),
+      linkedin: DataTypes.STRING(255),
+      timezone: DataTypes.STRING(60),
+      detectedLanguage: DataTypes.STRING(10),
+      doubleOptIn: { type: DataTypes.ENUM("Yes", "No"), defaultValue: "No" },
+      optIn: { type: DataTypes.ENUM("Opted In", "Opted Out", "Unknown"), defaultValue: "Unknown" },
       jobTitle: DataTypes.STRING(150),
       city: DataTypes.STRING(100),
       country: { type: DataTypes.STRING(100), defaultValue: "Pakistan" },
@@ -77,6 +87,12 @@ module.exports = (sequelize, DataTypes) => {
     Contact.hasMany(models.Conversation, { foreignKey: "contactId" });
     Contact.hasMany(models.AutomationExecution, { foreignKey: "contactId" });
     Contact.hasMany(models.Note, { foreignKey: "contactId" });
+    Contact.belongsToMany(models.ContactList, {
+      through: models.ContactListMember,
+      foreignKey: "contactId",
+      otherKey: "listId",
+      as: "lists",
+    });
   };
 
   return Contact;

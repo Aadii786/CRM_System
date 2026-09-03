@@ -49,6 +49,13 @@ const PERMISSIONS = [
   { key: "segments.update", module: "segments", description: "Edit segments" },
   { key: "segments.delete", module: "segments", description: "Delete segments" },
 
+  // Lists (static, manually-curated contact groupings organized into
+  // folders - distinct from Segments, which are dynamic/rule-based).
+  { key: "lists.view", module: "lists", description: "View lists and folders" },
+  { key: "lists.create", module: "lists", description: "Create lists and folders" },
+  { key: "lists.update", module: "lists", description: "Edit lists and folders, manage list membership" },
+  { key: "lists.delete", module: "lists", description: "Delete lists and folders" },
+
   // Automation
   { key: "automations.view", module: "automations", description: "View automations" },
   { key: "automations.create", module: "automations", description: "Create automations" },

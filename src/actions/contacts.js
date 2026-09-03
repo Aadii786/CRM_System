@@ -12,12 +12,27 @@ function toPayload(formData) {
     email: formData.get("email")?.toString().trim(),
     phone: formData.get("phone")?.toString().trim() || null,
     whatsappNumber: formData.get("whatsappNumber")?.toString().trim() || null,
+    landlineNumber: formData.get("landlineNumber")?.toString().trim() || null,
+    externalId: formData.get("externalId")?.toString().trim() || null,
+    linkedin: formData.get("linkedin")?.toString().trim() || null,
+    timezone: formData.get("timezone")?.toString() || null,
+    detectedLanguage: formData.get("detectedLanguage")?.toString() || null,
+    doubleOptIn: formData.get("doubleOptIn")?.toString() || null,
+    optIn: formData.get("optIn")?.toString() || null,
     jobTitle: formData.get("jobTitle")?.toString().trim() || null,
     city: formData.get("city")?.toString().trim() || null,
     country: formData.get("country")?.toString().trim() || "Pakistan",
+    companyId: formData.get("companyId")?.toString() || null,
+    ownerId: formData.get("ownerId")?.toString() || null,
     source: formData.get("source")?.toString() || "Other",
     status: formData.get("status")?.toString() || "New",
     departmentKey: formData.get("departmentKey")?.toString() || undefined,
+    // A hidden "listsSubmitted" marker (always rendered alongside the list
+    // checkboxes) distinguishes "the form has a Lists field and every box
+    // is unchecked" from "no Lists field was rendered at all" - getAll()
+    // alone can't tell those apart since an all-unchecked group submits no
+    // listIds entries either way.
+    listIds: formData.has("listsSubmitted") ? formData.getAll("listIds").map(String) : undefined,
   };
 }
 

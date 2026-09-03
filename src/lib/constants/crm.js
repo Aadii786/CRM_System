@@ -54,6 +54,23 @@ const ORGANIZATION_TYPES = [
   "Other",
 ];
 
+// Brevo-parity contact fields (requirements: match the detail captured on
+// contact creation - CONTACT_TIMEZONE, DETECTED_LANGUAGE, DOUBLE_OPT_IN, OPT_IN).
+const CONTACT_TIMEZONES = [
+  { value: "Asia/Karachi", label: "Asia/Karachi (PKT, UTC+5)" },
+  { value: "Asia/Dubai", label: "Asia/Dubai (GST, UTC+4)" },
+  { value: "Asia/Riyadh", label: "Asia/Riyadh (AST, UTC+3)" },
+  { value: "Asia/Kolkata", label: "Asia/Kolkata (IST, UTC+5:30)" },
+  { value: "Asia/Dhaka", label: "Asia/Dhaka (UTC+6)" },
+  { value: "Asia/Colombo", label: "Asia/Colombo (UTC+5:30)" },
+  { value: "Europe/London", label: "Europe/London (GMT/BST)" },
+  { value: "America/New_York", label: "America/New_York (EST/EDT)" },
+];
+
+const DETECTED_LANGUAGES = ["English", "Urdu", "Arabic", "French", "Chinese", "Other"];
+const DOUBLE_OPT_IN_OPTIONS = ["Yes", "No"];
+const OPT_IN_OPTIONS = ["Opted In", "Opted Out", "Unknown"];
+
 const TASK_PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 const TASK_STATUSES = ["Pending", "In Progress", "Completed", "Overdue", "Cancelled"];
 
@@ -104,6 +121,10 @@ module.exports = {
   LEAD_SOURCES,
   CONTACT_STATUSES,
   ENGAGEMENT_STATUSES,
+  CONTACT_TIMEZONES,
+  DETECTED_LANGUAGES,
+  DOUBLE_OPT_IN_OPTIONS,
+  OPT_IN_OPTIONS,
   TRAINING_TYPES,
   ORGANIZATION_TYPES,
   TASK_PRIORITIES,
