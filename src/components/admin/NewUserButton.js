@@ -9,7 +9,7 @@ import Field, { Input, Select } from "@/components/ui/Field";
 import { createUserAction } from "@/actions/admin";
 import { useToast } from "@/components/ui/Toast";
 
-export default function NewUserButton({ roles, departments }) {
+export default function NewUserButton({ roles, departments, lockDepartment = false }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(null);
   const [isPending, startTransition] = useTransition();
@@ -52,10 +52,17 @@ export default function NewUserButton({ roles, departments }) {
                 {roles.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
               </Select>
             </Field>
-            <Field label="Department" htmlFor="u-dept">
-              <Select id="u-dept" name="departmentId">
-                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </Select>
+            <Field label="Department" htmlFor="u-dept" hint={lockDepartment ? "Locked to your own department." : undefined}>
+              {lockDepartment ? (
+                <>
+                  <Input value={departments[0]?.name || ""} disabled />
+                  <input type="hidden" name="departmentId" value={departments[0]?.id || ""} />
+                </>
+              ) : (
+                <Select id="u-dept" name="departmentId">
+                  {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </Select>
+              )}
             </Field>
           </div>
           <Field label="Temporary Password" htmlFor="u-password" hint="Defaults to Demo@12345 if left blank.">

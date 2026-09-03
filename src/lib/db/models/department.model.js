@@ -37,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
       senderName: DataTypes.STRING(150),
       senderEmail: DataTypes.STRING(190),
       replyTo: DataTypes.STRING(190),
+      // The user who heads this department (Settings > Departments > Create
+      // Department flow) - nullable so a department can exist briefly
+      // without one assigned yet.
+      headUserId: DataTypes.INTEGER,
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
@@ -46,6 +50,7 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Department.associate = (models) => {
+    Department.belongsTo(models.User, { foreignKey: "headUserId", as: "head" });
     Department.hasMany(models.User, { foreignKey: "departmentId" });
     Department.hasMany(models.Contact, { foreignKey: "departmentId" });
     Department.hasMany(models.Company, { foreignKey: "departmentId" });

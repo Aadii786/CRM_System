@@ -139,6 +139,42 @@ const IKL_HSM_EXECUTIVE_PERMISSIONS = [
   "reports.view",
 ];
 
+// Generic, department-agnostic role templates (unlike the six pilot roles
+// above, these aren't hand-authored per department) - every department
+// created through Settings > Departments after the initial pilot rollout
+// gets its Department Head and Team Members assigned one of these two,
+// with no code change required to onboard department #4, #5, ... #N.
+// Scope is derived per-USER from their own departmentId (rbac.js), never
+// from the role itself, so the same two roles work for any department.
+const DEPARTMENT_HEAD_PERMISSIONS = [
+  "dashboard.view",
+  "contacts.view", "contacts.create", "contacts.update", "contacts.delete", "contacts.import", "contacts.export",
+  "companies.view", "companies.create", "companies.update", "companies.delete",
+  "deals.view", "deals.create", "deals.update", "deals.delete", "deals.move_stage", "deals.approve",
+  "campaigns.view", "campaigns.create", "campaigns.update", "campaigns.send", "campaigns.delete",
+  "segments.view", "segments.create", "segments.update", "segments.delete",
+  "automations.view", "automations.create", "automations.update", "automations.execute", "automations.delete",
+  "conversations.view", "conversations.reply", "conversations.assign",
+  "tasks.view", "tasks.create", "tasks.update", "tasks.delete",
+  "meetings.view", "meetings.create", "meetings.update", "meetings.delete",
+  "reports.view", "reports.export",
+  "users.view", "users.manage",
+];
+
+const TEAM_MEMBER_PERMISSIONS = [
+  "dashboard.view",
+  "contacts.view", "contacts.create", "contacts.update",
+  "companies.view", "companies.create", "companies.update",
+  "deals.view", "deals.create", "deals.update", "deals.move_stage",
+  "campaigns.view",
+  "segments.view",
+  "automations.view",
+  "conversations.view", "conversations.reply",
+  "tasks.view", "tasks.create", "tasks.update",
+  "meetings.view", "meetings.create", "meetings.update",
+  "reports.view",
+];
+
 // The six roles required by the requirements document (#8-#10), plus the
 // implicit "full access" administrator.
 const ROLES = [
@@ -183,6 +219,20 @@ const ROLES = [
     description: "Operational IKL/HSM access without delete/invoice/admin rights.",
     scope: "ikl_hsm",
     permissions: IKL_HSM_EXECUTIVE_PERMISSIONS,
+  },
+  {
+    key: "DEPARTMENT_HEAD",
+    name: "Department Head",
+    description: "Department-scoped administrator for any department created through Settings > Departments - manages their own department's team, leads, contacts, marketing and reports. Cannot create departments, see other departments' data, or change global settings.",
+    scope: "any",
+    permissions: DEPARTMENT_HEAD_PERMISSIONS,
+  },
+  {
+    key: "TEAM_MEMBER",
+    name: "Team Member",
+    description: "Department-scoped operational CRM user for any department created through Settings > Departments - view/create/edit within their own department, no delete/export/admin rights.",
+    scope: "any",
+    permissions: TEAM_MEMBER_PERMISSIONS,
   },
 ];
 

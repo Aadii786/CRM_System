@@ -31,12 +31,21 @@ function serializeUser(user) {
     avatarColor: user.avatarColor,
     status: user.status,
     department: user.Department
-      ? { id: user.Department.id, key: user.Department.key, name: user.Department.name, isUniversityWide: user.Department.isUniversityWide }
+      ? { id: user.Department.id, key: user.Department.key, name: user.Department.name, isUniversityWide: user.Department.isUniversityWide, isActive: user.Department.isActive }
       : null,
     roles: roles.map((r) => ({ key: r.key, name: r.name, scope: r.scope })),
     primaryRoleKey: user.primaryRoleKey,
     permissions: Array.from(permissionSet),
   };
+}
+
+// A deactivated department (Settings > Departments) blocks its own users'
+// access even if their individual account is still "active" - the
+// university-wide scope (Rector/Central Administrator) can never be
+// deactivated (see departmentService.setDepartmentStatus), so this only
+// ever affects department-scoped users.
+function isBlockedByDepartment(user) {
+  return Boolean(user.Department && !user.Department.isUniversityWide && user.Department.isActive === false);
 }
 
 /**
@@ -51,7 +60,7 @@ export async function loginWithPassword(email, password) {
     include: userInclude(),
   });
 
-  if (!user || user.status !== "active") {
+  if (!user || user.status !== "active" || isBlockedByDepartment(user)) {
     return { ok: false, error: "Invalid email or password." };
   }
 
@@ -80,7 +89,7 @@ export async function getCurrentUser() {
   if (!userId) return null;
 
   const user = await User.findByPk(userId, { include: userInclude() });
-  if (!user || user.status !== "active") return null;
+  if (!user || user.status !== "active" || isBlockedByDepartment(user)) return null;
 
   return serializeUser(user);
 }

@@ -19,7 +19,11 @@ export default function UsersTable({ users, roles, canManage }) {
       const fd = new FormData();
       fd.set("id", u.id);
       fd.set("status", u.status === "active" ? "disabled" : "active");
-      await toggleUserStatusAction(fd);
+      const result = await toggleUserStatusAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
       push(`${u.name} ${u.status === "active" ? "disabled" : "enabled"}.`);
       router.refresh();
     });
@@ -30,7 +34,11 @@ export default function UsersTable({ users, roles, canManage }) {
       const fd = new FormData();
       fd.set("id", u.id);
       fd.set("roleKey", roleKey);
-      await updateUserRoleAction(fd);
+      const result = await updateUserRoleAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
       push(`Role updated for ${u.name}.`);
       router.refresh();
     });

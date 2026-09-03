@@ -2,21 +2,22 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, Power } from "lucide-react";
 import Button from "@/components/ui/Button";
-import Field, { Input } from "@/components/ui/Field";
+import Field, { Input, Select } from "@/components/ui/Field";
 import Badge from "@/components/ui/Badge";
-import { updateDepartmentSenderIdentityAction } from "@/actions/departments";
+import { updateDepartmentSenderIdentityAction, setDepartmentHeadAction, setDepartmentStatusAction } from "@/actions/departments";
 import { useToast } from "@/components/ui/Toast";
 
 /**
  * Every department (Marketing, IKL/HSM, and any future department added to
  * the data-driven catalog) sends campaigns from its own identity. Shown
- * per-department in Settings > Departments; editable by that department's
- * own manager/executive (campaigns.create + same department) or a Central
- * CRM Administrator (departments.manage) - see departmentService.js.
+ * per-department in Settings > Departments; sender editable by that
+ * department's own manager/executive (campaigns.create + same department)
+ * or a Central CRM Administrator; head assignment and activate/deactivate
+ * are Super Admin only (departments.manage) - see departmentService.js.
  */
-export default function DepartmentSenderIdentity({ department, canEdit }) {
+export default function DepartmentSenderIdentity({ department, canEdit, canManageDept, head, departmentUsers = [] }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     senderName: department.senderName || "",
@@ -47,25 +48,75 @@ export default function DepartmentSenderIdentity({ department, canEdit }) {
     });
   }
 
+  function changeHead(headUserId) {
+    if (!headUserId) return;
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("id", department.id);
+      fd.set("headUserId", headUserId);
+      const result = await setDepartmentHeadAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
+      push(`Department head updated for ${department.name}.`);
+      router.refresh();
+    });
+  }
+
+  function toggleStatus() {
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("id", department.id);
+      fd.set("isActive", department.isActive ? "false" : "true");
+      const result = await setDepartmentStatusAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
+      push(`${department.name} ${department.isActive ? "deactivated" : "reactivated"}.`);
+      router.refresh();
+    });
+  }
+
   if (!editing) {
     return (
       <div className="flex items-center justify-between gap-3 px-5 py-3.5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-medium text-ink">{department.name}</p>
             <Badge tone={department.isUniversityWide ? "primary" : "neutral"}>{department.isUniversityWide ? "University-wide" : "Department"}</Badge>
+            {!department.isUniversityWide && <Badge tone={department.isActive ? "success" : "danger"}>{department.isActive ? "Active" : "Inactive"}</Badge>}
           </div>
           <p className="text-xs text-ink-muted mt-0.5">{department.description}</p>
           <p className="text-xs text-ink-secondary mt-1.5 truncate">
             Sends as: <span className="font-medium text-ink">{department.senderName || "—"}</span>
             {" "}&lt;{department.senderEmail || "not set"}&gt;
           </p>
+          <div className="text-xs text-ink-secondary mt-1 flex items-center gap-1.5">
+            <span>Head:</span>
+            {canManageDept && departmentUsers.length > 0 ? (
+              <Select value={head?.id || ""} onChange={(e) => changeHead(e.target.value)} disabled={isPending} className="h-6 text-xs w-44">
+                <option value="">Unassigned</option>
+                {departmentUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </Select>
+            ) : (
+              <span className="font-medium text-ink">{head?.name || "Unassigned"}</span>
+            )}
+          </div>
         </div>
-        {canEdit && (
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => setEditing(true)} className="shrink-0">
-            Edit sender
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {canEdit && (
+            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => setEditing(true)}>
+              Edit sender
+            </Button>
+          )}
+          {canManageDept && !department.isUniversityWide && (
+            <Button variant="ghost" size="sm" icon={Power} loading={isPending} onClick={toggleStatus}>
+              {department.isActive ? "Deactivate" : "Reactivate"}
+            </Button>
+          )}
+        </div>
       </div>
     );
   }

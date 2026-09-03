@@ -32,16 +32,26 @@ export async function toggleUserStatusAction(formData) {
   const user = await requireUser();
   const id = formData.get("id");
   const status = formData.get("status");
-  await userService.updateUserStatus(user, id, status);
-  revalidatePath("/users");
+  try {
+    await userService.updateUserStatus(user, id, status);
+    revalidatePath("/users");
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not update user status." };
+  }
 }
 
 export async function updateUserRoleAction(formData) {
   const user = await requireUser();
   const id = formData.get("id");
   const roleKey = formData.get("roleKey");
-  await userService.updateUserRole(user, id, roleKey);
-  revalidatePath("/users");
+  try {
+    await userService.updateUserRole(user, id, roleKey);
+    revalidatePath("/users");
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not update role." };
+  }
 }
 
 export async function toggleRolePermissionAction(formData) {

@@ -64,7 +64,15 @@ export function getNavSections(user) {
         { label: "Integrations", href: "/integrations", icon: "Plug", show: () => hasPermission(user, "integrations.view") },
         { label: "API & Webhooks", href: "/api-webhooks", icon: "KeyRound", show: () => hasPermission(user, "api.manage") },
         { label: "Audit Logs", href: "/audit-logs", icon: "ScrollText", show: () => hasPermission(user, "audit_logs.view") },
-        { label: "Settings", href: "/settings", icon: "Settings", show: () => hasPermission(user, "settings.view") },
+        {
+          label: "Settings",
+          href: "/settings",
+          icon: "Settings",
+          // Also visible to anyone who can only reach the Departments tab
+          // (their own department's sender identity/head/team) even
+          // without full settings.view - see settings/page.js.
+          show: () => hasPermission(user, "settings.view") || hasPermission(user, "departments.manage") || hasPermission(user, "campaigns.create"),
+        },
       ],
     },
     {
