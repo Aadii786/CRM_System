@@ -44,6 +44,34 @@
   --color-info-subtle: #f0f9ff;
   --color-info-border: #bae6fd;
 
+  /*
+    Module/department accent colors. These exist alongside --color-primary
+    (the one brand accent used for primary buttons/links/focus) and the
+    status colors above (success/warning/danger/info, which always mean
+    "good/caution/bad/neutral-info" and nothing else). This second palette
+    instead labels *which part of the CRM* something belongs to - Contacts
+    vs. Leads vs. Deals vs. Administration - so a KPI icon, a department
+    badge or a chart series reads as "this is Marketing data" at a glance
+    without another label. Same subtle/solid pairing as the status colors;
+    used only for small accents (icons, badges, avatar rings, chart marks),
+    never as a page or card background - the UI stays neutral overall.
+  */
+  --color-blue: #2563eb;       /* Contacts / People / general information */
+  --color-blue-subtle: #eff6ff;
+  --color-blue-border: #bfdbfe;
+  --color-purple: #7c3aed;     /* Marketing / Leads / Campaigns */
+  --color-purple-subtle: #f5f3ff;
+  --color-purple-border: #ddd6fe;
+  --color-cyan: #0891b2;       /* Deals / Opportunities */
+  --color-cyan-subtle: #ecfeff;
+  --color-cyan-border: #a5f3fc;
+  --color-teal: #0d9488;       /* Admissions / a department's secondary accent */
+  --color-teal-subtle: #f0fdfa;
+  --color-teal-border: #99f6e4;
+  --color-rose: #e11d48;       /* Lost/critical - an alternate to danger for chart variety */
+  --color-rose-subtle: #fff1f2;
+  --color-rose-border: #fecdd3;
+
   /* Radius scale */
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -121,4 +149,17 @@ body {
 }
 .animate-fade-in {
   animation: fade-in 0.18s ease-out;
+}
+
+/* Skeleton loaders (route-level loading.js files) - a shimmering neutral
+   block instead of a blank screen while a data-heavy page's server
+   component fetches. */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.skeleton {
+  background: var(--color-border);
+  border-radius: var(--radius-md);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }

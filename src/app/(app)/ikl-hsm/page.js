@@ -29,14 +29,14 @@ export default async function IklHsmDashboardPage() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
-        <MetricCard label="Companies" value={formatNumber(stats.companies)} icon={Building2} href="/companies" />
-        <MetricCard label="Contacts" value={formatNumber(stats.contacts)} icon={Users} />
-        <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals" />
-        <MetricCard label="Won Deals" value={formatNumber(stats.wonDeals)} icon={Trophy} />
-        <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={Wallet} />
-        <MetricCard label="Won Value" value={formatCurrencyPKR(stats.wonValue)} icon={Wallet} />
-        <MetricCard label="Proposals Sent" value={formatNumber(stats.proposalsSent)} icon={FileText} />
-        <MetricCard label="Acceptance Rate" value={formatPercent(stats.proposalAcceptanceRate)} icon={CheckCircle2} />
+        <MetricCard label="Companies" value={formatNumber(stats.companies)} icon={Building2} href="/companies" tone="blue" />
+        <MetricCard label="Contacts" value={formatNumber(stats.contacts)} icon={Users} tone="blue" />
+        <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals" tone="cyan" />
+        <MetricCard label="Won Deals" value={formatNumber(stats.wonDeals)} icon={Trophy} tone="green" />
+        <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={Wallet} tone="cyan" />
+        <MetricCard label="Won Value" value={formatCurrencyPKR(stats.wonValue)} icon={Wallet} tone="green" />
+        <MetricCard label="Proposals Sent" value={formatNumber(stats.proposalsSent)} icon={FileText} tone="amber" />
+        <MetricCard label="Acceptance Rate" value={formatPercent(stats.proposalAcceptanceRate)} icon={CheckCircle2} tone="green" />
       </div>
 
       <div className="grid lg:grid-cols-[1fr_1fr] gap-6">

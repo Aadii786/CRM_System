@@ -46,8 +46,8 @@ export function getNavSections(user) {
     {
       title: "Departments",
       items: [
-        { label: "Marketing", href: "/marketing", icon: "Briefcase", show: () => inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
-        { label: "IKL / HSM", href: "/ikl-hsm", icon: "Landmark", show: () => inDepartment(user, "ikl-hsm") && hasPermission(user, "dashboard.view") },
+        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", show: () => inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
+        { label: "IKL / HSM", href: "/ikl-hsm", icon: "Landmark", dept: "ikl-hsm", show: () => inDepartment(user, "ikl-hsm") && hasPermission(user, "dashboard.view") },
       ],
     },
     {
@@ -87,7 +87,7 @@ export function getNavSections(user) {
   return sections
     .map((section) => ({
       title: section.title,
-      items: section.items.filter((item) => item.show()).map(({ label, href, icon }) => ({ label, href, icon })),
+      items: section.items.filter((item) => item.show()).map(({ label, href, icon, dept }) => ({ label, href, icon, dept })),
     }))
     .filter((section) => section.items.length > 0);
 }

@@ -1,3 +1,5 @@
+import { departmentTone } from "@/lib/constants/moduleColors";
+
 const TONES = {
   neutral: "bg-surface-alt text-ink-secondary border-border",
   primary: "bg-primary-subtle text-primary-active border-primary-border",
@@ -5,6 +7,14 @@ const TONES = {
   warning: "bg-warning-subtle text-warning border-warning-border",
   danger: "bg-danger-subtle text-danger border-danger-border",
   info: "bg-info-subtle text-info border-info-border",
+  // Module/department accents (see lib/constants/moduleColors.js) - same
+  // subtle-background/solid-text pairing as the status tones above, but
+  // for "which part of the CRM is this" rather than good/bad/warning.
+  blue: "bg-blue-50 text-blue-700 border-blue-200",
+  purple: "bg-purple-50 text-purple-700 border-purple-200",
+  cyan: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  teal: "bg-teal-50 text-teal-700 border-teal-200",
+  indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
 };
 
 // Maps the CRM's own status vocabularies to a semantic tone, so the same
@@ -49,8 +59,14 @@ export function toneForStatus(status) {
   return STATUS_TONE_MAP[status] || "neutral";
 }
 
-export default function Badge({ tone, status, className = "", children }) {
-  const resolvedTone = tone || (status ? toneForStatus(status) : "neutral");
+/**
+ * `department` (a department key like "marketing" or "ikl-hsm") auto-picks
+ * that department's color from the shared catalog, so every department
+ * badge/pill in the app - Contacts list, Users, Companies, Deals - reads
+ * consistently without each screen re-deciding a color.
+ */
+export default function Badge({ tone, status, department, className = "", children }) {
+  const resolvedTone = tone || (department ? departmentTone(department) : status ? toneForStatus(status) : "neutral");
   return (
     <span
       className={[

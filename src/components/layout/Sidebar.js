@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { departmentTone, getTone } from "@/lib/constants/moduleColors";
 import {
   LayoutDashboard, Users, Building2, Handshake, Activity, CheckSquare,
   CalendarDays, Megaphone, Filter, Workflow, MessageCircle, LineChart,
@@ -28,15 +29,21 @@ function NavLink({ item, collapsed, onNavigate }) {
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       className={[
-        "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-ring",
+        "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150 focus-ring",
         collapsed ? "justify-center" : "",
         isActive
           ? "bg-primary-subtle text-primary-active"
-          : "text-ink-secondary hover:bg-surface-alt hover:text-ink",
+          : "text-ink-secondary hover:bg-surface-alt hover:text-ink hover:translate-x-0.5",
       ].join(" ")}
     >
+      {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-primary" aria-hidden="true" />}
       <Icon className="size-[18px] shrink-0" aria-hidden="true" />
-      {!collapsed && <span className="truncate">{item.label}</span>}
+      {!collapsed && (
+        <span className="flex items-center gap-1.5 min-w-0">
+          <span className="truncate">{item.label}</span>
+          {item.dept && <span className={["size-1.5 rounded-full shrink-0", getTone(departmentTone(item.dept)).dot].join(" ")} aria-hidden="true" />}
+        </span>
+      )}
     </Link>
   );
 }
