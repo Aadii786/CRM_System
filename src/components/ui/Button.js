@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 const VARIANTS = {
-  primary: "bg-primary text-white hover:bg-primary-hover active:bg-primary-active shadow-xs border border-transparent",
+  primary: "bg-gradient-to-b from-[#6058ea] to-primary text-white hover:from-primary hover:to-primary-hover active:to-primary-active shadow-sm shadow-primary/25 hover:shadow-md hover:shadow-primary/30 border border-transparent",
   secondary: "bg-surface text-ink border border-border-strong hover:bg-surface-alt shadow-xs",
   ghost: "bg-transparent text-ink-secondary hover:bg-surface-alt border border-transparent",
   danger: "bg-danger text-white hover:brightness-95 border border-transparent shadow-xs",
@@ -34,7 +34,7 @@ export default function Button({
   ...props
 }) {
   const classes = [
-    "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+    "inline-flex items-center justify-center rounded-md font-medium transition-all",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
     "disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap",
     VARIANTS[variant],

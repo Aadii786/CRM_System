@@ -17,16 +17,17 @@ export default function MetricCard({ label, value, delta, deltaLabel, href, icon
   const isPositive = typeof delta === "number" && delta >= 0;
   const Wrapper = href ? Link : "div";
   const wrapperProps = href ? { href } : {};
-  const { icon: iconColor, bg: iconBg } = getTone(tone);
+  const { icon: iconColor, bg: iconBg, dot } = getTone(tone);
 
   return (
     <Wrapper
       {...wrapperProps}
       className={[
-        "block rounded-lg border border-border bg-surface p-5 transition-all",
+        "relative block overflow-hidden rounded-lg border border-border bg-surface p-5 transition-all",
         href ? "hover:shadow-md hover:border-border-strong hover:-translate-y-0.5 cursor-pointer" : "",
       ].join(" ")}
     >
+      {tone !== "neutral" && <span className={["absolute inset-x-0 top-0 h-[3px]", dot].join(" ")} aria-hidden="true" />}
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <p className="text-xs font-medium text-ink-muted uppercase tracking-wide">{label}</p>
         {Icon && (

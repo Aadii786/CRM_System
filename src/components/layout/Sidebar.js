@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { departmentTone, getTone } from "@/lib/constants/moduleColors";
+import { getTone } from "@/lib/constants/moduleColors";
 import {
   LayoutDashboard, Users, Building2, Handshake, Activity, CheckSquare,
   CalendarDays, Megaphone, Filter, Workflow, MessageCircle, LineChart,
@@ -22,6 +22,7 @@ function NavLink({ item, collapsed, onNavigate }) {
   const pathname = usePathname();
   const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
   const Icon = ICONS[item.icon] || LayoutDashboard;
+  const tone = getTone(item.tone);
 
   return (
     <Link
@@ -29,19 +30,18 @@ function NavLink({ item, collapsed, onNavigate }) {
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       className={[
-        "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150 focus-ring",
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 focus-ring",
         collapsed ? "justify-center" : "",
         isActive
-          ? "bg-primary-subtle text-primary-active"
-          : "text-ink-secondary hover:bg-surface-alt hover:text-ink hover:translate-x-0.5",
+          ? [tone.navActiveBg, "text-white shadow-sm"].join(" ")
+          : ["text-slate-300", tone.navHoverBg, "hover:text-white hover:translate-x-0.5"].join(" "),
       ].join(" ")}
     >
-      {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-primary" aria-hidden="true" />}
-      <Icon className="size-[18px] shrink-0" aria-hidden="true" />
+      <Icon className={["size-[18px] shrink-0", isActive ? "text-white" : tone.navIcon].join(" ")} aria-hidden="true" />
       {!collapsed && (
         <span className="flex items-center gap-1.5 min-w-0">
           <span className="truncate">{item.label}</span>
-          {item.dept && <span className={["size-1.5 rounded-full shrink-0", getTone(departmentTone(item.dept)).dot].join(" ")} aria-hidden="true" />}
+          {item.dept && <span className={["size-1.5 rounded-full shrink-0", isActive ? "bg-white" : getTone(item.dept === "marketing" ? "purple" : "blue").dot].join(" ")} aria-hidden="true" />}
         </span>
       )}
     </Link>
@@ -50,26 +50,32 @@ function NavLink({ item, collapsed, onNavigate }) {
 
 function SidebarContent({ navSections, collapsed, onToggleCollapse, onNavigate, showMobileClose, onCloseMobile }) {
   return (
-    <div className="flex h-full flex-col bg-surface">
-      <div className={["flex items-center h-[var(--header-height)] shrink-0 border-b border-border px-4", collapsed ? "justify-center" : "justify-between"].join(" ")}>
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-ink">
-          <span className="flex size-8 items-center justify-center rounded-md bg-primary text-white shrink-0">
+    <div
+      className="flex h-full flex-col bg-gradient-to-b from-[#1e1b4b] via-[#2b2470] to-[#3730a3] relative overflow-hidden"
+    >
+      {/* Faint decorative glow - purely atmospheric, sits behind all content */}
+      <div className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute bottom-0 -left-16 size-48 rounded-full bg-cyan-500/10 blur-3xl" aria-hidden="true" />
+
+      <div className={["relative flex items-center h-[var(--header-height)] shrink-0 border-b border-white/10 px-4", collapsed ? "justify-center" : "justify-between"].join(" ")}>
+        <Link href="/dashboard" className="flex items-center gap-2.5 font-semibold text-white">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-white/25 to-white/5 text-white shrink-0 ring-1 ring-white/20">
             <GraduationCap className="size-[18px]" />
           </span>
           {!collapsed && <span className="text-[15px] tracking-tight">University CRM</span>}
         </Link>
         {showMobileClose && (
-          <button onClick={onCloseMobile} aria-label="Close navigation" className="rounded-md p-1.5 text-ink-muted hover:bg-surface-alt">
+          <button onClick={onCloseMobile} aria-label="Close navigation" className="rounded-md p-1.5 text-slate-300 hover:bg-white/10 hover:text-white">
             <X className="size-4" />
           </button>
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2.5 py-3 flex flex-col gap-4">
+      <nav className="relative flex-1 overflow-y-auto px-2.5 py-3 flex flex-col gap-4">
         {navSections.map((section) => (
           <div key={section.title || "untitled"}>
             {section.title && !collapsed && (
-              <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{section.title}</p>
+              <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-indigo-300/70">{section.title}</p>
             )}
             <div className="flex flex-col gap-0.5">
               {section.items.map((item) => (
@@ -80,11 +86,11 @@ function SidebarContent({ navSections, collapsed, onToggleCollapse, onNavigate, 
         ))}
       </nav>
 
-      <div className="shrink-0 border-t border-border p-2.5 hidden lg:block">
+      <div className="relative shrink-0 border-t border-white/10 p-2.5 hidden lg:block">
         <button
           type="button"
           onClick={onToggleCollapse}
-          className={["flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-secondary hover:bg-surface-alt focus-ring", collapsed ? "justify-center" : ""].join(" ")}
+          className={["flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white focus-ring", collapsed ? "justify-center" : ""].join(" ")}
         >
           {collapsed ? <PanelLeftOpen className="size-[18px]" /> : <PanelLeftClose className="size-[18px]" />}
           {!collapsed && "Collapse"}
@@ -99,7 +105,7 @@ export default function Sidebar({ navSections, collapsed, onToggleCollapse, mobi
     <>
       {/* Desktop / tablet */}
       <aside
-        className="hidden lg:block fixed inset-y-0 left-0 z-30 border-r border-border transition-[width] duration-200"
+        className="hidden lg:block fixed inset-y-0 left-0 z-30 shadow-xl transition-[width] duration-200"
         style={{ width: collapsed ? "var(--sidebar-width-collapsed)" : "var(--sidebar-width)" }}
       >
         <SidebarContent navSections={navSections} collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
@@ -109,7 +115,7 @@ export default function Sidebar({ navSections, collapsed, onToggleCollapse, mobi
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/30 animate-fade-in" onClick={onCloseMobile} aria-hidden="true" />
-          <div className="relative w-[280px] max-w-[80vw] animate-fade-in">
+          <div className="relative w-[280px] max-w-[80vw] animate-fade-in shadow-2xl">
             <SidebarContent
               navSections={navSections}
               collapsed={false}

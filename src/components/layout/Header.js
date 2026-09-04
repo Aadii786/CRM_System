@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, HelpCircle, ChevronDown, LogOut, RefreshCcw, Search as SearchIcon } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
 import DropdownMenu, { DropdownItem, DropdownSeparator } from "@/components/ui/DropdownMenu";
 import { logoutAction } from "@/actions/auth";
 import QuickCreateMenu from "./QuickCreateMenu";
@@ -37,9 +38,9 @@ export default function Header({ user, notifications, unreadCount, onToggleMobil
 
       <div className="ml-auto flex items-center gap-1.5">
         {user.department && (
-          <span className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-alt px-3 py-1 text-xs font-medium text-ink-secondary mr-1">
+          <Badge department={user.department.key} className="hidden md:inline-flex mr-1 px-3 py-1">
             {user.department.name}
-          </span>
+          </Badge>
         )}
 
         <QuickCreateMenu />
