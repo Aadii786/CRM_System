@@ -17,7 +17,7 @@ export default function TasksList({ tasks, canEdit }) {
   const router = useRouter();
 
   if (tasks.length === 0) {
-    return <EmptyState title="No tasks found" description="Tasks you create or that are assigned to you will appear here." />;
+    return <EmptyState tone="amber" title="No tasks found" description="Tasks you create or that are assigned to you will appear here." />;
   }
 
   function setStatus(task, status) {

@@ -25,7 +25,7 @@ export default async function AutomationsPage() {
       />
 
       {automations.length === 0 ? (
-        <EmptyState icon={Workflow} title="No automations found" description="Automations will appear here once created." />
+        <EmptyState icon={Workflow} tone="purple" title="No automations found" description="Automations will appear here once created." />
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {automations.map((a) => {

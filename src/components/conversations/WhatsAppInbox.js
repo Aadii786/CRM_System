@@ -69,7 +69,7 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
   }
 
   if (conversations.length === 0) {
-    return <EmptyState icon={MessageCircle} title="No conversations yet" description="WhatsApp conversations will appear here once contacts start replying." />;
+    return <EmptyState icon={MessageCircle} tone="green" title="No conversations yet" description="WhatsApp conversations will appear here once contacts start replying." />;
   }
 
   return (

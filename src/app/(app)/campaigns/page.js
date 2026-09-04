@@ -61,6 +61,7 @@ export default async function CampaignsPage({ searchParams }) {
         emptyState={
           <EmptyState
             icon={Megaphone}
+            tone="purple"
             title="No campaigns found"
             description="Create your first campaign to start engaging your contacts."
             action={hasPermission(user, "campaigns.create") && <Button href="/campaigns/new" variant="primary" icon={Plus}>Create Campaign</Button>}

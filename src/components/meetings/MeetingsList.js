@@ -18,7 +18,7 @@ export default function MeetingsList({ meetings, showComplete, canManageDocument
   const router = useRouter();
 
   if (meetings.length === 0) {
-    return <EmptyState title="No meetings" description="Meetings will appear here once scheduled." />;
+    return <EmptyState tone="teal" title="No meetings" description="Meetings will appear here once scheduled." />;
   }
 
   function complete(id) {

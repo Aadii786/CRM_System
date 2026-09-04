@@ -28,6 +28,7 @@ export default function SegmentsPageClient({ segments, departmentKey, canManage 
       {segments.length === 0 ? (
         <EmptyState
           icon={Filter}
+          tone="purple"
           title="No segments found"
           description="Create your first segment to start targeting specific groups of contacts."
           action={canManage && <Button variant="primary" icon={Plus} onClick={() => setOpen(true)}>New Segment</Button>}

@@ -65,6 +65,7 @@ export default function FoldersPageClient({ folders, lists, companies, canManage
       {visibleFolders.length === 0 ? (
         <EmptyState
           icon={FolderIcon}
+          tone="purple"
           title="No folders found"
           description="Folders group Lists together, optionally under a company."
           action={canManage && <Button variant="primary" icon={Plus} onClick={() => setCreateOpen(true)}>New Folder</Button>}

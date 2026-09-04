@@ -45,6 +45,7 @@ export default function ListsPageClient({ folders, lists, canManage, canDelete }
 
       {visibleLists.length === 0 ? (
         <EmptyState
+          tone="purple"
           title="No lists found"
           description="Lists are static, manually-curated contact groups organized into folders - great for a one-off send to a hand-picked audience."
           action={canManage && <Button variant="primary" icon={Plus} onClick={() => setDrawerOpen(true)}>Create a list</Button>}

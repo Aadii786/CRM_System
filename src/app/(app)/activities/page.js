@@ -21,7 +21,7 @@ export default async function ActivitiesPage({ searchParams }) {
       <PageHeader title="Activities" description="Unified timeline of everything happening across contacts, companies and deals." />
 
       {activities.length === 0 ? (
-        <EmptyState title="No activity yet" />
+        <EmptyState tone="indigo" title="No activity yet" />
       ) : (
         <div className="flex flex-col divide-y divide-border rounded-lg border border-border bg-surface">
           {activities.map((a) => (

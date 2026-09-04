@@ -74,6 +74,7 @@ export default async function CompaniesPage({ searchParams }) {
         emptyState={
           <EmptyState
             icon={Building2}
+            tone="cyan"
             title="No companies found"
             description="Add your first company to start tracking B2B relationships."
             action={hasPermission(user, "companies.create") && <Button href="/companies/new" variant="primary" icon={Plus}>Create Company</Button>}

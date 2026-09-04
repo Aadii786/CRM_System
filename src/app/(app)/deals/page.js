@@ -20,7 +20,7 @@ export default async function DealsPage({ searchParams }) {
     return (
       <div>
         <PageHeader title="Deals & Pipelines" />
-        <EmptyState icon={Handshake} title="No pipelines configured" description="Pipelines are set up per department in Settings." />
+        <EmptyState icon={Handshake} tone="cyan" title="No pipelines configured" description="Pipelines are set up per department in Settings." />
       </div>
     );
   }
