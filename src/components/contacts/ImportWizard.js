@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Field, { Select, Input } from "@/components/ui/Field";
 import { parseCsv } from "@/lib/utils/csv";
+import { parseXlsx } from "@/lib/utils/xlsx";
 import { checkDuplicatesAction, runImportAction } from "@/actions/imports";
 import { createFolderAction, createListAction } from "@/actions/lists";
 import { useToast } from "@/components/ui/Toast";
@@ -58,6 +59,7 @@ function guessMapping(headers) {
 export default function ImportWizard({ departmentKey, folders = [], lists: initialLists = [], canUseLists = false }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [fileName, setFileName] = useState("");
+  const [fileError, setFileError] = useState(null);
   const [headers, setHeaders] = useState([]);
   const [rows, setRows] = useState([]);
   const [mapping, setMapping] = useState({});
@@ -96,15 +98,39 @@ export default function ImportWizard({ departmentKey, folders = [], lists: initi
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const { headers: h, rows: r } = parseCsv(String(reader.result));
+    setFileError(null);
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+
+    function applyParsed({ headers: h, rows: r }) {
+      if (h.length === 0 || r.length === 0) {
+        setFileError("Couldn't find any data in that file - check it has a header row and at least one data row.");
+        return;
+      }
       setHeaders(h);
       setRows(r);
       setMapping(guessMapping(h));
       setStepIndex(1);
-    };
-    reader.readAsText(file);
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => setFileError("Couldn't read that file. Try re-saving it and uploading again.");
+
+    if (isExcel) {
+      // .xlsx/.xls are binary (zip-based) - reading them as text produces
+      // garbage (their raw bytes start with the ZIP signature "PK...").
+      // Real files need SheetJS reading an ArrayBuffer, not readAsText().
+      reader.onload = () => {
+        try {
+          applyParsed(parseXlsx(reader.result));
+        } catch {
+          setFileError("Couldn't parse that Excel file. Try exporting it as .csv instead.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = () => applyParsed(parseCsv(String(reader.result)));
+      reader.readAsText(file);
+    }
   }
 
   async function goToDuplicates() {
@@ -130,6 +156,7 @@ export default function ImportWizard({ departmentKey, folders = [], lists: initi
   function reset() {
     setStepIndex(0);
     setFileName("");
+    setFileError(null);
     setHeaders([]);
     setRows([]);
     setMapping({});
@@ -166,12 +193,15 @@ export default function ImportWizard({ departmentKey, folders = [], lists: initi
             <span className="flex size-12 items-center justify-center rounded-full bg-primary-subtle text-primary mb-4">
               <Upload className="size-5" />
             </span>
-            <h3 className="text-sm font-semibold text-ink mb-1">Upload a CSV file</h3>
+            <h3 className="text-sm font-semibold text-ink mb-1">Upload a CSV or Excel file</h3>
             <p className="text-sm text-ink-muted max-w-sm mb-5">
-              Expect columns like First Name, Last Name, Email, SMS, WhatsApp, Job Title, LinkedIn, Timezone... Field mapping is next.
+              .csv, .xlsx or .xls. Expect columns like First Name, Last Name, Email, SMS, WhatsApp, Job Title, LinkedIn, Timezone... Field mapping is next.
             </p>
+            {fileError && (
+              <p className="text-sm text-danger max-w-sm mb-4">{fileError}{fileName ? ` (${fileName})` : ""}</p>
+            )}
             <label className="inline-flex">
-              <input type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
+              <input type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handleFile} className="hidden" />
               <span className="cursor-pointer inline-flex items-center gap-2 rounded-md bg-primary px-4 h-9 text-sm font-medium text-white hover:bg-primary-hover">
                 Choose File
               </span>
