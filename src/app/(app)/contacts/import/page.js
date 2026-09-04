@@ -1,5 +1,7 @@
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
+import { hasPermission } from "@/lib/permissions/rbac";
 import { listImports } from "@/lib/services/importService";
+import { listFolders, listLists } from "@/lib/services/listService";
 import PageHeader from "@/components/common/PageHeader";
 import Card, { CardHeader } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -11,19 +13,31 @@ export const metadata = { title: "Import Contacts" };
 
 export default async function ImportContactsPage() {
   const user = await requireUserWithPermission("contacts.import");
-  const importsRaw = await listImports(user, 10);
+  const canSeeLists = hasPermission(user, "lists.view");
+  const [importsRaw, foldersRaw, listsRaw] = await Promise.all([
+    listImports(user, 10),
+    canSeeLists ? listFolders(user) : Promise.resolve([]),
+    canSeeLists ? listLists(user) : Promise.resolve([]),
+  ]);
   const imports = importsRaw.map((i) => i.get({ plain: true }));
+  const folders = foldersRaw.map((f) => f.get({ plain: true }));
+  const lists = listsRaw.map((l) => l.get({ plain: true }));
 
   return (
     <div>
       <PageHeader
         breadcrumbs={[{ label: "Contacts", href: "/contacts" }, { label: "Import" }]}
         title="Import Contacts"
-        description="Enterprise-grade CSV import: upload, map fields, validate, detect duplicates, then import."
+        description="Enterprise-grade CSV import: upload, map fields, choose a list, validate, detect duplicates, then import."
       />
 
       <div className="grid lg:grid-cols-[1.5fr_1fr] gap-6">
-        <ImportWizard departmentKey={user.department?.key} />
+        <ImportWizard
+          departmentKey={user.department?.key}
+          folders={folders}
+          lists={lists}
+          canUseLists={canSeeLists && hasPermission(user, "lists.create")}
+        />
 
         <Card padding="none">
           <div className="p-5 pb-0">

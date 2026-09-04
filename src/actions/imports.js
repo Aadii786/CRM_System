@@ -15,11 +15,12 @@ export async function checkDuplicatesAction(departmentKey, emails) {
   return { duplicateCount: existing.size };
 }
 
-/** rows: array of { firstName, lastName, email, phone, jobTitle, city, source } */
-export async function runImportAction({ filename, departmentKey, rows }) {
+/** rows: array of mapped-field objects, one per CSV row (see ImportWizard's CONTACT_FIELDS for the full field list). */
+export async function runImportAction({ filename, departmentKey, rows, listId }) {
   const user = await requireUser();
-  const summary = await runImport(user, { filename, departmentKey, rows });
+  const summary = await runImport(user, { filename, departmentKey, rows, listId });
   revalidatePath("/contacts");
   revalidatePath("/contacts/import");
+  if (listId) revalidatePath(`/lists/${listId}`);
   return summary;
 }
