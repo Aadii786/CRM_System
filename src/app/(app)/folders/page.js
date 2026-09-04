@@ -9,14 +9,15 @@ export const metadata = { title: "Folders" };
 
 export default async function FoldersPage() {
   const user = await requireUserWithPermission("lists.view");
-  const [foldersRaw, listsRaw, { data: companiesRaw }] = await Promise.all([
+  const canSeeCompanies = hasPermission(user, "companies.view");
+  const [foldersRaw, listsRaw, companiesResult] = await Promise.all([
     listFolders(user),
     listLists(user),
-    getCompanies(user, { page: 1, limit: 300 }),
+    canSeeCompanies ? getCompanies(user, { page: 1, limit: 300 }) : Promise.resolve({ data: [] }),
   ]);
   const folders = foldersRaw.map((f) => f.get({ plain: true }));
   const lists = listsRaw.map((l) => l.get({ plain: true }));
-  const companies = companiesRaw.map((c) => ({ id: c.id, name: c.name }));
+  const companies = companiesResult.data.map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <div>

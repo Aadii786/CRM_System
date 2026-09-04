@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/Toast";
 
 const initialState = { error: null };
 
-export default function ContactForm({ departments, contact, companies = [], owners = [], folders = [], lists = [], contactListIds = [] }) {
+export default function ContactForm({ departments, contact, companies = [], owners = [], folders = [], lists = [], contactListIds = [], canManageCompanies = true }) {
   const isEdit = Boolean(contact);
   const [state, formAction, pending] = useActionState(isEdit ? updateContactAction : createContactAction, initialState);
   const [selectedListIds, setSelectedListIds] = useState(new Set(contactListIds.map(String)));
@@ -102,17 +102,21 @@ export default function ContactForm({ departments, contact, companies = [], owne
         </Field>
       </div>
 
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted -mb-2">Company information</h3>
-      <Field label="Company" htmlFor="companyId-search" hint="Search an existing company, or create a new one without leaving this form.">
-        <CompanyCombobox
-          companies={companies}
-          defaultCompany={contact?.companyId ? companies.find((c) => c.id === contact.companyId) : null}
-          onCompanyChange={(c) => {
-            setCompanyId(c ? String(c.id) : "");
-            setFolderId("");
-          }}
-        />
-      </Field>
+      {canManageCompanies && (
+        <>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted -mb-2">Company information</h3>
+          <Field label="Company" htmlFor="companyId-search" hint="Search an existing company, or create a new one without leaving this form.">
+            <CompanyCombobox
+              companies={companies}
+              defaultCompany={contact?.companyId ? companies.find((c) => c.id === contact.companyId) : null}
+              onCompanyChange={(c) => {
+                setCompanyId(c ? String(c.id) : "");
+                setFolderId("");
+              }}
+            />
+          </Field>
+        </>
+      )}
 
       <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted -mb-2">Organization</h3>
       <p className="text-xs text-ink-muted -mt-3">Company → Folder → List. Optional - you can also organize contacts later.</p>

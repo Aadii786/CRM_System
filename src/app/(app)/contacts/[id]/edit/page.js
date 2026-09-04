@@ -25,14 +25,15 @@ export default async function EditContactPage({ params }) {
   const departments = allDepartments.filter((d) => accessibleKeys.includes(d.key) && !d.isUniversityWide).map((d) => ({ key: d.key, name: d.name }));
 
   const canSeeLists = hasPermission(user, "lists.view");
-  const [{ data: companiesRaw }, usersRaw, listsRaw, foldersRaw, contactLists] = await Promise.all([
-    getCompanies(user, { page: 1, limit: 300 }),
+  const canSeeCompanies = hasPermission(user, "companies.view");
+  const [companiesResult, usersRaw, listsRaw, foldersRaw, contactLists] = await Promise.all([
+    canSeeCompanies ? getCompanies(user, { page: 1, limit: 300 }) : Promise.resolve({ data: [] }),
     listUsers(user).catch(() => []),
     canSeeLists ? listLists(user) : Promise.resolve([]),
     canSeeLists ? listFolders(user) : Promise.resolve([]),
     canSeeLists ? getListsForContact(user, id) : Promise.resolve([]),
   ]);
-  const companies = companiesRaw.map((c) => ({ id: c.id, name: c.name }));
+  const companies = companiesResult.data.map((c) => ({ id: c.id, name: c.name }));
   const owners = usersRaw.map((u) => ({ id: u.id, name: u.name }));
   const lists = listsRaw.map((l) => l.get({ plain: true }));
   const folders = foldersRaw.map((f) => f.get({ plain: true }));
@@ -45,7 +46,16 @@ export default async function EditContactPage({ params }) {
         title="Edit Contact"
       />
       <Card className="max-w-2xl">
-        <ContactForm departments={departments} contact={contact} companies={companies} owners={owners} lists={lists} folders={folders} contactListIds={contactListIds} />
+        <ContactForm
+          departments={departments}
+          contact={contact}
+          companies={companies}
+          owners={owners}
+          lists={lists}
+          folders={folders}
+          contactListIds={contactListIds}
+          canManageCompanies={canSeeCompanies}
+        />
       </Card>
     </div>
   );

@@ -19,13 +19,18 @@ export default async function NewContactPage() {
     .map((d) => ({ key: d.key, name: d.name }));
 
   const canSeeLists = hasPermission(user, "lists.view");
-  const [{ data: companiesRaw }, usersRaw, listsRaw, foldersRaw] = await Promise.all([
-    getCompanies(user, { page: 1, limit: 300 }),
+  // Companies is an IKL/HSM concept in this pilot (Marketing manages
+  // individual leads, not B2B companies) - Marketing roles hold no
+  // companies.* permission at all, so this must never be an unconditional
+  // call or the whole page 403s for them.
+  const canSeeCompanies = hasPermission(user, "companies.view");
+  const [companiesResult, usersRaw, listsRaw, foldersRaw] = await Promise.all([
+    canSeeCompanies ? getCompanies(user, { page: 1, limit: 300 }) : Promise.resolve({ data: [] }),
     listUsers(user).catch(() => []),
     canSeeLists ? listLists(user) : Promise.resolve([]),
     canSeeLists ? listFolders(user) : Promise.resolve([]),
   ]);
-  const companies = companiesRaw.map((c) => ({ id: c.id, name: c.name }));
+  const companies = companiesResult.data.map((c) => ({ id: c.id, name: c.name }));
   const owners = usersRaw.map((u) => ({ id: u.id, name: u.name }));
   const lists = listsRaw.map((l) => l.get({ plain: true }));
   const folders = foldersRaw.map((f) => f.get({ plain: true }));
@@ -38,7 +43,14 @@ export default async function NewContactPage() {
         description="Add a new contact to the CRM."
       />
       <Card className="max-w-2xl">
-        <ContactForm departments={departments} companies={companies} owners={owners} lists={lists} folders={folders} />
+        <ContactForm
+          departments={departments}
+          companies={companies}
+          owners={owners}
+          lists={lists}
+          folders={folders}
+          canManageCompanies={canSeeCompanies}
+        />
       </Card>
     </div>
   );
