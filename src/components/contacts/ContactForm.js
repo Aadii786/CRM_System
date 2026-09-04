@@ -20,7 +20,6 @@ export default function ContactForm({ departments, contact, companies = [], owne
   const isEdit = Boolean(contact);
   const [state, formAction, pending] = useActionState(isEdit ? updateContactAction : createContactAction, initialState);
   const [selectedListIds, setSelectedListIds] = useState(new Set(contactListIds.map(String)));
-  const [companyId, setCompanyId] = useState(contact?.companyId ? String(contact.companyId) : "");
   const [folderId, setFolderId] = useState("");
   const router = useRouter();
   const { push } = useToast();
@@ -33,18 +32,17 @@ export default function ContactForm({ departments, contact, companies = [], owne
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  // Company -> Folder -> List cascade (requirements #14): a folder either
-  // belongs to the selected company, or is a general/no-company folder
-  // available regardless of which company is chosen.
-  const visibleFolders = useMemo(
-    () => folders.filter((f) => !f.companyId || String(f.companyId) === companyId),
-    [folders, companyId]
-  );
+  // Every folder is always selectable here, not just the selected
+  // company's - List membership isn't actually tied to a contact's
+  // company, and a folder scoped to a company was invisible on existing
+  // contacts that had no company set yet, hiding lists that should still
+  // be pickable. The Folder select shows which company each one belongs
+  // to (or "general") so the hierarchy is still visible, just not a hard
+  // requirement.
   const visibleLists = useMemo(() => {
     if (folderId) return lists.filter((l) => String(l.folderId) === folderId);
-    const visibleFolderIds = new Set(visibleFolders.map((f) => f.id));
-    return lists.filter((l) => visibleFolderIds.has(l.folderId));
-  }, [lists, folderId, visibleFolders]);
+    return lists;
+  }, [lists, folderId]);
 
   function toggleList(id) {
     setSelectedListIds((prev) => {
@@ -109,10 +107,6 @@ export default function ContactForm({ departments, contact, companies = [], owne
             <CompanyCombobox
               companies={companies}
               defaultCompany={contact?.companyId ? companies.find((c) => c.id === contact.companyId) : null}
-              onCompanyChange={(c) => {
-                setCompanyId(c ? String(c.id) : "");
-                setFolderId("");
-              }}
             />
           </Field>
         </>
@@ -123,7 +117,7 @@ export default function ContactForm({ departments, contact, companies = [], owne
       <Field label="Folder" htmlFor="folder-picker">
         <Select id="folder-picker" value={folderId} onChange={(e) => setFolderId(e.target.value)}>
           <option value="">All folders</option>
-          {visibleFolders.map((f) => <option key={f.id} value={String(f.id)}>{f.name}{f.companyId ? "" : " (general)"}</option>)}
+          {folders.map((f) => <option key={f.id} value={String(f.id)}>{f.name}{f.companyId ? ` — ${f.Company?.name || "company"}` : " (general)"}</option>)}
         </Select>
       </Field>
       {visibleLists.length > 0 && (
