@@ -34,7 +34,7 @@ export default function ContactOverview({ contact }) {
           <Row label="Engagement"><Badge tone="neutral">{contact.engagementStatus}</Badge></Row>
           <Row label="Lead Score">{contact.leadScore} / 100</Row>
           <Row label="Source">{contact.source}</Row>
-          <Row label="Department">{contact.Department?.name}</Row>
+          <Row label="Department">{contact.Department ? <Badge department={contact.Department.key}>{contact.Department.name}</Badge> : "—"}</Row>
           <Row label="Owner">{contact.owner?.name || "Unassigned"}</Row>
           <Row label="Created">{formatDate(contact.createdAt)}</Row>
           <Row label="Last Activity">{formatDate(contact.lastActivityAt)}</Row>

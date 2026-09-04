@@ -1,9 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { resolveFormatter } from "./formatters";
-
-const COLORS = ["var(--color-primary)", "var(--color-success)", "var(--color-warning)"];
+import { resolveFormatter, CHART_PALETTE } from "./formatters";
 
 /**
  * data: [{ label: "Contacts", Marketing: 58000, "IKL/HSM": 4280 }, ...]
@@ -24,7 +22,7 @@ export default function ComparisonBarChart({ data, series, format = "number" }) 
         />
         {series.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
         {series.map((s, i) => (
-          <Bar key={s.key} dataKey={s.key} name={s.name} fill={COLORS[i % COLORS.length]} radius={[4, 4, 0, 0]} maxBarSize={40} />
+          <Bar key={s.key} dataKey={s.key} name={s.name} fill={CHART_PALETTE[i % CHART_PALETTE.length]} radius={[4, 4, 0, 0]} maxBarSize={40} />
         ))}
       </BarChart>
     </ResponsiveContainer>

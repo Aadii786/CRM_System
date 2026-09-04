@@ -14,3 +14,19 @@ const FORMATTERS = {
 export function resolveFormatter(format) {
   return FORMATTERS[format] || ((v) => v);
 }
+
+// One shared, ordered color sequence for every multi-series chart in the
+// app (requirements #19: consistent chart colors, used only where they
+// represent different meanings) - pulls from the same module-color CSS
+// variables the sidebar/badges/KPI tiles use (globals.css), so a chart
+// legend reads as part of the same system instead of its own palette.
+export const CHART_PALETTE = [
+  "var(--color-blue)",
+  "var(--color-purple)",
+  "var(--color-cyan)",
+  "var(--color-success)",
+  "var(--color-warning)",
+  "var(--color-teal)",
+  "var(--color-rose)",
+  "var(--color-primary)",
+];

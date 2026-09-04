@@ -1,16 +1,7 @@
 "use client";
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { resolveFormatter } from "./formatters";
-
-const COLORS = [
-  "var(--color-primary)",
-  "var(--color-success)",
-  "var(--color-warning)",
-  "var(--color-info)",
-  "var(--color-danger)",
-  "var(--color-border-strong)",
-];
+import { resolveFormatter, CHART_PALETTE } from "./formatters";
 
 /**
  * data: [{ name: "Website", value: 240 }, ...]
@@ -23,7 +14,7 @@ export default function DonutChart({ data, format = "number" }) {
       <PieChart>
         <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="85%" paddingAngle={2}>
           {data.map((entry, i) => (
-            <Cell key={entry.name} fill={COLORS[i % COLORS.length]} />
+            <Cell key={entry.name} fill={CHART_PALETTE[i % CHART_PALETTE.length]} />
           ))}
         </Pie>
         <Tooltip

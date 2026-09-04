@@ -20,6 +20,7 @@ export default function ContactsTable({ contacts, canEdit }) {
   if (contacts.length === 0) {
     return (
       <EmptyState
+        tone="blue"
         title="No contacts found"
         description="Try adjusting your search or filters, or import contacts to get started."
       />

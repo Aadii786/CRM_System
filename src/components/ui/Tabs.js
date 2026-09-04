@@ -27,15 +27,15 @@ export default function Tabs({ tabs, defaultTab, children }) {
               aria-selected={isActive}
               onClick={() => setActive(tab.key)}
               className={[
-                "relative px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary rounded-t-md",
-                isActive ? "text-primary" : "text-ink-muted hover:text-ink",
+                "relative px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary rounded-t-md",
+                isActive ? "text-primary-active bg-primary-subtle/60" : "text-ink-muted hover:text-ink hover:bg-surface-alt",
               ].join(" ")}
             >
               {tab.label}
               {tab.count != null && (
-                <span className="ml-1.5 text-xs text-ink-muted">({tab.count})</span>
+                <span className={["ml-1.5 text-xs", isActive ? "text-primary" : "text-ink-muted"].join(" ")}>({tab.count})</span>
               )}
-              {isActive && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-primary rounded-full" />}
+              {isActive && <span className="absolute left-0 right-0 -bottom-px h-[2.5px] bg-primary rounded-full" />}
             </button>
           );
         })}

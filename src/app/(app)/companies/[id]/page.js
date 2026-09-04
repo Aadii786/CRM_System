@@ -85,7 +85,7 @@ export default async function CompanyDetailPage({ params }) {
           <div className="rounded-lg border border-border bg-surface p-5">
             <h3 className="text-sm font-semibold text-ink mb-3">CRM Details</h3>
             <OverviewRow label="Owner">{company.owner?.name || "Unassigned"}</OverviewRow>
-            <OverviewRow label="Department">{company.Department?.name}</OverviewRow>
+            <OverviewRow label="Department">{company.Department ? <Badge department={company.Department.key}>{company.Department.name}</Badge> : "—"}</OverviewRow>
             <OverviewRow label="Created">{formatDate(company.createdAt)}</OverviewRow>
             <OverviewRow label="Last Activity">{formatDate(company.lastActivityAt)}</OverviewRow>
           </div>

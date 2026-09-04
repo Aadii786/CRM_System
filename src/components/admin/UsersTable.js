@@ -85,7 +85,9 @@ export default function UsersTable({ users, roles, canManage }) {
                   <span className="text-ink-secondary">{roles.find((r) => r.key === u.primaryRoleKey)?.name}</span>
                 )}
               </td>
-              <td className="px-4 py-3 text-ink-secondary">{u.Department?.name || "—"}</td>
+              <td className="px-4 py-3">
+                {u.Department ? <Badge department={u.Department.key}>{u.Department.name}</Badge> : <span className="text-ink-muted">—</span>}
+              </td>
               <td className="px-4 py-3">
                 <Badge tone={u.status === "active" ? "success" : "danger"}>{u.status === "active" ? "active" : "deleted"}</Badge>
               </td>

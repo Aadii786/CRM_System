@@ -1,9 +1,7 @@
 "use client";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { resolveFormatter } from "./formatters";
-
-const COLORS = ["var(--color-primary)", "var(--color-success)", "var(--color-warning)", "var(--color-info)"];
+import { resolveFormatter, CHART_PALETTE } from "./formatters";
 
 /**
  * data: [{ label: "Jan", seriesA: 10, seriesB: 20 }, ...]
@@ -29,7 +27,7 @@ export default function TrendLineChart({ data, series, format = "number" }) {
             type="monotone"
             dataKey={s.key}
             name={s.name}
-            stroke={COLORS[i % COLORS.length]}
+            stroke={CHART_PALETTE[i % CHART_PALETTE.length]}
             strokeWidth={2}
             dot={false}
             activeDot={{ r: 4 }}
