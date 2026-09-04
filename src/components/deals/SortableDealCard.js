@@ -12,7 +12,7 @@ import DealCard from "./DealCard";
  * for plain clicks - only a deliberate grab-and-move on the handle starts
  * a drag.
  */
-export default function SortableDealCard({ deal, stages, canDrag, onMoved }) {
+export default function SortableDealCard({ deal, tone, stages, canDrag, onMoved }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: deal.id,
     data: { type: "deal", stageId: deal.stageId },
@@ -38,7 +38,7 @@ export default function SortableDealCard({ deal, stages, canDrag, onMoved }) {
           <GripVertical className="size-3.5" />
         </button>
       )}
-      <DealCard deal={deal} stages={stages} onMoved={onMoved} canMove={canDrag} indent={canDrag} />
+      <DealCard deal={deal} tone={tone} stages={stages} onMoved={onMoved} canMove={canDrag} indent={canDrag} />
     </div>
   );
 }

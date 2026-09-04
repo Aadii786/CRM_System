@@ -3,10 +3,11 @@ import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
 import StageMoveSelect from "./StageMoveSelect";
 import { formatCurrencyPKR, formatDate } from "@/lib/utils/format";
+import { getTone } from "@/lib/constants/moduleColors";
 
-export default function DealCard({ deal, stages, onMoved, canMove, indent }) {
+export default function DealCard({ deal, tone = "neutral", stages, onMoved, canMove, indent }) {
   return (
-    <div className={["rounded-lg border border-border bg-surface p-3.5 hover:border-primary-border hover:shadow-sm transition-all", indent ? "pl-6" : ""].join(" ")}>
+    <div className={["rounded-lg border border-border bg-surface p-3.5 hover:shadow-sm transition-all border-l-[3px]", getTone(tone).borderL, indent ? "pl-6" : ""].join(" ")}>
       <Link href={`/deals/${deal.id}`} className="block">
         {deal.referenceNumber && <p className="text-[11px] font-mono text-ink-muted mb-0.5">{deal.referenceNumber}</p>}
         <p className="text-sm font-medium text-ink mb-1 line-clamp-2">{deal.name}</p>

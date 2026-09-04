@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import PipelineColumn from "./PipelineColumn";
 import { moveDealStageAction } from "@/actions/deals";
 import { useToast } from "@/components/ui/Toast";
+import { stageTone } from "@/lib/constants/moduleColors";
 
 /**
  * Kanban board with real drag-and-drop (dnd-kit - a few KB, no heavy DnD
@@ -104,10 +105,11 @@ export default function PipelineBoard({ pipeline, byStage, canDrag }) {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
       <div className="h-[70vh] min-h-[420px] flex gap-4 overflow-x-auto pb-3 -mx-1 px-1">
-        {pipeline.stages.map((stage) => (
+        {pipeline.stages.map((stage, i) => (
           <PipelineColumn
             key={stage.id}
             stage={stage}
+            tone={stageTone(stage, i)}
             deals={columns[stage.id] || []}
             allStages={pipeline.stages}
             canDrag={canDrag}
