@@ -8,14 +8,21 @@ import PasswordLoginForm from "@/components/auth/PasswordLoginForm";
 const ROLE_DESCRIPTIONS = {
   RECTOR: "University-wide executive dashboard, read-only reports",
   CENTRAL_CRM_ADMINISTRATOR: "Full platform access - users, roles, all data",
-  MARKETING_MANAGER: "Contacts, campaigns, segments, automation",
-  MARKETING_EXECUTIVE: "Operational marketing access",
-  IKL_HSM_MANAGER: "Companies, deals, training, proposals, invoices",
-  IKL_HSM_EXECUTIVE: "Operational B2B CRM access",
+  MARKETING_MANAGER: "Heads the Marketing department - contacts, campaigns, segments, automation",
+  MARKETING_EXECUTIVE: "Marketing department team member - operational access",
+  IKL_HSM_MANAGER: "Heads the IKL/HSM department - companies, deals, training, proposals, invoices",
+  IKL_HSM_EXECUTIVE: "IKL/HSM department team member - operational B2B access",
   DEPARTMENT_HEAD: "Runs the Admissions department - team, contacts, reports",
   DEPARTMENT_MARKETING: "Marketing side of Admissions - shares the department's contacts with Sales",
   DEPARTMENT_SALES: "Sales side of Admissions - shares the department's contacts with Marketing",
 };
+
+// Manager-tier pilot roles are that department's head in every way that
+// matters (full authority, owns the team) - they just predate the
+// "Department Head" title the newer generic template (see Admissions
+// below) uses. Flagged here purely for a "Head" badge on the login page
+// so the parallel is visible at a glance - no role/permission change.
+const HEAD_EQUIVALENT_ROLE_KEYS = new Set(["MARKETING_MANAGER", "IKL_HSM_MANAGER", "DEPARTMENT_HEAD"]);
 
 const HIGHLIGHTS = [
   { icon: Users, label: "58,000+ contacts managed" },
@@ -23,11 +30,13 @@ const HIGHLIGHTS = [
   { icon: ShieldCheck, label: "Role & department-aware access" },
 ];
 
-const DEPARTMENT_ROLE_KEYS = new Set(["DEPARTMENT_HEAD", "DEPARTMENT_MARKETING", "DEPARTMENT_SALES"]);
-const PILOT_DEMO_USERS = DEMO_USERS.filter((u) => !DEPARTMENT_ROLE_KEYS.has(u.roleKey));
-const DEPARTMENT_DEMO_USERS = DEMO_USERS.filter((u) => DEPARTMENT_ROLE_KEYS.has(u.roleKey));
+const UNIVERSITY_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "university");
+const MARKETING_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "marketing");
+const IKL_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "ikl-hsm");
+const DEPARTMENT_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "admissions");
 
 function DemoUserButton({ user: u }) {
+  const isHead = HEAD_EQUIVALENT_ROLE_KEYS.has(u.roleKey);
   return (
     <form action={demoLoginAction}>
       <input type="hidden" name="roleKey" value={u.roleKey} />
@@ -42,7 +51,14 @@ function DemoUserButton({ user: u }) {
           {u.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-medium text-ink truncate">{u.name}</span>
+          <span className="flex items-center gap-1.5">
+            <span className="block text-sm font-medium text-ink truncate">{u.name}</span>
+            {isHead && (
+              <span className="shrink-0 rounded-full bg-primary-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-active">
+                Head
+              </span>
+            )}
+          </span>
           <span className="block text-xs text-ink-muted truncate">{u.jobTitle}</span>
           <span className="block text-[11px] text-ink-muted mt-0.5">{ROLE_DESCRIPTIONS[u.roleKey]}</span>
         </span>
@@ -116,15 +132,25 @@ export default async function LoginPage() {
           <div className="rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6 mb-5">
             <h3 className="text-sm font-semibold text-ink mb-1">Sign in as a demo user</h3>
             <p className="text-xs text-ink-muted mb-4">
-              One click signs you in - permissions, sidebar and dashboards update instantly per role.
+              One click signs you in - permissions, sidebar and dashboards update instantly per role. Every department here has a head and a team, whatever that department happens to call them.
             </p>
 
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Marketing &amp; IKL/HSM - pilot departments</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">University leadership</p>
             <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
-              {PILOT_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
+              {UNIVERSITY_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
             </div>
 
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Admissions - Department Head / Marketing / Sales</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Marketing department</p>
+            <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
+              {MARKETING_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
+            </div>
+
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">IKL/HSM department</p>
+            <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
+              {IKL_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
+            </div>
+
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Admissions - the newer department template</p>
             <div className="grid gap-2.5 sm:grid-cols-2">
               {DEPARTMENT_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
             </div>
