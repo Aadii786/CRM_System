@@ -12,6 +12,9 @@ const ROLE_DESCRIPTIONS = {
   MARKETING_EXECUTIVE: "Operational marketing access",
   IKL_HSM_MANAGER: "Companies, deals, training, proposals, invoices",
   IKL_HSM_EXECUTIVE: "Operational B2B CRM access",
+  DEPARTMENT_HEAD: "Runs the Admissions department - team, contacts, reports",
+  DEPARTMENT_MARKETING: "Marketing side of Admissions - shares the department's contacts with Sales",
+  DEPARTMENT_SALES: "Sales side of Admissions - shares the department's contacts with Marketing",
 };
 
 const HIGHLIGHTS = [
@@ -19,6 +22,34 @@ const HIGHLIGHTS = [
   { icon: LineChart, label: "Real-time dashboards" },
   { icon: ShieldCheck, label: "Role & department-aware access" },
 ];
+
+const DEPARTMENT_ROLE_KEYS = new Set(["DEPARTMENT_HEAD", "DEPARTMENT_MARKETING", "DEPARTMENT_SALES"]);
+const PILOT_DEMO_USERS = DEMO_USERS.filter((u) => !DEPARTMENT_ROLE_KEYS.has(u.roleKey));
+const DEPARTMENT_DEMO_USERS = DEMO_USERS.filter((u) => DEPARTMENT_ROLE_KEYS.has(u.roleKey));
+
+function DemoUserButton({ user: u }) {
+  return (
+    <form action={demoLoginAction}>
+      <input type="hidden" name="roleKey" value={u.roleKey} />
+      <button
+        type="submit"
+        className="w-full flex items-start gap-3 rounded-xl border border-border-strong bg-surface p-3 text-left transition-all hover:border-primary-border hover:shadow-md hover:-translate-y-0.5 focus-ring"
+      >
+        <span
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
+          style={{ backgroundColor: u.avatarColor }}
+        >
+          {u.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-ink truncate">{u.name}</span>
+          <span className="block text-xs text-ink-muted truncate">{u.jobTitle}</span>
+          <span className="block text-[11px] text-ink-muted mt-0.5">{ROLE_DESCRIPTIONS[u.roleKey]}</span>
+        </span>
+      </button>
+    </form>
+  );
+}
 
 export default async function LoginPage() {
   const existing = await getCurrentUser();
@@ -87,28 +118,15 @@ export default async function LoginPage() {
             <p className="text-xs text-ink-muted mb-4">
               One click signs you in - permissions, sidebar and dashboards update instantly per role.
             </p>
+
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Marketing &amp; IKL/HSM - pilot departments</p>
+            <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
+              {PILOT_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
+            </div>
+
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Admissions - Department Head / Marketing / Sales</p>
             <div className="grid gap-2.5 sm:grid-cols-2">
-              {DEMO_USERS.map((u) => (
-                <form key={u.key} action={demoLoginAction}>
-                  <input type="hidden" name="roleKey" value={u.roleKey} />
-                  <button
-                    type="submit"
-                    className="w-full flex items-start gap-3 rounded-xl border border-border-strong bg-surface p-3 text-left transition-all hover:border-primary-border hover:shadow-md hover:-translate-y-0.5 focus-ring"
-                  >
-                    <span
-                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
-                      style={{ backgroundColor: u.avatarColor }}
-                    >
-                      {u.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium text-ink truncate">{u.name}</span>
-                      <span className="block text-xs text-ink-muted truncate">{u.jobTitle}</span>
-                      <span className="block text-[11px] text-ink-muted mt-0.5">{ROLE_DESCRIPTIONS[u.roleKey]}</span>
-                    </span>
-                  </button>
-                </form>
-              ))}
+              {DEPARTMENT_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
             </div>
           </div>
 
