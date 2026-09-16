@@ -22,6 +22,22 @@ export async function departmentIdsForKeys(keys = []) {
   return rows.map((r) => r.id);
 }
 
+/**
+ * CNM audit fix: every "scopedDepartmentIds" helper across the service
+ * layer used to pass a hard-coded ["marketing", "ikl-hsm"] (or just
+ * ["ikl-hsm"]) into getAccessibleDepartmentKeys() - harmless for a
+ * department-scoped user (who only ever gets their own department key
+ * back regardless of what's passed in), but it meant a university-wide
+ * actor (Rector, Central CRM Administrator) never saw a department created
+ * after those first two anywhere except that department's own dashboard.
+ * This returns every real department key so "all departments" actually
+ * means all departments, not just the two pilot ones.
+ */
+export async function allDepartmentKeys() {
+  const rows = await Department.findAll({ attributes: ["key"] });
+  return rows.map((r) => r.key);
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**

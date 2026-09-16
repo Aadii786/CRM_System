@@ -20,6 +20,23 @@ export default async function DepartmentDashboardPage() {
   const deptName = user.department?.name || "My Department";
   const tone = departmentTone(user.department?.key);
 
+  // CNM audit fix: the required routing table names a distinct "Marketing
+  // Dashboard" and "Sales Dashboard" landing for those roles even inside a
+  // generic (non-pilot) department, not just the two pilot ones. Rather
+  // than fork this into three separate pages/services - which would
+  // duplicate the shared department data this page deliberately reads
+  // once - the same page relabels itself by the viewer's role(s); a
+  // Department Head (or someone holding both roles) still sees the full,
+  // unlabelled department view.
+  const roleKeys = user.roles?.map((r) => r.key) || [];
+  const isHead = roleKeys.includes("DEPARTMENT_HEAD");
+  const isMarketing = roleKeys.includes("DEPARTMENT_MARKETING");
+  const isSales = roleKeys.includes("DEPARTMENT_SALES");
+  let dashboardTitle = `${deptName} Dashboard`;
+  if (!isHead && isMarketing && !isSales) dashboardTitle = `${deptName} Marketing Dashboard`;
+  else if (!isHead && isSales && !isMarketing) dashboardTitle = `${deptName} Sales Dashboard`;
+  else if (!isHead && isMarketing && isSales) dashboardTitle = `${deptName} Marketing & Sales Dashboard`;
+
   const [stats, activitiesRaw] = await Promise.all([
     getDepartmentDashboard(user),
     listActivities(user, { limit: 8 }),
@@ -28,7 +45,7 @@ export default async function DepartmentDashboardPage() {
 
   return (
     <div>
-      <PageHeader title={`${deptName} Dashboard`} description={`Real-time overview of contacts, companies, deals and day-to-day work for ${deptName}.`} />
+      <PageHeader title={dashboardTitle} description={`Real-time overview of contacts, companies, deals and day-to-day work for ${deptName} - shared by everyone in the department.`} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
         <MetricCard label="Total Contacts" value={formatNumber(stats.totalContacts)} icon={Users} href="/contacts" tone={tone} />

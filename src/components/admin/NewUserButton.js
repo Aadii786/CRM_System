@@ -46,25 +46,28 @@ export default function NewUserButton({ roles, departments, lockDepartment = fal
           <Field label="Job Title" htmlFor="u-title">
             <Input id="u-title" name="jobTitle" />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Role" htmlFor="u-role" required>
-              <Select id="u-role" name="roleKey" required>
-                {roles.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
+          <Field label="Role(s)" htmlFor="u-role" required hint="A person can hold more than one role - e.g. both Marketing and Sales.">
+            <div id="u-role" className="flex flex-col gap-1.5">
+              {roles.map((r) => (
+                <label key={r.key} className="flex items-center gap-2 text-sm text-ink">
+                  <input type="checkbox" name="roleKeys" value={r.key} />
+                  {r.name}
+                </label>
+              ))}
+            </div>
+          </Field>
+          <Field label="Department" htmlFor="u-dept" hint={lockDepartment ? "Locked to your own department." : undefined}>
+            {lockDepartment ? (
+              <>
+                <Input value={departments[0]?.name || ""} disabled />
+                <input type="hidden" name="departmentId" value={departments[0]?.id || ""} />
+              </>
+            ) : (
+              <Select id="u-dept" name="departmentId">
+                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </Select>
-            </Field>
-            <Field label="Department" htmlFor="u-dept" hint={lockDepartment ? "Locked to your own department." : undefined}>
-              {lockDepartment ? (
-                <>
-                  <Input value={departments[0]?.name || ""} disabled />
-                  <input type="hidden" name="departmentId" value={departments[0]?.id || ""} />
-                </>
-              ) : (
-                <Select id="u-dept" name="departmentId">
-                  {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </Select>
-              )}
-            </Field>
-          </div>
+            )}
+          </Field>
           <Field label="Temporary Password" htmlFor="u-password" hint="Defaults to Demo@12345 if left blank.">
             <Input id="u-password" name="password" type="password" placeholder="Demo@12345" />
           </Field>

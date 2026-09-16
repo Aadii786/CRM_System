@@ -9,15 +9,16 @@ import * as settingsService from "@/lib/services/settingsService";
 
 export async function createUserAction(_prevState, formData) {
   const user = await requireUser();
+  const roleKeys = formData.getAll("roleKeys").map((v) => v.toString());
   const payload = {
     name: formData.get("name")?.toString().trim(),
     email: formData.get("email")?.toString().trim(),
     jobTitle: formData.get("jobTitle")?.toString().trim(),
-    roleKey: formData.get("roleKey")?.toString(),
+    roleKeys,
     departmentId: Number(formData.get("departmentId")) || null,
     password: formData.get("password")?.toString(),
   };
-  if (!payload.name || !payload.email || !payload.roleKey) return { error: "Name, email and role are required." };
+  if (!payload.name || !payload.email || !roleKeys.length) return { error: "Name, email and at least one role are required." };
 
   try {
     await userService.createUser(user, payload);
@@ -67,6 +68,20 @@ export async function updateUserRoleAction(formData) {
     return { success: true };
   } catch (err) {
     return { error: err.message || "Could not update role." };
+  }
+}
+
+/** Multi-role assignment (e.g. Marketing + Sales on one account) - formData carries repeated "roleKeys" entries. */
+export async function updateUserRolesAction(formData) {
+  const user = await requireUser();
+  const id = formData.get("id");
+  const roleKeys = formData.getAll("roleKeys").map((v) => v.toString());
+  try {
+    await userService.updateUserRoles(user, id, roleKeys);
+    revalidatePath("/users");
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not update roles." };
   }
 }
 

@@ -2,14 +2,14 @@ import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
-import { departmentIdsForKeys } from "./departmentService";
+import { departmentIdsForKeys, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
 
 const { Conversation, Message, Contact, User } = db;
 
 export async function listConversations(user, { status, assignedToMe } = {}) {
   requirePermission(user, "conversations.view");
-  const deptKeys = getAccessibleDepartmentKeys(user, ["marketing", "ikl-hsm"]);
+  const deptKeys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   const deptIds = await departmentIdsForKeys(deptKeys);
   if (deptIds.length === 0) return [];
 
@@ -161,7 +161,7 @@ export async function simulateInboundReply(user, conversationId, body) {
 }
 
 export async function listAssignableUsers(user) {
-  const deptKeys = getAccessibleDepartmentKeys(user, ["marketing", "ikl-hsm"]);
+  const deptKeys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   const deptIds = await departmentIdsForKeys(deptKeys);
   if (deptIds.length === 0) return [];
   return User.findAll({ where: { departmentId: { [Op.in]: deptIds }, status: "active" }, attributes: ["id", "name", "avatarColor"] });

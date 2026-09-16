@@ -190,6 +190,40 @@ const TEAM_MEMBER_PERMISSIONS = [
   "reports.view",
 ];
 
+// Marketing/Sales split for the generic (non-pilot) department template -
+// operational tier only (no delete/send/approve/admin), matching the
+// MARKETING_EXECUTIVE / IKL_HSM_EXECUTIVE shape but department-agnostic
+// like DEPARTMENT_HEAD/TEAM_MEMBER above, so a Department Head can hand
+// either one out to a new hire in any department created later. Contact
+// visibility is NOT split between these two - both read/write the same
+// department-scoped Contact rows as everyone else in their department
+// (scoping is per-user departmentId, never per-role), so a contact
+// created by one is immediately visible to the other.
+const DEPARTMENT_MARKETING_PERMISSIONS = [
+  "dashboard.view",
+  "contacts.view", "contacts.create", "contacts.update", "contacts.import",
+  "campaigns.view", "campaigns.create", "campaigns.update",
+  "segments.view", "segments.create",
+  "lists.view", "lists.create",
+  "automations.view",
+  "conversations.view", "conversations.reply",
+  "tasks.view", "tasks.create", "tasks.update",
+  "meetings.view", "meetings.create", "meetings.update",
+  "reports.view",
+];
+
+const DEPARTMENT_SALES_PERMISSIONS = [
+  "dashboard.view",
+  "contacts.view", "contacts.create", "contacts.update",
+  "companies.view", "companies.create", "companies.update",
+  "deals.view", "deals.create", "deals.update", "deals.move_stage",
+  "lists.view", "lists.create",
+  "conversations.view", "conversations.reply",
+  "tasks.view", "tasks.create", "tasks.update",
+  "meetings.view", "meetings.create", "meetings.update",
+  "reports.view",
+];
+
 // The six roles required by the requirements document (#8-#10), plus the
 // implicit "full access" administrator.
 const ROLES = [
@@ -248,6 +282,20 @@ const ROLES = [
     description: "Department-scoped operational CRM user for any department created through Settings > Departments - view/create/edit within their own department, no delete/export/admin rights.",
     scope: "any",
     permissions: TEAM_MEMBER_PERMISSIONS,
+  },
+  {
+    key: "DEPARTMENT_MARKETING",
+    name: "Marketing",
+    description: "Marketing-side operational user for any department - contacts, campaigns, segments, lists, automations. Shares the same department contact database as Sales and the Department Head; nothing is duplicated per role.",
+    scope: "any",
+    permissions: DEPARTMENT_MARKETING_PERMISSIONS,
+  },
+  {
+    key: "DEPARTMENT_SALES",
+    name: "Sales",
+    description: "Sales-side operational user for any department - companies, contacts, deals/pipeline. Shares the same department contact database as Marketing and the Department Head; nothing is duplicated per role.",
+    scope: "any",
+    permissions: DEPARTMENT_SALES_PERMISSIONS,
   },
 ];
 

@@ -2,13 +2,13 @@ import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
-import { departmentIdsForKeys, departmentByKey } from "./departmentService";
+import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
 
 const { ListFolder, ContactList, ContactListMember, Contact, Company, User, Department } = db;
 
 async function scopedDepartmentIds(user) {
-  const keys = getAccessibleDepartmentKeys(user, ["marketing", "ikl-hsm"]);
+  const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   return departmentIdsForKeys(keys);
 }
 

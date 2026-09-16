@@ -2,7 +2,7 @@ import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
 import { hasPermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
-import { departmentIdsForKeys } from "./departmentService";
+import { departmentIdsForKeys, allDepartmentKeys } from "./departmentService";
 
 const { Contact, Company, Deal, Campaign, Task, Conversation } = db;
 
@@ -16,7 +16,7 @@ export async function globalSearch(user, query) {
   const q = (query || "").trim();
   if (q.length < 2) return { contacts: [], companies: [], deals: [], campaigns: [], tasks: [], conversations: [] };
 
-  const deptKeys = getAccessibleDepartmentKeys(user, ["marketing", "ikl-hsm"]);
+  const deptKeys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   const deptIds = await departmentIdsForKeys(deptKeys);
   const like = { [Op.like]: `%${q}%` };
 

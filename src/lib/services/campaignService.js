@@ -2,7 +2,7 @@ import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
-import { departmentIdsForKeys, departmentByKey } from "./departmentService";
+import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { buildSegmentWhere } from "./segmentService";
 import { recordAudit } from "./auditService";
 import { renderEmailDesignToHtml } from "@/lib/emailDesign/render";
@@ -10,7 +10,7 @@ import { renderEmailDesignToHtml } from "@/lib/emailDesign/render";
 const { Campaign, Segment, SegmentCondition, User, Contact, CampaignRecipient, CampaignEvent } = db;
 
 async function scopedDepartmentIds(user) {
-  const keys = getAccessibleDepartmentKeys(user, ["marketing", "ikl-hsm"]);
+  const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   return departmentIdsForKeys(keys);
 }
 

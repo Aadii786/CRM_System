@@ -2,7 +2,7 @@ import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
-import { departmentIdsForKeys, departmentByKey } from "./departmentService";
+import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
 
 const { Segment, SegmentCondition, Contact, User } = db;
@@ -17,7 +17,7 @@ const FIELD_TO_COLUMN = {
 };
 
 async function scopedDepartmentIds(user) {
-  const keys = getAccessibleDepartmentKeys(user, ["marketing", "ikl-hsm"]);
+  const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   return departmentIdsForKeys(keys);
 }
 

@@ -26,7 +26,12 @@ export default async function DepartmentsPage() {
     listDepartments(),
     canManageDepts ? listUsers(user) : Promise.resolve([]),
   ]);
-  const departments = departmentsRaw.map((d) => d.get({ plain: true }));
+  // CNM audit fix: a department-scoped viewer (e.g. Marketing, who reaches
+  // this page only to edit their own department's sender identity) used to
+  // see every department's name and description here, not just their own -
+  // no data or destructive action was exposed, but it blurred the
+  // Super-Admin-only boundary this page is otherwise meant to have.
+  const departments = (canManageDepts ? departmentsRaw : departmentsRaw.filter((d) => d.key === user.department?.key)).map((d) => d.get({ plain: true }));
   const allUsers = allUsersRaw.map((u) => u.get({ plain: true }));
 
   return (

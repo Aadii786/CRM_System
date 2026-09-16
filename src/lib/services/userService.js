@@ -32,12 +32,15 @@ export async function listUsers(user) {
   });
 }
 
-// A department-scoped Department Head can only ever hand new hires the
-// generic, operational Team Member role - promoting someone to Department
-// Head, or assigning any of the bespoke Marketing/IKL-HSM roles, stays a
+// A department-scoped Department Head can hand new hires one or more of
+// these three generic, operational roles - Marketing, Sales, or the
+// undifferentiated Team Member (CNM audit fix: previously only Team Member
+// existed, with no Marketing/Sales split available outside the two
+// hand-built pilot departments). Promoting someone to Department Head, or
+// assigning any of the bespoke Marketing/IKL-HSM pilot roles, stays a
 // Super Admin action (Settings > Departments > Create Department / change
-// head), matching the spec's hierarchy exactly.
-const NON_GLOBAL_ASSIGNABLE_ROLE_KEYS = ["TEAM_MEMBER"];
+// head), matching the required hierarchy exactly.
+const NON_GLOBAL_ASSIGNABLE_ROLE_KEYS = ["TEAM_MEMBER", "DEPARTMENT_MARKETING", "DEPARTMENT_SALES"];
 
 /** Roles the current user is allowed to hand out - used to populate role pickers server-side, not just for display. */
 export async function listAssignableRoles(user) {
@@ -57,7 +60,14 @@ async function assertRoleAssignable(actingUser, roleKey) {
 
 export async function createUser(actingUser, payload) {
   requirePermission(actingUser, "users.manage");
-  const role = await assertRoleAssignable(actingUser, payload.roleKey);
+
+  // Accepts either payload.roleKeys (array - e.g. ["DEPARTMENT_MARKETING",
+  // "DEPARTMENT_SALES"] for a person who does both) or the older singular
+  // payload.roleKey, kept working for backward compatibility.
+  const requestedKeys = Array.isArray(payload.roleKeys) && payload.roleKeys.length ? payload.roleKeys : [payload.roleKey];
+  const uniqueKeys = [...new Set(requestedKeys.filter(Boolean))];
+  if (!uniqueKeys.length) throw new Error("At least one role is required.");
+  const roles = await Promise.all(uniqueKeys.map((key) => assertRoleAssignable(actingUser, key)));
 
   // A department-scoped actor can only ever create users in their own
   // department - a client-supplied departmentId for any other department
@@ -71,14 +81,15 @@ export async function createUser(actingUser, payload) {
     email: payload.email.toLowerCase(),
     passwordHash,
     jobTitle: payload.jobTitle || null,
-    primaryRoleKey: payload.roleKey,
+    primaryRoleKey: uniqueKeys[0],
     departmentId,
     status: "active",
   });
 
-  await UserRole.create({ userId: newUser.id, roleId: role.id });
+  await UserRole.bulkCreate(roles.map((role) => ({ userId: newUser.id, roleId: role.id })));
 
-  await recordAudit({ userId: actingUser.id, action: `Created user ${payload.email}`, module: "users", resourceType: "User", resourceId: newUser.id, departmentId });
+  const roleNames = roles.map((r) => r.name).join(" + ");
+  await recordAudit({ userId: actingUser.id, action: `Created user ${payload.email} (${roleNames})`, module: "users", resourceType: "User", resourceId: newUser.id, departmentId });
   return newUser;
 }
 
@@ -144,15 +155,33 @@ export async function updateUserStatus(actingUser, id, status) {
   return target;
 }
 
-export async function updateUserRole(actingUser, id, roleKey) {
+/**
+ * Replaces a user's full set of roles with exactly the roles passed in
+ * (CNM audit fix - Option A "assign multiple roles to one person", e.g.
+ * Marketing + Sales on the same account). The user_roles join table was
+ * already many-to-many at the schema level; this is the first code path
+ * that actually keeps more than one row in it at once - every earlier
+ * caller went through the single-role updateUserRole below, which
+ * destroyed and replaced with exactly one row every time.
+ */
+export async function updateUserRoles(actingUser, id, roleKeys) {
   requirePermission(actingUser, "users.manage");
   const target = await loadTargetInOwnDepartment(actingUser, id);
-  const role = await assertRoleAssignable(actingUser, roleKey);
+
+  const uniqueKeys = [...new Set((roleKeys || []).filter(Boolean))];
+  if (!uniqueKeys.length) throw new Error("At least one role is required.");
+  const roles = await Promise.all(uniqueKeys.map((key) => assertRoleAssignable(actingUser, key)));
 
   await UserRole.destroy({ where: { userId: id } });
-  await UserRole.create({ userId: id, roleId: role.id });
-  await target.update({ primaryRoleKey: roleKey });
+  await UserRole.bulkCreate(roles.map((role) => ({ userId: id, roleId: role.id })));
+  await target.update({ primaryRoleKey: uniqueKeys[0] });
 
-  await recordAudit({ userId: actingUser.id, action: `Changed role for ${target.email} to ${role.name}`, module: "users", resourceType: "User", resourceId: id, departmentId: target.departmentId });
+  const roleNames = roles.map((r) => r.name).join(" + ");
+  await recordAudit({ userId: actingUser.id, action: `Set role(s) for ${target.email} to ${roleNames}`, module: "users", resourceType: "User", resourceId: id, departmentId: target.departmentId });
   return target;
+}
+
+/** Single-role convenience wrapper, kept for existing callers. */
+export async function updateUserRole(actingUser, id, roleKey) {
+  return updateUserRoles(actingUser, id, [roleKey]);
 }
