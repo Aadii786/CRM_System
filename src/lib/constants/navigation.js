@@ -23,6 +23,14 @@ function isUniversityWide(user) {
 function inDepartment(user, key) {
   return user?.department?.key === key || isUniversityWide(user);
 }
+// True for anyone in a department other than the two pilot ones (Marketing,
+// IKL/HSM) and not university-wide - i.e. a department created later via
+// Settings > Departments, which uses the generic Department Dashboard
+// instead of a hand-built one.
+function inOtherDepartment(user) {
+  const key = user?.department?.key;
+  return Boolean(key) && !isUniversityWide(user) && key !== "marketing" && key !== "ikl-hsm";
+}
 
 export function getNavSections(user) {
   const sections = [
@@ -54,6 +62,7 @@ export function getNavSections(user) {
       items: [
         { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
         { label: "IKL / HSM", href: "/ikl-hsm", icon: "Landmark", dept: "ikl-hsm", tone: "blue", show: () => inDepartment(user, "ikl-hsm") && hasPermission(user, "dashboard.view") },
+        { label: user?.department?.name || "My Department", href: "/department", icon: "Briefcase", dept: user?.department?.key, tone: "teal", show: () => inOtherDepartment(user) && hasPermission(user, "dashboard.view") },
       ],
     },
     {

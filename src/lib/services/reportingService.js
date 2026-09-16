@@ -335,3 +335,45 @@ export async function getIklDashboard(user) {
     totalPaid: Number(paymentsAgg?.paid || 0),
   };
 }
+
+/**
+ * Generic department dashboard - unlike getMarketingDashboard/getIklDashboard
+ * above (hard-coded to those two pilot departments), this works for ANY
+ * department key, including one created later via Settings > Departments.
+ * Scoped to the viewer's own department only (never called for a
+ * university-wide user - the dashboard router sends those to /executive).
+ */
+export async function getDepartmentDashboard(user) {
+  requirePermission(user, "dashboard.view");
+  const deptIds = await departmentIdsForKeys([user.department?.key].filter(Boolean));
+  const where = { departmentId: { [Op.in]: deptIds } };
+
+  const [
+    totalContacts, newContacts, companies, openDeals, wonDeals, pipelineValueAgg,
+    campaigns, openTasks, overdueTasks, upcomingMeetings,
+  ] = await Promise.all([
+    Contact.count({ where }),
+    Contact.count({ where: { ...where, createdAt: { [Op.gte]: new Date(Date.now() - 30 * 86400000) } } }),
+    Company.count({ where }),
+    Deal.count({ where: { ...where, status: "open" } }),
+    Deal.count({ where: { ...where, status: "won" } }),
+    Deal.findOne({ where: { ...where, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
+    Campaign.count({ where }),
+    Task.count({ where: { ...where, status: { [Op.in]: ["Pending", "In Progress"] } } }),
+    Task.count({ where: { ...where, status: "Overdue" } }),
+    db.Meeting.count({ where: { ...where, status: "Scheduled" } }),
+  ]);
+
+  return {
+    totalContacts,
+    newContacts,
+    companies,
+    openDeals,
+    wonDeals,
+    pipelineValue: Number(pipelineValueAgg?.sum || 0),
+    campaigns,
+    openTasks,
+    overdueTasks,
+    upcomingMeetings,
+  };
+}
