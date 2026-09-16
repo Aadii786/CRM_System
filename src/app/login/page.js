@@ -5,25 +5,6 @@ import { DEMO_USERS } from "@/lib/constants/demoUsers";
 import { demoLoginAction } from "@/actions/auth";
 import PasswordLoginForm from "@/components/auth/PasswordLoginForm";
 
-const ROLE_DESCRIPTIONS = {
-  RECTOR: "University-wide executive dashboard, read-only reports",
-  CENTRAL_CRM_ADMINISTRATOR: "Full platform access - users, roles, all data",
-  MARKETING_MANAGER: "Heads the Marketing department - contacts, campaigns, segments, automation",
-  MARKETING_EXECUTIVE: "Marketing department team member - operational access",
-  IKL_HSM_MANAGER: "Heads the IKL/HSM department - companies, deals, training, proposals, invoices",
-  IKL_HSM_EXECUTIVE: "IKL/HSM department team member - operational B2B access",
-  DEPARTMENT_HEAD: "Runs the Admissions department - team, contacts, reports",
-  DEPARTMENT_MARKETING: "Marketing side of Admissions - shares the department's contacts with Sales",
-  DEPARTMENT_SALES: "Sales side of Admissions - shares the department's contacts with Marketing",
-};
-
-// Manager-tier pilot roles are that department's head in every way that
-// matters (full authority, owns the team) - they just predate the
-// "Department Head" title the newer generic template (see Admissions
-// below) uses. Flagged here purely for a "Head" badge on the login page
-// so the parallel is visible at a glance - no role/permission change.
-const HEAD_EQUIVALENT_ROLE_KEYS = new Set(["MARKETING_MANAGER", "IKL_HSM_MANAGER", "DEPARTMENT_HEAD"]);
-
 const HIGHLIGHTS = [
   { icon: Users, label: "58,000+ contacts managed" },
   { icon: LineChart, label: "Real-time dashboards" },
@@ -36,10 +17,9 @@ const IKL_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "ikl-hsm");
 const DEPARTMENT_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "admissions");
 
 function DemoUserButton({ user: u }) {
-  const isHead = HEAD_EQUIVALENT_ROLE_KEYS.has(u.roleKey);
   return (
     <form action={demoLoginAction}>
-      <input type="hidden" name="roleKey" value={u.roleKey} />
+      <input type="hidden" name="demoKey" value={u.key} />
       <button
         type="submit"
         className="w-full flex items-start gap-3 rounded-xl border border-border-strong bg-surface p-3 text-left transition-all hover:border-primary-border hover:shadow-md hover:-translate-y-0.5 focus-ring"
@@ -53,14 +33,14 @@ function DemoUserButton({ user: u }) {
         <span className="min-w-0">
           <span className="flex items-center gap-1.5">
             <span className="block text-sm font-medium text-ink truncate">{u.name}</span>
-            {isHead && (
+            {u.isHead && (
               <span className="shrink-0 rounded-full bg-primary-subtle px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-active">
                 Head
               </span>
             )}
           </span>
           <span className="block text-xs text-ink-muted truncate">{u.jobTitle}</span>
-          <span className="block text-[11px] text-ink-muted mt-0.5">{ROLE_DESCRIPTIONS[u.roleKey]}</span>
+          <span className="block text-[11px] text-ink-muted mt-0.5">{u.description}</span>
         </span>
       </button>
     </form>

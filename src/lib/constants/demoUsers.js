@@ -3,6 +3,9 @@
 // The six demo users required by the requirements (#9, #14), plus the
 // department each belongs to and the role each is seeded with. Passwords
 // are set from DEMO_USER_PASSWORD at seed time - never hard-coded here.
+// `description` is per-user (not just per-role) because DEPARTMENT_MARKETING/
+// DEPARTMENT_SALES are now reused across three different departments below -
+// a single roleKey-keyed description would read wrong for at least two of them.
 const DEMO_USERS = [
   {
     key: "rector",
@@ -12,6 +15,7 @@ const DEMO_USERS = [
     roleKey: "RECTOR",
     departmentKey: "university",
     avatarColor: "#7C3AED",
+    description: "University-wide executive dashboard, read-only reports",
   },
   {
     key: "central-admin",
@@ -21,6 +25,7 @@ const DEMO_USERS = [
     roleKey: "CENTRAL_CRM_ADMINISTRATOR",
     departmentKey: "university",
     avatarColor: "#0EA5E9",
+    description: "Full platform access - users, roles, all data",
   },
   {
     key: "marketing-manager",
@@ -30,6 +35,8 @@ const DEMO_USERS = [
     roleKey: "MARKETING_MANAGER",
     departmentKey: "marketing",
     avatarColor: "#F59E0B",
+    isHead: true,
+    description: "Heads the Marketing department - contacts, campaigns, segments, automation",
   },
   {
     key: "marketing-executive",
@@ -39,6 +46,17 @@ const DEMO_USERS = [
     roleKey: "MARKETING_EXECUTIVE",
     departmentKey: "marketing",
     avatarColor: "#F97316",
+    description: "Marketing department team member - operational access",
+  },
+  {
+    key: "marketing-sales",
+    name: "Omar Siddiqui",
+    email: "marketing.sales@university.edu.pk",
+    jobTitle: "Sales",
+    roleKey: "DEPARTMENT_SALES",
+    departmentKey: "marketing",
+    avatarColor: "#2563EB",
+    description: "Sales side of Marketing - shares the department's contacts with Ayesha and Hamza",
   },
   {
     key: "ikl-manager",
@@ -48,6 +66,8 @@ const DEMO_USERS = [
     roleKey: "IKL_HSM_MANAGER",
     departmentKey: "ikl-hsm",
     avatarColor: "#16A34A",
+    isHead: true,
+    description: "Heads the IKL/HSM department - companies, deals, training, proposals, invoices",
   },
   {
     key: "ikl-executive",
@@ -57,6 +77,17 @@ const DEMO_USERS = [
     roleKey: "IKL_HSM_EXECUTIVE",
     departmentKey: "ikl-hsm",
     avatarColor: "#22C55E",
+    description: "IKL/HSM department team member - operational B2B access",
+  },
+  {
+    key: "ikl-marketing",
+    name: "Mahnoor Chaudhry",
+    email: "ikl.marketing@university.edu.pk",
+    jobTitle: "Marketing",
+    roleKey: "DEPARTMENT_MARKETING",
+    departmentKey: "ikl-hsm",
+    avatarColor: "#DB2777",
+    description: "Marketing side of IKL/HSM - shares the department's contacts with Sana and Usman",
   },
   // Generic department template (requirements: Rector -> Super Admin ->
   // Department Head -> Marketing/Sales, for any department created after
@@ -72,6 +103,8 @@ const DEMO_USERS = [
     roleKey: "DEPARTMENT_HEAD",
     departmentKey: "admissions",
     avatarColor: "#0D9488",
+    isHead: true,
+    description: "Runs the Admissions department - team, contacts, reports",
   },
   {
     key: "department-marketing",
@@ -81,6 +114,7 @@ const DEMO_USERS = [
     roleKey: "DEPARTMENT_MARKETING",
     departmentKey: "admissions",
     avatarColor: "#DB2777",
+    description: "Marketing side of Admissions - shares the department's contacts with Sales",
   },
   {
     key: "department-sales",
@@ -90,6 +124,7 @@ const DEMO_USERS = [
     roleKey: "DEPARTMENT_SALES",
     departmentKey: "admissions",
     avatarColor: "#2563EB",
+    description: "Sales side of Admissions - shares the department's contacts with Marketing",
   },
 ];
 

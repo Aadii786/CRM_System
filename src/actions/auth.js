@@ -31,16 +31,21 @@ export async function logoutAction() {
 
 /**
  * One-click demo sign-in (requirements #9): the client only ever sends a
- * role key, never a password. The actual credential is resolved
+ * demo user key, never a password. The actual credential is resolved
  * server-side from the same env vars the seeder used to create the
  * account, so no password is ever exposed to the browser.
+ *
+ * Matched by each entry's unique `key`, not `roleKey` - several demo users
+ * now share a roleKey (DEPARTMENT_MARKETING/DEPARTMENT_SALES appear once
+ * per department: Marketing, IKL/HSM and Admissions), so roleKey alone
+ * can no longer identify which specific person was clicked.
  */
 export async function demoLoginAction(formData) {
-  const roleKey = formData.get("roleKey");
-  const demoUser = DEMO_USERS.find((u) => u.roleKey === roleKey);
+  const demoKey = formData.get("demoKey");
+  const demoUser = DEMO_USERS.find((u) => u.key === demoKey);
   if (!demoUser) return { error: "Unknown demo user." };
 
-  const isDefaultAdmin = roleKey === "CENTRAL_CRM_ADMINISTRATOR";
+  const isDefaultAdmin = demoUser.roleKey === "CENTRAL_CRM_ADMINISTRATOR";
   const email = isDefaultAdmin
     ? process.env.DEFAULT_ADMIN_EMAIL || demoUser.email
     : demoUser.email;

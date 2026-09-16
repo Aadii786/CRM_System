@@ -23,13 +23,38 @@ function isUniversityWide(user) {
 function inDepartment(user, key) {
   return user?.department?.key === key || isUniversityWide(user);
 }
-// True for anyone in a department other than the two pilot ones (Marketing,
-// IKL/HSM) and not university-wide - i.e. a department created later via
-// Settings > Departments, which uses the generic Department Dashboard
-// instead of a hand-built one.
-function inOtherDepartment(user) {
-  const key = user?.department?.key;
-  return Boolean(key) && !isUniversityWide(user) && key !== "marketing" && key !== "ikl-hsm";
+
+// The hand-built /marketing and /ikl-hsm dashboards assume the viewer holds
+// the full historical permission set those pages were written for
+// (campaigns/segments/automations for Marketing; companies/deals for
+// IKL/HSM) - true for MARKETING_MANAGER/EXECUTIVE and IKL_HSM_MANAGER/
+// EXECUTIVE, but NOT for a Sales-role person now also in the Marketing
+// department, or a Marketing-role person in IKL/HSM (CNM fix: a department
+// can hold both a Marketing and a Sales user, sharing its data - the
+// department-specific dashboard only makes sense for the role it was
+// actually built for; everyone else uses the generic one below).
+export function usesMarketingDashboard(user) {
+  return (
+    user?.department?.key === "marketing" &&
+    hasPermission(user, "campaigns.view") &&
+    hasPermission(user, "segments.view") &&
+    hasPermission(user, "automations.view")
+  );
+}
+export function usesIklDashboard(user) {
+  return (
+    user?.department?.key === "ikl-hsm" &&
+    hasPermission(user, "companies.view") &&
+    hasPermission(user, "deals.view")
+  );
+}
+// True for anyone department-scoped who isn't eligible for one of the two
+// hand-built dashboards above - a department created later via Settings >
+// Departments, OR a Marketing/Sales user inside Marketing or IKL/HSM whose
+// role doesn't match what those pages assume.
+function usesGenericDepartmentDashboard(user) {
+  if (isUniversityWide(user) || !user?.department?.key) return false;
+  return !usesMarketingDashboard(user) && !usesIklDashboard(user);
 }
 
 export function getNavSections(user) {
@@ -60,9 +85,9 @@ export function getNavSections(user) {
     {
       title: "Departments",
       items: [
-        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
-        { label: "IKL / HSM", href: "/ikl-hsm", icon: "Landmark", dept: "ikl-hsm", tone: "blue", show: () => inDepartment(user, "ikl-hsm") && hasPermission(user, "dashboard.view") },
-        { label: user?.department?.name || "My Department", href: "/department", icon: "Briefcase", dept: user?.department?.key, tone: "teal", show: () => inOtherDepartment(user) && hasPermission(user, "dashboard.view") },
+        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => (isUniversityWide(user) ? inDepartment(user, "marketing") : usesMarketingDashboard(user)) && hasPermission(user, "dashboard.view") },
+        { label: "IKL / HSM", href: "/ikl-hsm", icon: "Landmark", dept: "ikl-hsm", tone: "blue", show: () => (isUniversityWide(user) ? inDepartment(user, "ikl-hsm") : usesIklDashboard(user)) && hasPermission(user, "dashboard.view") },
+        { label: user?.department?.name || "My Department", href: "/department", icon: "Briefcase", dept: user?.department?.key, tone: "teal", show: () => usesGenericDepartmentDashboard(user) && hasPermission(user, "dashboard.view") },
       ],
     },
     {

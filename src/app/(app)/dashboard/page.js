@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
+import { usesMarketingDashboard, usesIklDashboard } from "@/lib/constants/navigation";
 
 // Role-aware landing page (requirements #69, CNM audit fix): Super Admin
 // (holds departments.manage) lands on the system-administration home
@@ -20,8 +21,8 @@ export default async function DashboardRouterPage() {
 
   if (hasPermission(user, "departments.manage")) redirect("/departments");
   if (hasPermission(user, "executive.dashboard.view")) redirect("/executive");
-  if (user.department?.key === "marketing") redirect("/marketing");
-  if (user.department?.key === "ikl-hsm") redirect("/ikl-hsm");
+  if (usesMarketingDashboard(user)) redirect("/marketing");
+  if (usesIklDashboard(user)) redirect("/ikl-hsm");
   if (user.department && !user.department.isUniversityWide) redirect("/department");
 
   redirect("/contacts");
