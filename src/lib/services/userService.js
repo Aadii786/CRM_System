@@ -181,6 +181,35 @@ export async function updateUserRoles(actingUser, id, roleKeys) {
   return target;
 }
 
+/**
+ * Sets a new password for an existing user (the CRM administrator for
+ * anyone, a department head for their own Marketing / Sales / Team Member
+ * staff). Passwords can only be set here when a user is created
+ * otherwise, so this is how a forgotten password is recovered. The person
+ * resetting never sees the old password and the change is audited.
+ */
+export async function resetUserPassword(actingUser, id, newPassword) {
+  requirePermission(actingUser, "users.manage");
+  const target = await User.findByPk(id, { include: [{ model: Department }, { model: Role }] });
+  if (!target) throw new Error("User not found.");
+  if (!isGlobalUserManager(actingUser)) {
+    requireDepartmentAccess(actingUser, target.Department?.key);
+    // Operational staff only: the generic roles plus the pilot departments' "Executive" roles.
+    const resettable = [...NON_GLOBAL_ASSIGNABLE_ROLE_KEYS, "IKL_HSM_EXECUTIVE", "MARKETING_EXECUTIVE"];
+    const outranks = target.Roles.some((r) => !resettable.includes(r.key));
+    if (outranks) throw new ForbiddenError("You can only reset the password of your Marketing, Sales and Team Member staff.");
+  }
+  if (String(target.id) === String(actingUser.id)) throw new Error("Use your own sign-in screen to change your own password.");
+
+  const password = String(newPassword || "");
+  if (password.length < 8) throw new Error("The password must be at least 8 characters.");
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) throw new Error("The password needs at least one letter and one number.");
+
+  await target.update({ passwordHash: await bcrypt.hash(password, 10) });
+  await recordAudit({ userId: actingUser.id, action: `Reset password for ${target.email}`, module: "users", resourceType: "User", resourceId: id, departmentId: target.departmentId });
+  return target;
+}
+
 /** Single-role convenience wrapper, kept for existing callers. */
 export async function updateUserRole(actingUser, id, roleKey) {
   return updateUserRoles(actingUser, id, [roleKey]);

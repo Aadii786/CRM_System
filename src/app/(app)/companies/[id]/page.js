@@ -5,6 +5,8 @@ import { hasPermission } from "@/lib/permissions/rbac";
 import { getCompanyById, getCompanyRelated } from "@/lib/services/companyService";
 import { listDocuments } from "@/lib/services/documentService";
 import { getCompanyHierarchy } from "@/lib/services/listService";
+import { listNotes } from "@/lib/services/noteService";
+import NotesPanel from "@/components/common/NotesPanel";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Avatar from "@/components/ui/Avatar";
@@ -29,11 +31,13 @@ export default async function CompanyDetailPage({ params }) {
   const company = companyRaw.get({ plain: true });
 
   const canSeeLists = hasPermission(user, "lists.view");
-  const [relatedRaw, documentsRaw, foldersRaw] = await Promise.all([
+  const [notesRaw, relatedRaw, documentsRaw, foldersRaw] = await Promise.all([
+    listNotes(user, "company", id),
     getCompanyRelated(user, id),
     listDocuments(user, "company", id),
     canSeeLists ? getCompanyHierarchy(user, id) : Promise.resolve([]),
   ]);
+  const notes = notesRaw.map((n) => n.get({ plain: true }));
   const contacts = relatedRaw.contacts.map((c) => c.get({ plain: true }));
   const deals = relatedRaw.deals.map((d) => d.get({ plain: true }));
   const tasks = relatedRaw.tasks.map((t) => t.get({ plain: true }));
@@ -64,6 +68,7 @@ export default async function CompanyDetailPage({ params }) {
       <Tabs
         tabs={[
           { key: "overview", label: "Overview" },
+          { key: "notes", label: "Notes", count: notes.length },
           { key: "contacts", label: "Contacts", count: contacts.length },
           { key: "deals", label: "Deals", count: deals.length },
           { key: "folders", label: "Folders & Lists", count: folders.length },
@@ -90,6 +95,8 @@ export default async function CompanyDetailPage({ params }) {
             <OverviewRow label="Last Activity">{formatDate(company.lastActivityAt)}</OverviewRow>
           </div>
         </div>
+
+        <NotesPanel relatedType="company" relatedId={company.id} notes={notes} canAdd={hasPermission(user, "companies.update")} />
 
         {contacts.length === 0 ? (
           <EmptyState title="No contacts yet" description="Contacts at this company will appear here." />

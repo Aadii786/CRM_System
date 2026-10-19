@@ -44,3 +44,22 @@ export async function moveDealStageAction(formData) {
     return { error: err.message || "Could not move deal." };
   }
 }
+
+export async function convertContactToDealAction(_prev, formData) {
+  const user = await requireUser();
+  const contactId = formData.get("contactId");
+  try {
+    const deal = await dealService.convertContactToDeal(user, contactId, {
+      name: formData.get("name")?.toString(),
+      trainingType: formData.get("trainingType")?.toString() || null,
+      value: formData.get("value")?.toString(),
+      expectedCloseDate: formData.get("expectedCloseDate")?.toString() || null,
+    });
+    revalidatePath("/deals");
+    revalidatePath(`/contacts/${contactId}`);
+    return { success: true, id: deal.id };
+  } catch (err) {
+    if (err instanceof dealService.OpenDealExistsError) return { error: err.message, existingDealId: err.existingDealId };
+    return { error: err.message || "Could not convert the lead." };
+  }
+}

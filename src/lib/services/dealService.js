@@ -125,8 +125,12 @@ export async function getDealRelated(user, dealId) {
     Activity.findAll({ where: { dealId }, order: [["occurredAt", "DESC"]], limit: 30 }),
     TrainingProgram.findAll({ where: { dealId }, include: [{ model: db.Trainer }, { model: db.Participant, as: "participants" }] }),
     TNA.findAll({ where: { dealId } }),
-    Proposal.findAll({ where: { dealId }, order: [["createdAt", "DESC"]] }),
-    Invoice.findAll({ where: { dealId }, include: [{ model: Payment }] }),
+    Proposal.findAll({
+      where: { dealId },
+      include: [{ model: User, as: "createdBy", attributes: ["id", "name"] }, { model: User, as: "approvedBy", attributes: ["id", "name"] }],
+      order: [["createdAt", "DESC"]],
+    }),
+    Invoice.findAll({ where: { dealId }, include: [{ model: Payment }], order: [["createdAt", "DESC"], [Payment, "paidAt", "DESC"]] }),
   ]);
   return { tasks, meetings, notes, activities, trainingPrograms, tnas, proposals, invoices };
 }
@@ -201,7 +205,77 @@ export async function moveDealStage(user, dealId, stageId) {
     occurredAt: new Date(),
   });
 
+  // Winning a deal converts the lead: the contact becomes a Converted customer
+  // and the company an Active client (CRM-2.10), without anyone editing them by hand.
+  if (status === "won") await markLeadConverted(user, deal);
+
   await recordAudit({ userId: user.id, action: `Moved deal to ${stage.name}`, module: "deals", resourceType: "Deal", resourceId: dealId });
+  return deal;
+}
+
+async function markLeadConverted(user, deal) {
+  if (deal.contactId) {
+    const contact = await Contact.findByPk(deal.contactId);
+    if (contact && contact.status !== "Converted") {
+      await contact.update({ status: "Converted", contactType: contact.contactType === "Partner" ? contact.contactType : "Customer" });
+      await Activity.create({ type: "status_change", title: "Lead converted to customer", description: `Deal won: ${deal.name}`, contactId: contact.id, dealId: deal.id, companyId: deal.companyId, userId: user.id, occurredAt: new Date() });
+    }
+  }
+  if (deal.companyId) {
+    const company = await Company.findByPk(deal.companyId);
+    if (company && company.status !== "Active") await company.update({ status: "Active" });
+  }
+}
+
+export class OpenDealExistsError extends Error {
+  constructor(deal) {
+    super(`This contact already has an open opportunity (${deal.referenceNumber || deal.name}).`);
+    this.name = "OpenDealExistsError";
+    this.existingDealId = deal.id;
+  }
+}
+
+/**
+ * One-click "Convert to opportunity": opens a deal in the first stage of the
+ * contact's department pipeline, links the contact and company, and moves the
+ * contact on to Qualified (CRM-2.10). The contact becomes Converted
+ * automatically when that deal is won (see moveDealStage).
+ */
+export async function convertContactToDeal(user, contactId, payload = {}) {
+  requirePermission(user, "deals.create");
+  const contact = await Contact.findByPk(contactId, { include: [{ model: Company }, { model: Department }] });
+  if (!contact) throw new Error("Contact not found.");
+  requireDepartmentAccess(user, contact.Department?.key);
+
+  const existing = await Deal.findOne({ where: { contactId: contact.id, status: "open" } });
+  if (existing) throw new OpenDealExistsError(existing);
+
+  const pipeline = await Pipeline.findOne({ where: { departmentId: contact.departmentId }, order: [["isDefault", "DESC"], ["id", "ASC"]] });
+  if (!pipeline) throw new Error("This department has no pipeline yet. Ask the CRM administrator to set one up.");
+  const firstStage = await PipelineStage.findOne({ where: { pipelineId: pipeline.id, isWon: false, isLost: false }, order: [["order", "ASC"]] });
+  if (!firstStage) throw new Error("The pipeline has no open stage.");
+
+  const fullName = `${contact.firstName} ${contact.lastName}`.trim();
+  const name = String(payload.name || "").trim() || `${contact.Company?.name || fullName} - ${payload.trainingType || "Training"}`;
+  const deal = await createDeal(user, {
+    name,
+    stageId: firstStage.id,
+    companyId: contact.companyId,
+    contactId: contact.id,
+    value: Number(payload.value) || 0,
+    expectedCloseDate: payload.expectedCloseDate || null,
+    source: contact.source || "Other",
+    trainingType: payload.trainingType || null,
+    ownerId: payload.ownerId || contact.ownerId || user.id,
+  });
+
+  const progressed = ["New", "Engaged", "Interested"].includes(contact.status);
+  await contact.update({
+    ...(progressed ? { status: "Qualified" } : {}),
+    ...(contact.contactType === "Lead" ? { contactType: "Prospect" } : {}),
+  });
+  await Activity.create({ type: "status_change", title: "Lead converted to opportunity", description: `${name} (${deal.referenceNumber})`, contactId: contact.id, dealId: deal.id, companyId: contact.companyId, userId: user.id, occurredAt: new Date() });
+  await recordAudit({ userId: user.id, action: `Converted ${fullName} to opportunity ${deal.referenceNumber}`, module: "deals", resourceType: "Deal", resourceId: deal.id, departmentId: contact.departmentId });
   return deal;
 }
 

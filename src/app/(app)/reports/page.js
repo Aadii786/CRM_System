@@ -30,7 +30,7 @@ const CATEGORIES = [
   { key: "user", label: "User Reports", icon: User, href: "/users", description: "Activity and ownership by user." },
   { key: "department", label: "Department Reports", icon: Building2, href: "/reports/department-performance", description: "Marketing vs. IKL/HSM side by side.", requires: "executive.dashboard.view" },
   { key: "conversion", label: "Conversion Reports", icon: TrendingUp, href: "/executive", description: "Funnel and conversion-rate tracking.", requires: "executive.dashboard.view" },
-  { key: "revenue", label: "Revenue Reports", icon: Wallet, href: "/reports/revenue", description: "Pipeline value, revenue by training type/company/owner.", requires: "executive.dashboard.view" },
+  { key: "revenue", label: "Revenue Reports", icon: Wallet, href: "/reports/revenue", description: "Pipeline value, revenue by training type/company/owner.", requires: "reports.view" },
   { key: "automation", label: "Automation Reports", icon: Workflow, href: "/automations", description: "Entered/completed/converted per automation." },
   { key: "whatsapp", label: "WhatsApp Reports", icon: MessageCircle, href: "/conversations", description: "Conversation volume and response activity." },
   { key: "custom", label: "Custom Reports", icon: FileBarChart, href: "/reports/department-performance", description: "Save and schedule your own report views.", requires: "executive.dashboard.view" },

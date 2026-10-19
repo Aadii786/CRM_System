@@ -4,6 +4,8 @@ import { hasPermission } from "@/lib/permissions/rbac";
 import { getContactById, getContactTimeline, getContactRelated } from "@/lib/services/contactService";
 import { listDocuments } from "@/lib/services/documentService";
 import { getListsForContact, listLists } from "@/lib/services/listService";
+import { listNotes } from "@/lib/services/noteService";
+import NotesPanel from "@/components/common/NotesPanel";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Tabs from "@/components/ui/Tabs";
@@ -30,13 +32,15 @@ export default async function ContactDetailPage({ params }) {
   const contact = contactRaw.get({ plain: true });
 
   const canSeeLists = hasPermission(user, "lists.view");
-  const [timelineRaw, related, documentsRaw, memberLists, allListsRaw] = await Promise.all([
+  const [notesRaw, timelineRaw, related, documentsRaw, memberLists, allListsRaw] = await Promise.all([
+    listNotes(user, "contact", id),
     getContactTimeline(user, id),
     getContactRelated(user, id),
     listDocuments(user, "contact", id),
     canSeeLists ? getListsForContact(user, id) : Promise.resolve([]),
     canSeeLists ? listLists(user) : Promise.resolve([]),
   ]);
+  const notes = notesRaw.map((n) => n.get({ plain: true }));
   const timeline = timelineRaw.map((a) => a.get({ plain: true }));
   const deals = related.deals.map((d) => d.get({ plain: true }));
   const tasks = related.tasks.map((t) => t.get({ plain: true }));
@@ -65,12 +69,13 @@ export default async function ContactDetailPage({ params }) {
             </p>
           </div>
         </div>
-        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} />
+        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} canConvert={hasPermission(user, "deals.create")} />
       </div>
 
       <Tabs
         tabs={[
           { key: "overview", label: "Overview" },
+          { key: "notes", label: "Notes", count: notes.length },
           { key: "engagement", label: "Engagement" },
           { key: "timeline", label: "Timeline", count: timeline.length },
           { key: "related", label: "Related" },
@@ -79,6 +84,7 @@ export default async function ContactDetailPage({ params }) {
         ]}
       >
         <ContactOverview contact={contact} />
+        <NotesPanel relatedType="contact" relatedId={contact.id} notes={notes} canAdd={hasPermission(user, "contacts.update")} />
         <ContactEngagement contact={contact} campaignRecipients={campaignRecipients} />
         <ContactTimeline activities={timeline} />
         <ContactRelated deals={deals} tasks={tasks} meetings={meetings} conversation={conversation} />

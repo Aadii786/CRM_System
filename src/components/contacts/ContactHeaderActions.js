@@ -10,8 +10,9 @@ import { useToast } from "@/components/ui/Toast";
 import { sendDemoEmailAction, sendDemoWhatsappAction } from "@/actions/engagement";
 import { createTaskAction } from "@/actions/tasks";
 import LogCallButton from "@/components/common/LogCallButton";
+import ConvertToOpportunityButton from "@/components/contacts/ConvertToOpportunityButton";
 
-export default function ContactHeaderActions({ contact, canEdit }) {
+export default function ContactHeaderActions({ contact, canEdit, canConvert }) {
   const { push } = useToast();
   const [waOpen, setWaOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
@@ -29,7 +30,8 @@ export default function ContactHeaderActions({ contact, canEdit }) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {canConvert && <ConvertToOpportunityButton contact={contact} />}
       {canEdit && (
         <Button href={`/contacts/${contact.id}/edit`} variant="secondary" icon={Pencil}>
           Edit

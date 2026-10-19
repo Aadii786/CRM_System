@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, Loader2, Users, Building2, Handshake, Megaphone, CheckSquare } from "lucide-react";
+import { Search, Loader2, Users, Building2, Handshake, Megaphone, CheckSquare, StickyNote } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 
 const GROUPS = [
@@ -11,6 +11,7 @@ const GROUPS = [
   { key: "deals", label: "Deals", icon: Handshake },
   { key: "campaigns", label: "Campaigns", icon: Megaphone },
   { key: "tasks", label: "Tasks", icon: CheckSquare },
+  { key: "notes", label: "Notes", icon: StickyNote },
 ];
 
 /** Command-palette style global search overlay (requirements #7, #58). */
@@ -66,7 +67,7 @@ export default function GlobalSearch({ open, onClose }) {
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search contacts, companies, deals, campaigns, tasks..."
+          placeholder="Search contacts, companies, deals, notes, tasks..."
           className="h-11 w-full rounded-md border border-border-strong pl-9 pr-9 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         />
         {loading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-ink-muted" />}

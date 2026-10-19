@@ -141,6 +141,7 @@ const IKL_HSM_EXECUTIVE_PERMISSIONS = [
   "lists.create",
   "training.manage",
   "proposals.manage",
+  "invoices.manage",
   "conversations.view",
   "conversations.reply",
   "tasks.view",
@@ -173,6 +174,7 @@ const DEPARTMENT_HEAD_PERMISSIONS = [
   "meetings.view", "meetings.create", "meetings.update", "meetings.delete",
   "reports.view", "reports.export",
   "users.view", "users.manage",
+  "proposals.manage", "invoices.manage", "training.manage",
 ];
 
 const TEAM_MEMBER_PERMISSIONS = [
@@ -201,15 +203,16 @@ const TEAM_MEMBER_PERMISSIONS = [
 // created by one is immediately visible to the other.
 const DEPARTMENT_MARKETING_PERMISSIONS = [
   "dashboard.view",
-  "contacts.view", "contacts.create", "contacts.update", "contacts.import",
-  "campaigns.view", "campaigns.create", "campaigns.update",
-  "segments.view", "segments.create",
-  "lists.view", "lists.create",
-  "automations.view",
+  "contacts.view", "contacts.create", "contacts.update", "contacts.import", "contacts.export",
+  "companies.view", "deals.view",
+  "campaigns.view", "campaigns.create", "campaigns.update", "campaigns.send",
+  "segments.view", "segments.create", "segments.update",
+  "lists.view", "lists.create", "lists.update",
+  "automations.view", "automations.create", "automations.update", "automations.execute",
   "conversations.view", "conversations.reply",
   "tasks.view", "tasks.create", "tasks.update",
   "meetings.view", "meetings.create", "meetings.update",
-  "reports.view",
+  "reports.view", "reports.export",
 ];
 
 const DEPARTMENT_SALES_PERMISSIONS = [
@@ -217,7 +220,9 @@ const DEPARTMENT_SALES_PERMISSIONS = [
   "contacts.view", "contacts.create", "contacts.update",
   "companies.view", "companies.create", "companies.update",
   "deals.view", "deals.create", "deals.update", "deals.move_stage",
-  "lists.view", "lists.create",
+  "proposals.manage", "invoices.manage", "training.manage",
+  "lists.view", "lists.create", "lists.update",
+  "segments.view", "campaigns.view", "automations.view",
   "conversations.view", "conversations.reply",
   "tasks.view", "tasks.create", "tasks.update",
   "meetings.view", "meetings.create", "meetings.update",

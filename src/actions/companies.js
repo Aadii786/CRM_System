@@ -31,6 +31,7 @@ export async function createCompanyAction(_prevState, formData) {
     revalidatePath("/companies");
     return { success: true, id: company.id };
   } catch (err) {
+    if (err instanceof companyService.DuplicateCompanyError) return { error: err.message, duplicateCompanyId: err.existingCompanyId };
     return { error: err.message || "Could not create company." };
   }
 }
@@ -44,6 +45,7 @@ export async function updateCompanyAction(_prevState, formData) {
     revalidatePath(`/companies/${id}`);
     return { success: true };
   } catch (err) {
+    if (err instanceof companyService.DuplicateCompanyError) return { error: err.message, duplicateCompanyId: err.existingCompanyId };
     return { error: err.message || "Could not update company." };
   }
 }

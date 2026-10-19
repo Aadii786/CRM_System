@@ -12,15 +12,15 @@ import { formatCurrencyPKR, formatPercent } from "@/lib/utils/format";
 export const metadata = { title: "Revenue Report" };
 
 export default async function RevenueReportPage() {
-  const user = await requireUserWithPermission("executive.dashboard.view");
-  const [revenue, revenueOverTime] = await Promise.all([getRevenueDashboard(), getRevenueOverTime(6)]);
+  const user = await requireUserWithPermission("reports.view");
+  const [revenue, revenueOverTime] = await Promise.all([getRevenueDashboard(user), getRevenueOverTime(6, user)]);
 
   return (
     <div>
       <PageHeader
         breadcrumbs={[{ label: "Reports", href: "/reports" }, { label: "Revenue" }]}
         title="Revenue Report"
-        description="IKL/HSM financial performance (requirements #42)."
+        description="Pipeline value, won revenue and payments received for your department."
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 mb-6">

@@ -7,6 +7,54 @@ import { recordAudit } from "./auditService";
 
 const { Company, Contact, Deal, Department, User, Task, Meeting, TrainingProgram, Activity } = db;
 
+/** Thrown when a company with the same name (or website) already exists in the department. */
+export class DuplicateCompanyError extends Error {
+  constructor(existing) {
+    super(`A company called "${existing.name}" already exists.`);
+    this.name = "DuplicateCompanyError";
+    this.existingCompanyId = existing.id;
+  }
+}
+
+const LEGAL_WORDS = new Set(["pvt", "private", "ltd", "limited", "inc", "llc", "co", "company", "corp", "corporation", "the", "and", "&"]);
+
+/** "The Acme (Pvt.) Ltd" and "ACME private limited" both become "acme". */
+export function normalizeCompanyName(name) {
+  const words = String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9&\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w && !LEGAL_WORDS.has(w));
+  return words.join(" ");
+}
+
+function websiteHost(url) {
+  if (!url) return "";
+  try {
+    return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+async function findDuplicateCompany(departmentId, { name, website }, excludeId = null) {
+  const normalized = normalizeCompanyName(name);
+  const host = websiteHost(website);
+  if (!normalized && !host) return null;
+  const firstWord = normalized.split(" ")[0];
+  const or = [];
+  if (firstWord) or.push({ name: { [Op.like]: `%${firstWord}%` } });
+  if (host) or.push({ website: { [Op.like]: `%${host}%` } });
+  const candidates = await Company.findAll({ where: { departmentId, [Op.or]: or }, limit: 200 });
+  return (
+    candidates.find((c) => {
+      if (excludeId && String(c.id) === String(excludeId)) return false;
+      if (normalized && normalizeCompanyName(c.name) === normalized) return true;
+      return Boolean(host) && websiteHost(c.website) === host;
+    }) || null
+  );
+}
+
 async function scopedDepartmentIds(user) {
   const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
   return departmentIdsForKeys(keys);
@@ -73,6 +121,9 @@ export async function createCompany(user, payload) {
   const dept = await departmentByKey(payload.departmentKey || user.department?.key);
   if (!dept || !deptIds.includes(dept.id)) throw new Error("You cannot create a company in that department.");
 
+  const duplicate = await findDuplicateCompany(dept.id, payload);
+  if (duplicate) throw new DuplicateCompanyError(duplicate);
+
   const company = await Company.create({
     name: payload.name,
     organizationType: payload.organizationType || "Corporate",
@@ -100,6 +151,11 @@ export async function updateCompany(user, id, payload) {
   const company = await Company.findByPk(id, { include: [Department] });
   if (!company) throw new Error("Company not found.");
   requireDepartmentAccess(user, company.Department?.key);
+
+  if (payload.name !== undefined || payload.website !== undefined) {
+    const duplicate = await findDuplicateCompany(company.departmentId, { name: payload.name ?? company.name, website: payload.website ?? company.website }, company.id);
+    if (duplicate) throw new DuplicateCompanyError(duplicate);
+  }
 
   await company.update({
     name: payload.name ?? company.name,

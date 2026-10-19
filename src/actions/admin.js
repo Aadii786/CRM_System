@@ -29,6 +29,17 @@ export async function createUserAction(_prevState, formData) {
   }
 }
 
+export async function resetUserPasswordAction(formData) {
+  const user = await requireUser();
+  try {
+    await userService.resetUserPassword(user, formData.get("id"), formData.get("password")?.toString());
+    revalidatePath("/users");
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not reset the password." };
+  }
+}
+
 export async function updateUserDetailsAction(formData) {
   const user = await requireUser();
   const id = formData.get("id");

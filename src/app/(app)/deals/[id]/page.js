@@ -11,9 +11,12 @@ import Tabs from "@/components/ui/Tabs";
 import EmptyState from "@/components/ui/EmptyState";
 import StageMoveSelect from "@/components/deals/StageMoveSelect";
 import DocumentsPanel from "@/components/documents/DocumentsPanel";
+import NotesPanel from "@/components/common/NotesPanel";
+import ProposalsPanel from "@/components/deals/ProposalsPanel";
+import FinancePanel from "@/components/deals/FinancePanel";
 import LogCallButton from "@/components/common/LogCallButton";
 import { formatCurrencyPKR, formatCurrencyFull, formatDate, formatDateTime } from "@/lib/utils/format";
-import { GraduationCap, FileText, CreditCard } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -98,20 +101,9 @@ export default async function DealDetailPage({ params }) {
             <Row label="Expected Close">{formatDate(deal.expectedCloseDate)}</Row>
             <Row label="Created">{formatDate(deal.createdAt)}</Row>
           </div>
-          <div className="rounded-lg border border-border bg-surface p-5">
-            <h3 className="text-sm font-semibold text-ink mb-2">Notes</h3>
-            {notes.length === 0 ? (
-              <p className="text-sm text-ink-muted">No notes yet.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {notes.map((n) => (
-                  <div key={n.id} className="text-sm">
-                    <p className="text-ink">{n.body}</p>
-                    <p className="text-xs text-ink-muted mt-0.5">{n.author?.name} · {formatDateTime(n.createdAt)}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div>
+            <h3 className="text-sm font-semibold text-ink mb-2.5">Notes</h3>
+            <NotesPanel relatedType="deal" relatedId={deal.id} notes={notes} canAdd={hasPermission(user, "deals.update")} />
           </div>
         </div>
 
@@ -152,46 +144,19 @@ export default async function DealDetailPage({ params }) {
           </div>
         </div>
 
-        {proposals.length === 0 ? <EmptyState icon={FileText} title="No proposals yet" /> : (
-          <div className="flex flex-col gap-2.5">
-            {proposals.map((p) => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-surface p-4">
-                <div>
-                  <p className="text-sm font-medium text-ink">{p.type} Proposal</p>
-                  <p className="text-xs text-ink-muted">Sent {formatDate(p.sentDate)}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-ink tabular-nums">{formatCurrencyPKR(p.value)}</span>
-                  <Badge status={p.status}>{p.status}</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <ProposalsPanel
+          dealId={deal.id}
+          proposals={proposals}
+          canManage={hasPermission(user, "proposals.manage")}
+          canApprove={hasPermission(user, "deals.approve")}
+        />
 
-        {invoices.length === 0 ? <EmptyState icon={CreditCard} title="No invoices yet" /> : (
-          <div className="flex flex-col gap-2.5">
-            {invoices.map((inv) => (
-              <div key={inv.id} className="rounded-lg border border-border bg-surface p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-ink">{inv.invoiceNumber}</p>
-                  <Badge status={inv.status}>{inv.status}</Badge>
-                </div>
-                <Row label="Amount">{formatCurrencyFull(inv.amount)}</Row>
-                <Row label="Paid">{formatCurrencyFull(inv.paidAmount)}</Row>
-                <Row label="Due Date">{formatDate(inv.dueDate)}</Row>
-                {inv.Payments?.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-border">
-                    <p className="text-xs font-medium text-ink-muted mb-1.5">Payments</p>
-                    {inv.Payments.map((p) => (
-                      <p key={p.id} className="text-xs text-ink-secondary">{formatCurrencyFull(p.amount)} via {p.method} on {formatDate(p.paidAt)}</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <FinancePanel
+          dealId={deal.id}
+          invoices={invoices}
+          proposals={proposals}
+          canManage={hasPermission(user, "invoices.manage")}
+        />
 
         {activities.length === 0 ? <EmptyState title="No activity yet" /> : (
           <div className="flex flex-col gap-3">

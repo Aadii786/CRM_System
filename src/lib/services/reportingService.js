@@ -2,7 +2,7 @@ import "server-only";
 import { Op, fn, col, literal } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
-import { departmentIdsForKeys, listDepartments } from "./departmentService";
+import { departmentIdsForKeys, listDepartments, allDepartmentKeys } from "./departmentService";
 
 const {
   Contact, Company, Deal, Campaign, Automation, Conversation, Message,
@@ -144,14 +144,17 @@ export async function getLeadsOverTime(months = 6) {
   return buildMonthSeries(rows, months, "count");
 }
 
-export async function getRevenueOverTime(months = 6) {
+export async function getRevenueOverTime(months = 6, user = null) {
   const since = new Date();
   since.setMonth(since.getMonth() - (months - 1));
   since.setDate(1);
 
+  // With a user, only payments on deals in the departments they may see.
+  const deptIds = user ? await revenueDepartmentIds(user) : null;
   const rows = await Payment.findAll({
     where: { paidAt: { [Op.gte]: since } },
-    attributes: [[fn("DATE_FORMAT", col("paid_at"), "%Y-%m"), "month"], [fn("SUM", col("amount")), "revenue"]],
+    ...(deptIds ? { include: [{ model: Invoice, attributes: [], required: true, include: [{ model: Deal, attributes: [], where: { departmentId: { [Op.in]: deptIds.length ? deptIds : [0] } }, required: true }] }] } : {}),
+    attributes: [[fn("DATE_FORMAT", col("Payment.paid_at"), "%Y-%m"), "month"], [fn("SUM", col("Payment.amount")), "revenue"]],
     group: [literal("month")],
     order: [literal("month ASC")],
     raw: true,
@@ -249,28 +252,40 @@ export async function getMarketingDashboard(user) {
   };
 }
 
-/** Revenue analytics for the IKL/HSM financial report (requirements #42). */
-export async function getRevenueDashboard() {
-  const iklIds = await idsForKey("ikl-hsm");
+/**
+ * Revenue analytics (requirements #42), scoped to the departments the user
+ * may see: IKL staff see IKL's own pipeline, invoices and payments; the
+ * Rector and CRM administrator see every department that has deals.
+ */
+async function revenueDepartmentIds(user) {
+  const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
+  return departmentIdsForKeys(keys);
+}
+
+export async function getRevenueDashboard(user) {
+  requirePermission(user, "reports.view");
+  const deptIds = await revenueDepartmentIds(user);
+  const inDept = { [Op.in]: deptIds.length ? deptIds : [0] };
+  const viaDeal = (attrs = []) => ({ model: Deal, attributes: attrs, where: { departmentId: inDept }, required: true });
 
   const [pipelineAgg, wonAgg, pendingAgg, paidAgg, dealCount, wonCount] = await Promise.all([
-    Deal.findOne({ where: { departmentId: { [Op.in]: iklIds }, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Deal.findOne({ where: { departmentId: { [Op.in]: iklIds }, status: "won" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Invoice.findOne({ attributes: [[fn("SUM", literal("amount - paid_amount")), "pending"]], where: { status: { [Op.in]: ["Unpaid", "Partial", "Overdue"] } }, raw: true }),
-    Payment.findOne({ attributes: [[fn("SUM", col("amount")), "paid"]], raw: true }),
-    Deal.count({ where: { departmentId: { [Op.in]: iklIds } } }),
-    Deal.count({ where: { departmentId: { [Op.in]: iklIds }, status: "won" } }),
+    Deal.findOne({ where: { departmentId: inDept, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
+    Deal.findOne({ where: { departmentId: inDept, status: "won" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
+    Invoice.findOne({ attributes: [[fn("SUM", literal("amount - paid_amount")), "pending"]], where: { status: { [Op.in]: ["Unpaid", "Partial", "Overdue"] } }, include: [viaDeal()], raw: true }),
+    Payment.findOne({ attributes: [[fn("SUM", col("Payment.amount")), "paid"]], include: [{ model: Invoice, attributes: [], required: true, include: [viaDeal()] }], raw: true }),
+    Deal.count({ where: { departmentId: inDept } }),
+    Deal.count({ where: { departmentId: inDept, status: "won" } }),
   ]);
 
   const revenueByType = await Deal.findAll({
-    where: { departmentId: { [Op.in]: iklIds }, status: "won" },
+    where: { departmentId: inDept, status: "won" },
     attributes: ["trainingType", [fn("SUM", col("value")), "revenue"]],
     group: ["trainingType"],
     raw: true,
   });
 
   const revenueByCompany = await Deal.findAll({
-    where: { departmentId: { [Op.in]: iklIds }, status: "won" },
+    where: { departmentId: inDept, status: "won" },
     include: [{ model: Company, attributes: [] }],
     attributes: ["companyId", [col("Company.name"), "companyName"], [fn("SUM", col("Deal.value")), "revenue"]],
     group: ["companyId", "Company.id", "Company.name"],
@@ -280,7 +295,7 @@ export async function getRevenueDashboard() {
   });
 
   const revenueByOwner = await Deal.findAll({
-    where: { departmentId: { [Op.in]: iklIds }, status: "won" },
+    where: { departmentId: inDept, status: "won" },
     include: [{ model: db.User, as: "owner", attributes: [] }],
     attributes: ["ownerId", [col("owner.name"), "ownerName"], [fn("SUM", col("Deal.value")), "revenue"]],
     group: ["ownerId", "owner.id", "owner.name"],

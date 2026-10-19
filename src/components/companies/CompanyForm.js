@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Field, { Input, Select } from "@/components/ui/Field";
 import Button from "@/components/ui/Button";
@@ -83,7 +84,14 @@ export default function CompanyForm({ company }) {
         </Select>
       </Field>
 
-      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
+      {state?.duplicateCompanyId && (
+        <div className="rounded-md border border-warning-border bg-warning-subtle px-3.5 py-3 text-sm text-ink" role="alert">
+          <p className="font-medium">{state.error}</p>
+          <p className="mt-0.5">Companies are matched by name (ignoring Ltd, Pvt and punctuation) and by website, so the same client is not entered twice.</p>
+          <Link href={`/companies/${state.duplicateCompanyId}`} className="underline font-medium">View existing company</Link>
+        </div>
+      )}
+      {state?.error && !state?.duplicateCompanyId && <p className="text-sm text-danger">{state.error}</p>}
 
       <div className="flex items-center gap-2.5">
         <Button type="submit" variant="primary" loading={pending}>{isEdit ? "Save Changes" : "Create Company"}</Button>

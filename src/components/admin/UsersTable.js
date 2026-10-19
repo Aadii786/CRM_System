@@ -11,6 +11,7 @@ import { toggleUserStatusAction, updateUserRolesAction } from "@/actions/admin";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate, timeAgo } from "@/lib/utils/format";
 import EditUserButton from "@/components/admin/EditUserButton";
+import ResetPasswordButton from "@/components/admin/ResetPasswordButton";
 
 export default function UsersTable({ users, roles, canManage }) {
   const [isPending, startTransition] = useTransition();
@@ -96,6 +97,7 @@ export default function UsersTable({ users, roles, canManage }) {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       <EditUserButton user={u} />
+                      {u.status === "active" && <ResetPasswordButton user={u} />}
                       <button
                         onClick={() => toggleStatus(u)}
                         disabled={isPending}
