@@ -14,6 +14,7 @@ const DEMO_USERS = [
     jobTitle: "Rector",
     roleKey: "RECTOR",
     departmentKey: "university",
+    visibleOnLogin: true,
     avatarColor: "#7C3AED",
     description: "University-wide executive dashboard, read-only reports",
   },
@@ -65,9 +66,12 @@ const DEMO_USERS = [
     jobTitle: "IKL/HSM Manager",
     roleKey: "IKL_HSM_MANAGER",
     departmentKey: "ikl-hsm",
+    visibleOnLogin: true,
+    loginRole: "Head of Department",
     avatarColor: "#16A34A",
     isHead: true,
     description: "Heads the IKL/HSM department - companies, deals, training, proposals, invoices",
+    loginDescription: "Runs IKL: approves proposals, manages the team, sees all reports",
   },
   {
     key: "ikl-executive",
@@ -76,8 +80,11 @@ const DEMO_USERS = [
     jobTitle: "IKL/HSM Executive",
     roleKey: "IKL_HSM_EXECUTIVE",
     departmentKey: "ikl-hsm",
+    visibleOnLogin: true,
+    loginRole: "Sales",
     avatarColor: "#22C55E",
     description: "IKL/HSM department team member - operational B2B access",
+    loginDescription: "Works leads, companies, proposals, invoices and programs",
   },
   {
     key: "ikl-marketing",
@@ -86,8 +93,11 @@ const DEMO_USERS = [
     jobTitle: "Marketing",
     roleKey: "DEPARTMENT_MARKETING",
     departmentKey: "ikl-hsm",
+    visibleOnLogin: true,
+    loginRole: "Marketing",
     avatarColor: "#DB2777",
     description: "Marketing side of IKL/HSM - shares the department's contacts with Sana and Usman",
+    loginDescription: "Builds lists and segments, runs email campaigns and automations",
   },
   // Generic department template (requirements: Rector -> Super Admin ->
   // Department Head -> Marketing/Sales, for any department created after
@@ -128,4 +138,16 @@ const DEMO_USERS = [
   },
 ];
 
-module.exports = { DEMO_USERS };
+/**
+ * The demo users shown (and allowed) on the login screen. By default only the
+ * ones flagged `visibleOnLogin`: the Rector and the IKL team, so a department
+ * testing the CRM is not confused by other departments. Set
+ * DEMO_LOGIN_MODE=all to bring every demo department back. The check is also
+ * enforced server-side (demoLoginAction), so a hidden user cannot be signed in
+ * by crafting a request.
+ */
+function loginDemoUsers() {
+  return process.env.DEMO_LOGIN_MODE === "all" ? DEMO_USERS : DEMO_USERS.filter((u) => u.visibleOnLogin);
+}
+
+module.exports = { DEMO_USERS, loginDemoUsers };

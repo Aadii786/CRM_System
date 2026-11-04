@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { loginWithPassword, logout as logoutService } from "@/lib/auth/authService";
 import { recordAudit } from "@/lib/services/auditService";
-import { DEMO_USERS } from "@/lib/constants/demoUsers";
+import { loginDemoUsers } from "@/lib/constants/demoUsers";
 
 export async function loginAction(_prevState, formData) {
   const email = formData.get("email");
@@ -42,7 +42,7 @@ export async function logoutAction() {
  */
 export async function demoLoginAction(formData) {
   const demoKey = formData.get("demoKey");
-  const demoUser = DEMO_USERS.find((u) => u.key === demoKey);
+  const demoUser = loginDemoUsers().find((u) => u.key === demoKey);
   if (!demoUser) return { error: "Unknown demo user." };
 
   const isDefaultAdmin = demoUser.roleKey === "CENTRAL_CRM_ADMINISTRATOR";

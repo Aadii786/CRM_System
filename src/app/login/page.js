@@ -1,20 +1,23 @@
 import { redirect } from "next/navigation";
 import { GraduationCap, Users, LineChart, ShieldCheck, Sparkles } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/authService";
-import { DEMO_USERS } from "@/lib/constants/demoUsers";
+import { loginDemoUsers } from "@/lib/constants/demoUsers";
 import { demoLoginAction } from "@/actions/auth";
 import PasswordLoginForm from "@/components/auth/PasswordLoginForm";
 
 const HIGHLIGHTS = [
-  { icon: Users, label: "58,000+ contacts managed" },
-  { icon: LineChart, label: "Real-time dashboards" },
-  { icon: ShieldCheck, label: "Role & department-aware access" },
+  { icon: Users, label: "Leads, clients, programs and registrations in one place" },
+  { icon: LineChart, label: "Pipeline, proposals, invoices and live dashboards" },
+  { icon: ShieldCheck, label: "Each person sees only what their role allows" },
 ];
 
-const UNIVERSITY_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "university");
-const MARKETING_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "marketing");
-const IKL_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "ikl-hsm");
-const DEPARTMENT_DEMO_USERS = DEMO_USERS.filter((u) => u.departmentKey === "admissions");
+// Which demo logins appear is decided in constants/demoUsers.js (loginDemoUsers).
+const GROUPS = [
+  { key: "university", title: "University leadership" },
+  { key: "ikl-hsm", title: "IKL department" },
+  { key: "marketing", title: "Marketing department" },
+  { key: "admissions", title: "Admissions - the newer department template" },
+];
 
 function DemoUserButton({ user: u }) {
   return (
@@ -39,8 +42,8 @@ function DemoUserButton({ user: u }) {
               </span>
             )}
           </span>
-          <span className="block text-xs text-ink-muted truncate">{u.jobTitle}</span>
-          <span className="block text-[11px] text-ink-muted mt-0.5">{u.description}</span>
+          <span className="block text-xs text-ink-muted truncate">{u.loginRole || u.jobTitle}</span>
+          <span className="block text-[11px] text-ink-muted mt-0.5">{u.loginDescription || u.description}</span>
         </span>
       </button>
     </form>
@@ -50,6 +53,7 @@ function DemoUserButton({ user: u }) {
 export default async function LoginPage() {
   const existing = await getCurrentUser();
   if (existing) redirect("/dashboard");
+  const demoUsers = loginDemoUsers();
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -68,13 +72,13 @@ export default async function LoginPage() {
 
         <div className="relative max-w-md">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-indigo-100 ring-1 ring-white/15 mb-5">
-            <Sparkles className="size-3.5" /> Marketing + B2B CRM, in one platform
+            <Sparkles className="size-3.5" /> One CRM for every department
           </span>
           <h1 className="text-3xl font-semibold leading-tight text-balance">
             Every department, every deal, every contact — one connected CRM.
           </h1>
           <p className="mt-3 text-sm text-indigo-100/80 leading-relaxed">
-            A centralized CRM, marketing automation and B2B (IKL/HSM) demo built around the Brevo evaluation requirements.
+            The university&apos;s centralized CRM. IKL is the first department live: leads, programs, proposals, invoices and email campaigns.
           </p>
           <div className="mt-8 flex flex-col gap-3">
             {HIGHLIGHTS.map((h) => (
@@ -110,39 +114,33 @@ export default async function LoginPage() {
           </div>
 
           <div className="rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6 mb-5">
-            <h3 className="text-sm font-semibold text-ink mb-1">Sign in as a demo user</h3>
+            <h3 className="text-sm font-semibold text-ink mb-1">Choose your role</h3>
             <p className="text-xs text-ink-muted mb-4">
-              One click signs you in - permissions, sidebar and dashboards update instantly per role. Every department here has a head and a team, whatever that department happens to call them.
+              One click signs you in. The menu and dashboards change with the role, so you can see what each person in the department sees.
             </p>
 
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">University leadership</p>
-            <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
-              {UNIVERSITY_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
-            </div>
-
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Marketing department</p>
-            <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
-              {MARKETING_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
-            </div>
-
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">IKL/HSM department</p>
-            <div className="grid gap-2.5 sm:grid-cols-2 mb-5">
-              {IKL_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
-            </div>
-
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">Admissions - the newer department template</p>
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {DEPARTMENT_DEMO_USERS.map((u) => <DemoUserButton key={u.key} user={u} />)}
-            </div>
+            {GROUPS.map((g) => {
+              const members = demoUsers.filter((u) => u.departmentKey === g.key);
+              if (!members.length) return null;
+              return (
+                <div key={g.key} className="mb-5 last:mb-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted mb-2">{g.title}</p>
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    {members.map((u) => <DemoUserButton key={u.key} user={u} />)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6">
-            <h3 className="text-sm font-semibold text-ink mb-1">Sign in with email</h3>
-            <p className="text-xs text-ink-muted mb-4">
-              Use a seeded account directly, e.g. <code className="text-[11px]">rector@university.edu.pk</code>.
-            </p>
-            <PasswordLoginForm />
-          </div>
+          <details className="group rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6">
+            <summary className="cursor-pointer select-none text-sm font-medium text-ink-secondary hover:text-ink focus-ring rounded">
+              Staff sign-in with email and password
+            </summary>
+            <div className="mt-4">
+              <PasswordLoginForm />
+            </div>
+          </details>
         </div>
       </div>
     </div>

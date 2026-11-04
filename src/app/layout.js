@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "University CRM & Marketing Platform",
-  description:
-    "Centralized university CRM, marketing automation and B2B (IKL/HSM) platform demo, built on the Brevo evaluation requirements.",
+  title: "University CRM",
+  description: "The university's centralized CRM. IKL is the first department live: leads, programs, proposals, invoices and email campaigns.",
 };
 
 export default function RootLayout({ children }) {
