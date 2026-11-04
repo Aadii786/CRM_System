@@ -62,7 +62,7 @@ export default async function CompanyDetailPage({ params }) {
             <p className="text-sm text-ink-muted mt-0.5">{company.organizationType} · {company.industry || "—"} · {company.city}</p>
           </div>
         </div>
-        <Button href={`/companies/${id}/edit`} variant="secondary" icon={Pencil}>Edit</Button>
+        {hasPermission(user, "companies.update") && <Button href={`/companies/${id}/edit`} variant="secondary" icon={Pencil}>Edit</Button>}
       </div>
 
       <Tabs

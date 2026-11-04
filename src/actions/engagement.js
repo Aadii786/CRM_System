@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/requireUser";
+import { requirePermission, requireDepartmentAccess } from "@/lib/permissions/rbac";
 import db from "@/lib/db";
 import { applyScoreEvent } from "@/lib/services/leadScoringService";
 import { sendDemoWhatsappMessage, replyInConversation, simulateInboundReply, assignConversation } from "@/lib/services/conversationService";
@@ -17,8 +18,10 @@ const { Contact } = db;
 export async function sendDemoEmailAction(formData) {
   const user = await requireUser();
   const contactId = formData.get("contactId");
-  const contact = await Contact.findByPk(contactId);
+  requirePermission(user, "contacts.update");
+  const contact = await Contact.findByPk(contactId, { include: [db.Department] });
   if (!contact) throw new Error("Contact not found.");
+  requireDepartmentAccess(user, contact.Department?.key);
 
   await db.Activity.create({
     type: "email",

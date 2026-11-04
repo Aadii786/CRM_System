@@ -71,7 +71,11 @@ export default async function DealDetailPage({ params }) {
           <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-xl font-semibold text-ink">{deal.name}</h1>
             <Badge status={deal.status}>{deal.status}</Badge>
-            <StageMoveSelect dealId={deal.id} currentStageId={deal.stageId} stages={await getPipelineStages(deal.pipelineId)} />
+            {hasPermission(user, "deals.move_stage") ? (
+              <StageMoveSelect dealId={deal.id} currentStageId={deal.stageId} stages={await getPipelineStages(deal.pipelineId)} />
+            ) : (
+              <Badge tone="neutral">{deal.stage?.name}</Badge>
+            )}
           </div>
           <p className="text-sm text-ink-muted mt-0.5">
             {deal.Company && <Link href={`/companies/${deal.Company.id}`} className="hover:text-primary">{deal.Company.name}</Link>}
@@ -83,7 +87,7 @@ export default async function DealDetailPage({ params }) {
             <p className="text-2xl font-semibold text-ink tabular-nums">{formatCurrencyFull(deal.value)}</p>
             <p className="text-xs text-ink-muted">{deal.probability}% probability</p>
           </div>
-          <LogCallButton dealId={deal.id} revalidatePathValue={`/deals/${deal.id}`} />
+          {hasPermission(user, "deals.update") && <LogCallButton dealId={deal.id} revalidatePathValue={`/deals/${deal.id}`} />}
         </div>
       </div>
 

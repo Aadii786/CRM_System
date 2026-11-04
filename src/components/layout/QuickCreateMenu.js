@@ -5,19 +5,25 @@ import { Plus, UserPlus, Building2, Handshake, CheckSquare, CalendarDays, Megaph
 import DropdownMenu, { DropdownItem, DropdownSeparator } from "@/components/ui/DropdownMenu";
 
 // Global quick-create menu (requirements #59, #95).
+// Each entry is shown only to people who hold the permission behind it, so a
+// read-only user (the Rector) never sees a Create menu full of dead ends.
 const ITEMS = [
-  { label: "Create Contact", href: "/contacts/new", icon: UserPlus },
-  { label: "Create Company", href: "/companies/new", icon: Building2 },
-  { label: "Create Deal", href: "/deals/new", icon: Handshake },
-  { label: "Create Task", href: "/tasks", icon: CheckSquare },
-  { label: "Create Meeting", href: "/meetings", icon: CalendarDays },
+  { label: "Create Contact", href: "/contacts/new", icon: UserPlus, permission: "contacts.create" },
+  { label: "Create Company", href: "/companies/new", icon: Building2, permission: "companies.create" },
+  { label: "Create Deal", href: "/deals/new", icon: Handshake, permission: "deals.create" },
+  { label: "Create Task", href: "/tasks", icon: CheckSquare, permission: "tasks.create" },
+  { label: "Create Meeting", href: "/meetings", icon: CalendarDays, permission: "meetings.create" },
 ];
 const ITEMS_2 = [
-  { label: "Create Campaign", href: "/campaigns/new", icon: Megaphone },
-  { label: "Create Automation", href: "/automations/new", icon: Workflow },
+  { label: "Create Campaign", href: "/campaigns/new", icon: Megaphone, permission: "campaigns.create" },
+  { label: "Create Automation", href: "/automations/new", icon: Workflow, permission: "automations.create" },
 ];
 
-export default function QuickCreateMenu() {
+export default function QuickCreateMenu({ permissions = [] }) {
+  const allowed = (list) => list.filter((i) => permissions.includes(i.permission));
+  const first = allowed(ITEMS);
+  const second = allowed(ITEMS_2);
+  if (!first.length && !second.length) return null;
   return (
     <DropdownMenu
       trigger={
@@ -27,13 +33,13 @@ export default function QuickCreateMenu() {
         </button>
       }
     >
-      {ITEMS.map((item) => (
+      {first.map((item) => (
         <DropdownItem as={Link} href={item.href} icon={item.icon} key={item.href}>
           {item.label}
         </DropdownItem>
       ))}
-      <DropdownSeparator />
-      {ITEMS_2.map((item) => (
+      {first.length > 0 && second.length > 0 && <DropdownSeparator />}
+      {second.map((item) => (
         <DropdownItem as={Link} href={item.href} icon={item.icon} key={item.href}>
           {item.label}
         </DropdownItem>

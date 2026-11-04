@@ -12,7 +12,7 @@ import { createTaskAction } from "@/actions/tasks";
 import LogCallButton from "@/components/common/LogCallButton";
 import ConvertToOpportunityButton from "@/components/contacts/ConvertToOpportunityButton";
 
-export default function ContactHeaderActions({ contact, canEdit, canConvert, programs = [] }) {
+export default function ContactHeaderActions({ contact, canEdit, canConvert, canTask = false, canLog = false, canMessage = false, programs = [] }) {
   const { push } = useToast();
   const [waOpen, setWaOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
@@ -37,16 +37,22 @@ export default function ContactHeaderActions({ contact, canEdit, canConvert, pro
           Edit
         </Button>
       )}
-      <Button variant="secondary" icon={CheckSquare} onClick={() => setTaskOpen(true)}>
-        Add Task
-      </Button>
-      <LogCallButton contactId={contact.id} revalidatePathValue={`/contacts/${contact.id}`} />
-      <Button variant="secondary" icon={Mail} onClick={handleSendEmail} loading={isPending}>
-        Send Email
-      </Button>
-      <Button variant="primary" icon={MessageCircle} onClick={() => setWaOpen(true)}>
-        WhatsApp
-      </Button>
+      {canTask && (
+        <Button variant="secondary" icon={CheckSquare} onClick={() => setTaskOpen(true)}>
+          Add Task
+        </Button>
+      )}
+      {canLog && <LogCallButton contactId={contact.id} revalidatePathValue={`/contacts/${contact.id}`} />}
+      {canLog && (
+        <Button variant="secondary" icon={Mail} onClick={handleSendEmail} loading={isPending}>
+          Send Email
+        </Button>
+      )}
+      {canMessage && (
+        <Button variant="primary" icon={MessageCircle} onClick={() => setWaOpen(true)}>
+          WhatsApp
+        </Button>
+      )}
 
       <WhatsappModal contact={contact} open={waOpen} onClose={() => setWaOpen(false)} />
       <TaskModal contact={contact} open={taskOpen} onClose={() => setTaskOpen(false)} />

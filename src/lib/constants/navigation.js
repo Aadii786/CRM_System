@@ -58,12 +58,24 @@ export function homeDashboardPath(user) {
   return "/contacts";
 }
 
+// The sidebar's Dashboard item links straight to the user's own dashboard so it
+// is highlighted there; administrators (whose home is the Departments screen)
+// keep the /dashboard router so Dashboard and Departments are not both lit.
+function dashboardHref(user) {
+  const home = homeDashboardPath(user);
+  return home === "/departments" || home === "/contacts" ? "/dashboard" : home;
+}
+
+// The legacy Marketing pilot department has no data now; its entry in the
+// Rector's Departments list is hidden until Marketing is used again.
+const SHOW_MARKETING_DEPARTMENT = false;
+
 export function getNavSections(user) {
   const sections = [
     {
       title: "Main",
       items: [
-        { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard", tone: "blue", alsoActiveOn: [homeDashboardPath(user)], show: () => hasPermission(user, "dashboard.view") },
+        { label: "Dashboard", href: dashboardHref(user), icon: "LayoutDashboard", tone: "blue", alsoActiveOn: [homeDashboardPath(user)], show: () => hasPermission(user, "dashboard.view") },
         { label: "Contacts", href: "/contacts", icon: "Users", tone: "blue", show: () => hasPermission(user, "contacts.view") },
         { label: "Companies", href: "/companies", icon: "Building2", tone: "cyan", show: () => hasPermission(user, "companies.view") },
         { label: "Deals", href: "/deals", icon: "Handshake", tone: "cyan", show: () => hasPermission(user, "deals.view") },
@@ -87,7 +99,7 @@ export function getNavSections(user) {
     {
       title: "Departments",
       items: [
-        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => isUniversityWide(user) && inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
+        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => SHOW_MARKETING_DEPARTMENT && isUniversityWide(user) && inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
         { label: "IKL", href: "/ikl", icon: "Landmark", dept: "ikl-hsm", tone: "blue", show: () => isUniversityWide(user) && inDepartment(user, "ikl-hsm") && hasPermission(user, "dashboard.view") },
       ],
     },

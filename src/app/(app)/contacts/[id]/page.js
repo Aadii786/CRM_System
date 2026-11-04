@@ -82,7 +82,7 @@ export default async function ContactDetailPage({ params }) {
             </p>
           </div>
         </div>
-        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} canConvert={hasPermission(user, "deals.create")} programs={programOptions} />
+        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} canConvert={hasPermission(user, "deals.create")} canTask={hasPermission(user, "tasks.create")} canLog={hasPermission(user, "contacts.update")} canMessage={hasPermission(user, "conversations.reply")} programs={programOptions} />
       </div>
 
       <Tabs

@@ -43,7 +43,7 @@ export default function Header({ user, notifications, unreadCount, onToggleMobil
           </Badge>
         )}
 
-        <QuickCreateMenu />
+        <QuickCreateMenu permissions={user.permissions} />
 
         <NotificationsMenu notifications={notifications} unreadCount={unreadCount} />
 

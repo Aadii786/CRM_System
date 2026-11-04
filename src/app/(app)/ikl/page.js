@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
+import { hasPermission } from "@/lib/permissions/rbac";
 import { getIklDashboard } from "@/lib/services/reportingService";
 import { getDeals } from "@/lib/services/dealService";
 import PageHeader from "@/components/common/PageHeader";
@@ -13,6 +14,17 @@ import { formatNumber, formatCurrencyPKR, formatPercent } from "@/lib/utils/form
 
 export const metadata = { title: "IKL Dashboard" };
 
+// "IKL Head Dashboard", "IKL Sales Dashboard", "IKL Marketing Dashboard": named after who is looking.
+function dashboardIntro(user) {
+  const keys = (user.roles || []).map((r) => r.key);
+  const marketing = keys.includes("DEPARTMENT_MARKETING");
+  const sales = keys.some((k) => k === "DEPARTMENT_SALES" || k === "IKL_HSM_EXECUTIVE");
+  if (hasPermission(user, "deals.approve")) return { title: "IKL Head Dashboard", description: "All of IKL in one place: pipeline, proposals, leads, campaigns and money." };
+  if (marketing && sales) return { title: "IKL Marketing & Sales Dashboard", description: "Your sales and marketing work: pipeline, leads and campaign results." };
+  if (marketing) return { title: "IKL Marketing Dashboard", description: "Your marketing work: leads, the contact-to-client funnel and campaign results." };
+  return { title: "IKL Sales Dashboard", description: "Your sales work: pipeline, proposals, invoices and leads." };
+}
+
 export default async function IklHsmDashboardPage() {
   const user = await requireUserWithPermission("dashboard.view");
   const [stats, dealsResult] = await Promise.all([
@@ -20,12 +32,14 @@ export default async function IklHsmDashboardPage() {
     getDeals(user, { limit: 6 }),
   ]);
   const recentDeals = dealsResult.data.map((d) => d.get({ plain: true }));
+  const intro = dashboardIntro(user);
+  const canSeeFinance = hasPermission(user, "invoices.manage");
 
   return (
     <div>
       <PageHeader
-        title="IKL Dashboard"
-        description="B2B corporate, government and institutional training CRM."
+        title={intro.title}
+        description={intro.description}
         actions={<Button href="/deals" variant="primary">View Pipeline</Button>}
       />
 
@@ -84,14 +98,14 @@ export default async function IklHsmDashboardPage() {
           </div>
         </Card>
 
-        <Card>
+        {canSeeFinance && <Card>
           <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2"><Receipt className="size-4" /> Financials</h3>
           <div className="flex flex-col gap-3">
             <FinRow label="Total Invoiced" value={formatCurrencyPKR(stats.totalInvoiced)} />
             <FinRow label="Total Paid" value={formatCurrencyPKR(stats.totalPaid)} />
             <FinRow label="Outstanding" value={formatCurrencyPKR(Math.max(stats.totalInvoiced - stats.totalPaid, 0))} />
           </div>
-        </Card>
+        </Card>}
       </div>
     </div>
   );
