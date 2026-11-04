@@ -22,7 +22,7 @@ export default async function DashboardRouterPage() {
   if (hasPermission(user, "departments.manage")) redirect("/departments");
   if (hasPermission(user, "executive.dashboard.view")) redirect("/executive");
   if (usesMarketingDashboard(user)) redirect("/marketing");
-  if (usesIklDashboard(user)) redirect("/ikl-hsm");
+  if (usesIklDashboard(user)) redirect("/ikl");
   if (user.department && !user.department.isUniversityWide) redirect("/department");
 
   redirect("/contacts");

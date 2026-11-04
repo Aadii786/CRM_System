@@ -16,7 +16,7 @@ export const metadata = { title: "Reports" };
 // which already answer the same questions with live queries - listed here
 // so the full requirements taxonomy stays visible in one place.
 // Categories whose target page shows cross-department figures (revenue,
-// Marketing vs. IKL/HSM comparisons) require executive.dashboard.view, same
+// Marketing vs. IKL comparisons) require executive.dashboard.view, same
 // as the pages themselves - only Rector / Central CRM Administrator hold
 // that permission. Every other category's target page re-checks its own
 // department-scoped permission anyway; this list only prevents a dead-end
@@ -26,9 +26,9 @@ const CATEGORIES = [
   { key: "contact", label: "Contact Reports", icon: Users, href: "/contacts", description: "Status, source and lifecycle breakdowns." },
   { key: "engagement", label: "Engagement Reports", icon: Activity, href: "/marketing", description: "Open/click/engagement rates over time." },
   { key: "deal", label: "Deal Reports", icon: Handshake, href: "/deals", description: "Pipeline value, stage distribution." },
-  { key: "pipeline", label: "Pipeline Reports", icon: GitCompareArrows, href: "/ikl-hsm", description: "IKL/HSM pipeline health and conversion." },
+  { key: "pipeline", label: "Pipeline Reports", icon: GitCompareArrows, href: "/ikl", description: "IKL pipeline health and conversion." },
   { key: "user", label: "User Reports", icon: User, href: "/users", description: "Activity and ownership by user." },
-  { key: "department", label: "Department Reports", icon: Building2, href: "/reports/department-performance", description: "Marketing vs. IKL/HSM side by side.", requires: "executive.dashboard.view" },
+  { key: "department", label: "Department Reports", icon: Building2, href: "/reports/department-performance", description: "Marketing vs. IKL side by side.", requires: "executive.dashboard.view" },
   { key: "conversion", label: "Conversion Reports", icon: TrendingUp, href: "/executive", description: "Funnel and conversion-rate tracking.", requires: "executive.dashboard.view" },
   { key: "revenue", label: "Revenue Reports", icon: Wallet, href: "/reports/revenue", description: "Pipeline value, revenue by training type/company/owner.", requires: "reports.view" },
   { key: "automation", label: "Automation Reports", icon: Workflow, href: "/automations", description: "Entered/completed/converted per automation." },

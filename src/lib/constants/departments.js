@@ -24,10 +24,10 @@ const DEPARTMENTS = [
   },
   {
     key: "ikl-hsm",
-    name: "IKL / HSM",
+    name: "IKL",
     description: "B2B corporate, government and institutional training CRM.",
     isUniversityWide: false,
-    senderName: "IKL/HSM Corporate Training",
+    senderName: "IKL Corporate Training",
     senderEmail: "ikl.hsm@university.edu.pk",
     replyTo: "ikl.hsm@university.edu.pk",
   },

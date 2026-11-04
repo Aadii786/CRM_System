@@ -20,7 +20,8 @@ const ICONS = {
 
 function NavLink({ item, collapsed, onNavigate }) {
   const pathname = usePathname();
-  const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+  const matches = (p) => pathname === p || pathname.startsWith(p + "/");
+  const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/")) || (item.alsoActiveOn || []).some(matches);
   const Icon = ICONS[item.icon] || LayoutDashboard;
   const tone = getTone(item.tone);
 

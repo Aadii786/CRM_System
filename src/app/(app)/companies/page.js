@@ -44,7 +44,7 @@ export default async function CompaniesPage({ searchParams }) {
     <div>
       <PageHeader
         title="Companies"
-        description="Corporate, government and institutional clients managed by IKL/HSM."
+        description="Corporate, government and institutional clients managed by IKL."
         actions={hasPermission(user, "companies.create") && (
           <>
             <Button href="/companies/import" variant="secondary" icon={Upload}>Import</Button>

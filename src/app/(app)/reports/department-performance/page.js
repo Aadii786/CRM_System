@@ -24,7 +24,7 @@ export default async function DepartmentPerformancePage() {
       <PageHeader
         breadcrumbs={[{ label: "Reports", href: "/reports" }, { label: "Department Performance" }]}
         title="Department Performance"
-        description="Marketing vs. IKL/HSM, side by side (requirements #41). Figures are computed live from the seeded demo database."
+        description="Marketing vs. IKL, side by side (requirements #41). Figures are computed live from the seeded demo database."
       />
       <Card padding="none">
         <table className="w-full text-sm">
@@ -32,7 +32,7 @@ export default async function DepartmentPerformancePage() {
             <tr>
               <th className="text-left font-medium px-5 py-3">Metric</th>
               <th className="text-right font-medium px-5 py-3">Marketing</th>
-              <th className="text-right font-medium px-5 py-3">IKL/HSM</th>
+              <th className="text-right font-medium px-5 py-3">IKL</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -51,7 +51,7 @@ export default async function DepartmentPerformancePage() {
         </table>
       </Card>
       <p className="text-xs text-ink-muted mt-3">
-        DEMO DATA - figures reflect the seeded demo dataset (~58,000 Marketing contacts, ~4,280 IKL/HSM contacts) and will change as the platform is used.
+        DEMO DATA - figures reflect the seeded demo dataset (~58,000 Marketing contacts, ~4,280 IKL contacts) and will change as the platform is used.
       </p>
     </div>
   );

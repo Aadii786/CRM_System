@@ -197,7 +197,7 @@ export async function moveDealStage(user, dealId, stageId) {
   // but only a Manager can release it from there into Execution or
   // anywhere else.
   if (previousStage?.key === "approval" && !hasPermission(user, "deals.approve")) {
-    throw new Error("Only an IKL/HSM Manager can approve a deal out of the Approval stage.");
+    throw new Error("Only the Head of Department can approve a deal out of the Approval stage.");
   }
 
   const previousStageName = previousStage?.name;

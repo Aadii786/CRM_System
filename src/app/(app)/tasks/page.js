@@ -26,7 +26,7 @@ export default async function TasksPage({ searchParams }) {
     <div>
       <PageHeader
         title="Tasks"
-        description="Follow-ups, reminders and action items across Marketing and IKL/HSM."
+        description="Follow-ups, reminders and action items across Marketing and IKL."
         actions={hasPermission(user, "tasks.create") && <NewTaskButton />}
       />
 

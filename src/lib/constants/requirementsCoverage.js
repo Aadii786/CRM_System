@@ -17,7 +17,7 @@ export const REQUIREMENTS_COVERAGE = [
   { requirement: "Unified activity timeline", module: "Activities", href: "/activities", status: "Live" },
   { requirement: "Rector / Executive dashboard", module: "Executive", href: "/executive", status: "Live" },
   { requirement: "Marketing dashboard", module: "Marketing", href: "/marketing", status: "Live" },
-  { requirement: "IKL/HSM dashboard", module: "IKL/HSM", href: "/ikl-hsm", status: "Live" },
+  { requirement: "IKL dashboard", module: "IKL", href: "/ikl", status: "Live" },
   { requirement: "Department performance comparison", module: "Reports", href: "/reports/department-performance", status: "Live" },
   { requirement: "Revenue reporting", module: "Reports > Revenue", href: "/reports/revenue", status: "Live" },
   { requirement: "Users, roles & department-scoped RBAC", module: "Users / Roles", href: "/roles", status: "Live" },

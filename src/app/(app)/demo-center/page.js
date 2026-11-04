@@ -28,7 +28,7 @@ const SCENARIOS = [
   },
   {
     icon: Building2,
-    title: "Scenario 2 - IKL/HSM B2B Workflow",
+    title: "Scenario 2 - IKL B2B Workflow",
     description: "From first inquiry to signed training, delivery and payment.",
     steps: [
       { label: "Company", href: "/companies" },
@@ -55,7 +55,7 @@ const SCENARIOS = [
       { label: "University Dashboard", href: "/executive" },
       { label: "Marketing", href: "/marketing" },
       { label: "Campaign Performance", href: "/campaigns" },
-      { label: "IKL/HSM", href: "/ikl-hsm" },
+      { label: "IKL", href: "/ikl" },
       { label: "B2B Pipeline", href: "/deals" },
       { label: "Revenue", href: "/reports/revenue" },
       { label: "Department Comparison", href: "/reports/department-performance" },
@@ -65,12 +65,12 @@ const SCENARIOS = [
   {
     icon: ShieldCheck,
     title: "Scenario 4 - Permissions & Governance",
-    description: "Demonstrates that Marketing and IKL/HSM cannot see each other's operational records.",
+    description: "Demonstrates that Marketing and IKL cannot see each other's operational records.",
     steps: [
       { label: "Rector -> University Reporting", href: "/executive" },
       { label: "Central Admin -> Full Access", href: "/users" },
       { label: "Marketing -> Contacts/Campaigns", href: "/marketing" },
-      { label: "IKL/HSM -> B2B CRM/Deals", href: "/ikl-hsm" },
+      { label: "IKL -> B2B CRM/Deals", href: "/ikl" },
       { label: "Permission Matrix", href: "/roles" },
     ],
     cta: { label: "Open Roles & Permissions", href: "/roles" },

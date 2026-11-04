@@ -41,10 +41,10 @@ export default async function ExecutiveDashboardPage({ searchParams }) {
   const firstName = user.name.split(" ")[0];
 
   const comparisonData = [
-    { label: "Contacts", Marketing: deptComparison.marketing.contacts, "IKL/HSM": deptComparison.ikl.contacts },
-    { label: "New Leads", Marketing: deptComparison.marketing.newLeads, "IKL/HSM": deptComparison.ikl.newLeads },
-    { label: "Qualified", Marketing: deptComparison.marketing.qualified, "IKL/HSM": deptComparison.ikl.qualified },
-    { label: "Conversions", Marketing: deptComparison.marketing.conversions, "IKL/HSM": deptComparison.ikl.conversions },
+    { label: "Contacts", Marketing: deptComparison.marketing.contacts, "IKL": deptComparison.ikl.contacts },
+    { label: "New Leads", Marketing: deptComparison.marketing.newLeads, "IKL": deptComparison.ikl.newLeads },
+    { label: "Qualified", Marketing: deptComparison.marketing.qualified, "IKL": deptComparison.ikl.qualified },
+    { label: "Conversions", Marketing: deptComparison.marketing.conversions, "IKL": deptComparison.ikl.conversions },
   ];
 
   return (
@@ -91,14 +91,14 @@ export default async function ExecutiveDashboardPage({ searchParams }) {
         <ChartCard title="New Leads Over Time" description="Marketing contacts created per month.">
           <TrendLineChart data={leadsOverTime} series={[{ key: "value", name: "New Leads" }]} format="number" />
         </ChartCard>
-        <ChartCard title="Revenue Over Time" description="Payments received across all IKL/HSM invoices.">
+        <ChartCard title="Revenue Over Time" description="Payments received across all IKL invoices.">
           <TrendLineChart data={revenueOverTime} series={[{ key: "value", name: "Revenue" }]} format="currency" />
         </ChartCard>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        <ChartCard title="Department Comparison" description="Marketing vs. IKL/HSM across shared metrics.">
-          <ComparisonBarChart data={comparisonData} series={[{ key: "Marketing", name: "Marketing" }, { key: "IKL/HSM", name: "IKL/HSM" }]} format="number" />
+        <ChartCard title="Department Comparison" description="Marketing vs. IKL across shared metrics.">
+          <ComparisonBarChart data={comparisonData} series={[{ key: "Marketing", name: "Marketing" }, { key: "IKL", name: "IKL" }]} format="number" />
         </ChartCard>
         <Card>
           <h3 className="text-sm font-semibold text-ink mb-1">Conversion Funnel</h3>
@@ -118,7 +118,7 @@ export default async function ExecutiveDashboardPage({ searchParams }) {
               <tr>
                 <th className="text-left font-medium py-2">Metric</th>
                 <th className="text-right font-medium py-2">Marketing</th>
-                <th className="text-right font-medium py-2">IKL/HSM</th>
+                <th className="text-right font-medium py-2">IKL</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

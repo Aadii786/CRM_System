@@ -27,9 +27,9 @@ function inDepartment(user, key) {
 // The hand-built /marketing and /ikl-hsm dashboards assume the viewer holds
 // the full historical permission set those pages were written for
 // (campaigns/segments/automations for Marketing; companies/deals for
-// IKL/HSM) - true for MARKETING_MANAGER/EXECUTIVE and IKL_HSM_MANAGER/
+// IKL) - true for MARKETING_MANAGER/EXECUTIVE and IKL_HSM_MANAGER/
 // EXECUTIVE, but NOT for a Sales-role person now also in the Marketing
-// department, or a Marketing-role person in IKL/HSM (CNM fix: a department
+// department, or a Marketing-role person in IKL (CNM fix: a department
 // can hold both a Marketing and a Sales user, sharing its data - the
 // department-specific dashboard only makes sense for the role it was
 // actually built for; everyone else uses the generic one below).
@@ -48,13 +48,14 @@ export function usesIklDashboard(user) {
     hasPermission(user, "deals.view")
   );
 }
-// True for anyone department-scoped who isn't eligible for one of the two
-// hand-built dashboards above - a department created later via Settings >
-// Departments, OR a Marketing/Sales user inside Marketing or IKL/HSM whose
-// role doesn't match what those pages assume.
-function usesGenericDepartmentDashboard(user) {
-  if (isUniversityWide(user) || !user?.department?.key) return false;
-  return !usesMarketingDashboard(user) && !usesIklDashboard(user);
+/** Where /dashboard sends this user (mirrors app/(app)/dashboard/page.js), so the sidebar can highlight "Dashboard" there. */
+export function homeDashboardPath(user) {
+  if (hasPermission(user, "departments.manage")) return "/departments";
+  if (hasPermission(user, "executive.dashboard.view")) return "/executive";
+  if (usesMarketingDashboard(user)) return "/marketing";
+  if (usesIklDashboard(user)) return "/ikl";
+  if (user?.department && !user.department.isUniversityWide) return "/department";
+  return "/contacts";
 }
 
 export function getNavSections(user) {
@@ -62,7 +63,7 @@ export function getNavSections(user) {
     {
       title: "Main",
       items: [
-        { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard", tone: "blue", show: () => hasPermission(user, "dashboard.view") },
+        { label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard", tone: "blue", alsoActiveOn: [homeDashboardPath(user)], show: () => hasPermission(user, "dashboard.view") },
         { label: "Contacts", href: "/contacts", icon: "Users", tone: "blue", show: () => hasPermission(user, "contacts.view") },
         { label: "Companies", href: "/companies", icon: "Building2", tone: "cyan", show: () => hasPermission(user, "companies.view") },
         { label: "Deals", href: "/deals", icon: "Handshake", tone: "cyan", show: () => hasPermission(user, "deals.view") },
@@ -86,15 +87,14 @@ export function getNavSections(user) {
     {
       title: "Departments",
       items: [
-        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => (isUniversityWide(user) ? inDepartment(user, "marketing") : usesMarketingDashboard(user)) && hasPermission(user, "dashboard.view") },
-        { label: "IKL / HSM", href: "/ikl-hsm", icon: "Landmark", dept: "ikl-hsm", tone: "blue", show: () => (isUniversityWide(user) ? inDepartment(user, "ikl-hsm") : usesIklDashboard(user)) && hasPermission(user, "dashboard.view") },
-        { label: user?.department?.name || "My Department", href: "/department", icon: "Briefcase", dept: user?.department?.key, tone: "teal", show: () => usesGenericDepartmentDashboard(user) && hasPermission(user, "dashboard.view") },
+        { label: "Marketing", href: "/marketing", icon: "Briefcase", dept: "marketing", tone: "purple", show: () => isUniversityWide(user) && inDepartment(user, "marketing") && hasPermission(user, "dashboard.view") },
+        { label: "IKL", href: "/ikl", icon: "Landmark", dept: "ikl-hsm", tone: "blue", show: () => isUniversityWide(user) && inDepartment(user, "ikl-hsm") && hasPermission(user, "dashboard.view") },
       ],
     },
     {
       title: "Management",
       items: [
-        { label: "Executive Dashboard", href: "/executive", icon: "LineChart", tone: "indigo", show: () => hasPermission(user, "executive.dashboard.view") },
+        { label: "Executive Dashboard", href: "/executive", icon: "LineChart", tone: "indigo", show: () => hasPermission(user, "executive.dashboard.view") && homeDashboardPath(user) !== "/executive" },
         { label: "Reports", href: "/reports", icon: "FileBarChart", tone: "cyan", show: () => hasPermission(user, "reports.view") },
         { label: "Department Performance", href: "/reports/department-performance", icon: "GitCompareArrows", tone: "indigo", show: () => hasPermission(user, "executive.dashboard.view") },
       ],
@@ -103,7 +103,7 @@ export function getNavSections(user) {
       title: "Administration",
       items: [
         {
-          label: "Departments",
+          label: hasPermission(user, "departments.manage") ? "Departments" : "Email sender",
           href: "/departments",
           icon: "Building2",
           tone: "indigo",
@@ -129,7 +129,7 @@ export function getNavSections(user) {
   return sections
     .map((section) => ({
       title: section.title,
-      items: section.items.filter((item) => item.show()).map(({ label, href, icon, dept, tone }) => ({ label, href, icon, dept, tone })),
+      items: section.items.filter((item) => item.show()).map(({ label, href, icon, dept, tone, alsoActiveOn }) => ({ label, href, icon, dept, tone, alsoActiveOn })),
     }))
     .filter((section) => section.items.length > 0);
 }
