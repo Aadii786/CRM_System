@@ -9,6 +9,7 @@ import MetricCard from "@/components/ui/MetricCard";
 import FunnelBars from "@/components/charts/FunnelBars";
 import DataTable from "@/components/ui/DataTable";
 import CampaignActions from "@/components/campaigns/CampaignActions";
+import { isSimulatedProvider, providerName } from "@/lib/email/provider";
 import { formatDate, formatPercent } from "@/lib/utils/format";
 import { Send, Eye, MousePointerClick, XCircle } from "lucide-react";
 
@@ -44,10 +45,22 @@ export default async function CampaignDetailPage({ params }) {
         actions={
           <>
             <Badge status={campaign.status} />
-            <CampaignActions campaign={campaign} canSend={hasPermission(user, "campaigns.send")} />
+            <CampaignActions campaign={campaign} canSend={hasPermission(user, "campaigns.send")} simulated={isSimulatedProvider()} />
           </>
         }
       />
+
+      {isSimulatedProvider() && (
+        <p className="mb-4 rounded-md border border-warning-border bg-warning-subtle px-3.5 py-2.5 text-sm text-ink">
+          Email provider: <strong>{providerName()}</strong> (demo). Nothing leaves the system until the real email service is connected. Opens, clicks and unsubscribes still work through the same tracking links.
+        </p>
+      )}
+      {campaign.status === "Failed" && campaign.errorMessage && (
+        <p className="mb-4 rounded-md border border-danger-border bg-danger-subtle px-3.5 py-2.5 text-sm text-danger" role="alert">{campaign.errorMessage}</p>
+      )}
+      {campaign.status === "Scheduled" && campaign.scheduledAt && (
+        <p className="mb-4 rounded-md border border-info-border bg-info-subtle px-3.5 py-2.5 text-sm text-ink">Scheduled to send on {formatDate(campaign.scheduledAt, { hour: "numeric", minute: "2-digit" })}. The scheduler sends it automatically at that time.</p>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
         <MetricCard label="Recipients" value={campaign.recipientsCount.toLocaleString()} icon={Send} />
@@ -87,14 +100,14 @@ export default async function CampaignDetailPage({ params }) {
       <Card padding="none">
         <div className="p-5 pb-0">
           <h3 className="text-sm font-semibold text-ink mb-1">Recipients</h3>
-          <p className="text-xs text-ink-muted mb-4">Showing a sample of up to 100 recipients for this campaign.</p>
+          <p className="text-xs text-ink-muted mb-4">Showing up to 100 recipients. People who unsubscribed, bounced or opted out are never included.</p>
         </div>
         <div className="px-5 pb-5">
           <DataTable
             columns={[
               { key: "name", header: "Contact", render: (r) => `${r.Contact?.firstName} ${r.Contact?.lastName}` },
               { key: "email", header: "Email", render: (r) => r.Contact?.email },
-              { key: "status", header: "Status", render: (r) => <Badge status={r.status === "clicked" ? "Converted" : r.status === "opened" ? "Engaged" : r.status === "bounced" ? "Bounced" : "New"}>{r.status}</Badge> },
+              { key: "status", header: "Status", render: (r) => <Badge status={r.status === "clicked" ? "Converted" : r.status === "opened" ? "Engaged" : r.status === "bounced" || r.status === "failed" ? "Bounced" : r.status === "unsubscribed" ? "Unsubscribed" : "New"}>{r.status}</Badge> },
             ]}
             rows={recipients}
           />

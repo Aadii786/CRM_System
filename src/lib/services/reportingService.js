@@ -1,7 +1,7 @@
 import "server-only";
 import { Op, fn, col, literal } from "sequelize";
 import db from "@/lib/db";
-import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
+import { requirePermission, getAccessibleDepartmentKeys, hasPermission } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, listDepartments, allDepartmentKeys } from "./departmentService";
 
 const {
@@ -336,6 +336,50 @@ export async function getIklDashboard(user) {
     Invoice.findOne({ attributes: [[fn("SUM", col("paid_amount")), "paid"]], raw: true }),
   ]);
 
+  // Leads panel and contact-to-converted funnel (MIR-3.1, MIR-3.4), IKL only.
+  const inIkl = { departmentId: { [Op.in]: iklIds } };
+  const since = new Date(Date.now() - 30 * 86400000);
+  const [newLeads, activeLeads, qualifiedLeads, engagedPlus, qualifiedPlus, convertedCount] = await Promise.all([
+    Contact.count({ where: { ...inIkl, createdAt: { [Op.gte]: since } } }),
+    Contact.count({ where: { ...inIkl, engagementStatus: { [Op.notIn]: ["Inactive", "Bounced", "Unsubscribed"] } } }),
+    Contact.count({ where: { ...inIkl, status: "Qualified" } }),
+    Contact.count({ where: { ...inIkl, status: { [Op.in]: ["Engaged", "Interested", "Qualified", "Converted"] } } }),
+    Contact.count({ where: { ...inIkl, status: { [Op.in]: ["Qualified", "Converted"] } } }),
+    Contact.count({ where: { ...inIkl, status: "Converted" } }),
+  ]);
+
+  // Campaign panel (MIR-3.2): only for users who may see campaigns.
+  let campaignPanel = null;
+  if (hasPermission(user, "campaigns.view")) {
+    const [count, sentRows] = await Promise.all([
+      Campaign.count({ where: inIkl }),
+      Campaign.findOne({
+        where: { ...inIkl, status: "Sent" },
+        attributes: [
+          [fn("COUNT", col("id")), "sent"],
+          [fn("SUM", col("recipients_count")), "recipients"],
+          [fn("SUM", col("delivered_count")), "delivered"],
+          [fn("SUM", col("opened_count")), "opened"],
+          [fn("SUM", col("clicked_count")), "clicked"],
+          [fn("SUM", col("bounced_count")), "bounced"],
+          [fn("SUM", col("unsubscribed_count")), "unsubscribed"],
+        ],
+        raw: true,
+      }),
+    ]);
+    const delivered = Number(sentRows?.delivered || 0);
+    const pct = (n) => (delivered ? (Number(n || 0) / delivered) * 100 : 0);
+    campaignPanel = {
+      campaigns: count,
+      sentCampaigns: Number(sentRows?.sent || 0),
+      emailsSent: Number(sentRows?.recipients || 0),
+      openRate: pct(sentRows?.opened),
+      clickRate: pct(sentRows?.clicked),
+      bounceRate: Number(sentRows?.recipients || 0) ? (Number(sentRows?.bounced || 0) / Number(sentRows.recipients)) * 100 : 0,
+      unsubscribeRate: pct(sentRows?.unsubscribed),
+    };
+  }
+
   return {
     companies,
     contacts,
@@ -348,6 +392,14 @@ export async function getIklDashboard(user) {
     proposalAcceptanceRate: proposalsSent ? (proposalsAccepted / proposalsSent) * 100 : 0,
     totalInvoiced: Number(invoicesAgg?.total || 0),
     totalPaid: Number(paymentsAgg?.paid || 0),
+    leads: { total: contacts, newLast30: newLeads, active: activeLeads, inactive: Math.max(contacts - activeLeads, 0), qualified: qualifiedLeads },
+    funnel: [
+      { label: "Contacts", value: contacts },
+      { label: "Engaged", value: engagedPlus },
+      { label: "Qualified", value: qualifiedPlus },
+      { label: "Converted", value: convertedCount },
+    ],
+    campaignPanel,
   };
 }
 

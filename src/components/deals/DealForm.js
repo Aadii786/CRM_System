@@ -7,10 +7,11 @@ import Button from "@/components/ui/Button";
 import { createDealAction } from "@/actions/deals";
 import { LEAD_SOURCES, TRAINING_TYPES } from "@/lib/constants/crm";
 import { useToast } from "@/components/ui/Toast";
+import ProgramSelect from "@/components/deals/ProgramSelect";
 
 const initialState = { error: null };
 
-export default function DealForm({ pipelines, companies }) {
+export default function DealForm({ pipelines, companies, programs = [] }) {
   const [state, formAction, pending] = useActionState(createDealAction, initialState);
   const router = useRouter();
   const { push } = useToast();
@@ -66,6 +67,8 @@ export default function DealForm({ pipelines, companies }) {
           </Select>
         </Field>
       </div>
+
+      {programs.length > 0 && <ProgramSelect programs={programs} idPrefix="newdeal" />}
 
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
 

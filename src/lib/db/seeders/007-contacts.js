@@ -16,7 +16,7 @@ const { LEAD_SOURCES } = require("../../constants/crm");
 // Marketing target matches the requirements' headline "58,000 contacts".
 // IKL/HSM's separate, much smaller contact base mirrors the worked example
 // in requirements #41 (Department Performance: Marketing 58,000 / IKL-HSM 4,280).
-const MARKETING_CONTACT_COUNT = Number(process.env.SEED_CONTACT_COUNT) || 58000;
+const MARKETING_CONTACT_COUNT = Number(process.env.SEED_CONTACT_COUNT) || 500;
 const IKL_CONTACT_COUNT = 4280;
 const CHUNK_SIZE = 2000;
 

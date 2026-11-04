@@ -7,7 +7,8 @@ import MetricCard from "@/components/ui/MetricCard";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import { Building2, Users, Handshake, Trophy, Wallet, FileText, CheckCircle2, Receipt } from "lucide-react";
+import FunnelBars from "@/components/charts/FunnelBars";
+import { Building2, Users, Handshake, Trophy, Wallet, FileText, CheckCircle2, Receipt, UserPlus, Activity, Star, Megaphone, Send, Eye, MousePointerClick, MailX } from "lucide-react";
 import { formatNumber, formatCurrencyPKR, formatPercent } from "@/lib/utils/format";
 
 export const metadata = { title: "IKL/HSM Dashboard" };
@@ -38,6 +39,34 @@ export default async function IklHsmDashboardPage() {
         <MetricCard label="Proposals Sent" value={formatNumber(stats.proposalsSent)} icon={FileText} tone="amber" />
         <MetricCard label="Acceptance Rate" value={formatPercent(stats.proposalAcceptanceRate)} icon={CheckCircle2} tone="green" />
       </div>
+
+      <h2 className="text-sm font-semibold text-ink mb-2.5">Leads</h2>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-4">
+        <MetricCard label="Total leads" value={formatNumber(stats.leads.total)} icon={Users} tone="blue" href="/contacts" />
+        <MetricCard label="New in 30 days" value={formatNumber(stats.leads.newLast30)} icon={UserPlus} tone="cyan" />
+        <MetricCard label="Active" value={formatNumber(stats.leads.active)} icon={Activity} tone="green" />
+        <MetricCard label="Inactive" value={formatNumber(stats.leads.inactive)} icon={Users} tone="neutral" />
+        <MetricCard label="Qualified" value={formatNumber(stats.leads.qualified)} icon={Star} tone="amber" href="/contacts?status=Qualified" />
+      </div>
+      <Card className="mb-6">
+        <h3 className="text-sm font-semibold text-ink mb-1">From contact to converted</h3>
+        <p className="text-xs text-ink-muted mb-4">How many contacts reached each step: engaged, qualified and converted into a client.</p>
+        <FunnelBars stages={stats.funnel} />
+      </Card>
+
+      {stats.campaignPanel && (
+        <>
+          <h2 className="text-sm font-semibold text-ink mb-2.5">Campaigns</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3.5 mb-6">
+            <MetricCard label="Campaigns" value={formatNumber(stats.campaignPanel.campaigns)} icon={Megaphone} tone="purple" href="/campaigns" />
+            <MetricCard label="Emails sent" value={formatNumber(stats.campaignPanel.emailsSent)} icon={Send} tone="blue" />
+            <MetricCard label="Open rate" value={formatPercent(stats.campaignPanel.openRate)} icon={Eye} tone="green" />
+            <MetricCard label="Click rate" value={formatPercent(stats.campaignPanel.clickRate)} icon={MousePointerClick} tone="cyan" />
+            <MetricCard label="Bounce rate" value={formatPercent(stats.campaignPanel.bounceRate)} icon={MailX} tone="amber" />
+            <MetricCard label="Unsubscribe rate" value={formatPercent(stats.campaignPanel.unsubscribeRate)} icon={MailX} tone="neutral" />
+          </div>
+        </>
+      )}
 
       <div className="grid lg:grid-cols-[1fr_1fr] gap-6">
         <Card padding="none">

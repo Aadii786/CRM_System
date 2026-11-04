@@ -23,6 +23,7 @@ const CONTACT_FIELDS = [
   { key: "whatsappNumber", label: "WhatsApp Number", required: false },
   { key: "landlineNumber", label: "Landline / Phone Number", required: false },
   { key: "jobTitle", label: "Job Title", required: false },
+  { key: "companyName", label: "Company name (linked or created)", required: false },
   { key: "externalId", label: "Ext ID", required: false },
   { key: "linkedin", label: "LinkedIn", required: false },
   { key: "city", label: "City", required: false },

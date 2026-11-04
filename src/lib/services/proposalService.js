@@ -42,19 +42,6 @@ function logActivity(user, deal, title, description) {
   });
 }
 
-export async function listProposals(user, dealId) {
-  requirePermission(user, "deals.view");
-  await loadDeal(user, dealId);
-  return Proposal.findAll({
-    where: { dealId },
-    include: [
-      { model: User, as: "createdBy", attributes: ["id", "name"] },
-      { model: User, as: "approvedBy", attributes: ["id", "name"] },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
-}
-
 export async function createProposal(user, dealId, payload) {
   requirePermission(user, "proposals.manage");
   const deal = await loadDeal(user, dealId);

@@ -6,6 +6,7 @@ const ALL_PERMISSION_KEYS = PERMISSIONS.map((p) => p.key);
 
 const RECTOR_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "executive.dashboard.view",
   "contacts.view",
   "companies.view",
@@ -90,6 +91,7 @@ const MARKETING_EXECUTIVE_PERMISSIONS = [
 
 const IKL_HSM_MANAGER_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "companies.view",
   "companies.create",
   "companies.update",
@@ -127,6 +129,7 @@ const IKL_HSM_MANAGER_PERMISSIONS = [
 
 const IKL_HSM_EXECUTIVE_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "companies.view",
   "companies.create",
   "companies.update",
@@ -162,6 +165,7 @@ const IKL_HSM_EXECUTIVE_PERMISSIONS = [
 // from the role itself, so the same two roles work for any department.
 const DEPARTMENT_HEAD_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "contacts.view", "contacts.create", "contacts.update", "contacts.delete", "contacts.import", "contacts.export",
   "companies.view", "companies.create", "companies.update", "companies.delete",
   "deals.view", "deals.create", "deals.update", "deals.delete", "deals.move_stage", "deals.approve",
@@ -179,6 +183,7 @@ const DEPARTMENT_HEAD_PERMISSIONS = [
 
 const TEAM_MEMBER_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "contacts.view", "contacts.create", "contacts.update",
   "companies.view", "companies.create", "companies.update",
   "deals.view", "deals.create", "deals.update", "deals.move_stage",
@@ -203,6 +208,7 @@ const TEAM_MEMBER_PERMISSIONS = [
 // created by one is immediately visible to the other.
 const DEPARTMENT_MARKETING_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "contacts.view", "contacts.create", "contacts.update", "contacts.import", "contacts.export",
   "companies.view", "deals.view",
   "campaigns.view", "campaigns.create", "campaigns.update", "campaigns.send",
@@ -217,6 +223,7 @@ const DEPARTMENT_MARKETING_PERMISSIONS = [
 
 const DEPARTMENT_SALES_PERMISSIONS = [
   "dashboard.view",
+  "programs.view",
   "contacts.view", "contacts.create", "contacts.update",
   "companies.view", "companies.create", "companies.update",
   "deals.view", "deals.create", "deals.update", "deals.move_stage",

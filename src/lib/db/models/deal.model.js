@@ -30,6 +30,9 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "open",
       },
       lastActivityAt: DataTypes.DATE,
+      // The catalogue program / batch the inquiry is about (IKL Sprint 2).
+      programId: DataTypes.INTEGER,
+      batchId: DataTypes.INTEGER,
       deletedAt: DataTypes.DATE,
     },
     {
@@ -53,6 +56,8 @@ module.exports = (sequelize, DataTypes) => {
     Deal.hasMany(models.TNA, { foreignKey: "dealId" });
     Deal.hasMany(models.Proposal, { foreignKey: "dealId" });
     Deal.hasMany(models.Invoice, { foreignKey: "dealId" });
+    Deal.belongsTo(models.Program, { foreignKey: "programId", as: "program" });
+    Deal.belongsTo(models.ProgramBatch, { foreignKey: "batchId", as: "batch" });
   };
 
   return Deal;

@@ -63,6 +63,12 @@ module.exports = (sequelize, DataTypes) => {
       },
       leadScore: { type: DataTypes.INTEGER, defaultValue: 0 },
       lastActivityAt: DataTypes.DATE,
+      // One person record across lead / participant / alumnus (IKL Q5): the
+      // flags are set by participant and completion records.
+      isParticipant: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      isAlumnus: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      alumniSince: DataTypes.DATEONLY,
+      unsubscribedAt: DataTypes.DATE,
       deletedAt: DataTypes.DATE,
     },
     {
@@ -88,6 +94,8 @@ module.exports = (sequelize, DataTypes) => {
     Contact.hasMany(models.Conversation, { foreignKey: "contactId" });
     Contact.hasMany(models.AutomationExecution, { foreignKey: "contactId" });
     Contact.hasMany(models.Note, { foreignKey: "contactId" });
+    Contact.hasMany(models.ContactInterest, { foreignKey: "contactId", as: "interests" });
+    Contact.hasMany(models.ContactCompany, { foreignKey: "contactId", as: "otherCompanies" });
     Contact.belongsToMany(models.ContactList, {
       through: models.ContactListMember,
       foreignKey: "contactId",

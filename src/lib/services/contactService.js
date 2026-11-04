@@ -1,5 +1,5 @@
 import "server-only";
-import { Op } from "sequelize";
+import { Op, literal } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
@@ -24,6 +24,11 @@ export async function getContacts(user, {
   status,
   source,
   engagementStatus,
+  companyId,
+  createdFrom,
+  createdTo,
+  activityFrom,
+  activityTo,
   departmentKey,
   sortBy = "createdAt",
   sortDir = "DESC",
@@ -44,6 +49,27 @@ export async function getContacts(user, {
   if (status) where.status = status;
   if (source) where.source = source;
   if (engagementStatus) where.engagementStatus = engagementStatus;
+
+  // Organization filter (MIR-5.2): the main organization or any extra link.
+  const and = [];
+  const orgId = Number(companyId);
+  if (Number.isInteger(orgId) && orgId > 0) {
+    and.push({ [Op.or]: [{ companyId: orgId }, { id: { [Op.in]: literal(`(SELECT contact_id FROM contact_companies WHERE company_id = ${orgId})`) } }] });
+  }
+  // Date filters (MIR-5.4): created and last-activity ranges, inclusive of both days.
+  const day = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || "") ? new Date(`${s}T00:00:00`) : null);
+  const range = (field, from, to) => {
+    const a = day(from), b = day(to);
+    if (!a && !b) return;
+    const cond = {};
+    if (a) cond[Op.gte] = a;
+    if (b) cond[Op.lt] = new Date(b.getTime() + 86400000);
+    and.push({ [field]: cond });
+  };
+  range("createdAt", createdFrom, createdTo);
+  range("lastActivityAt", activityFrom, activityTo);
+  if (and.length) where[Op.and] = and;
+
   if (q) {
     where[Op.or] = [
       { firstName: { [Op.like]: `%${q}%` } },

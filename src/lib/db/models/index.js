@@ -65,6 +65,10 @@ const modelDefiners = [
   require("./customObjectRecord.model.js"),
   require("./setting.model.js"),
   require("./document.model.js"),
+  require("./program.model.js"),
+  require("./programBatch.model.js"),
+  require("./contactInterest.model.js"),
+  require("./contactCompany.model.js"),
 ];
 
 const db = {};

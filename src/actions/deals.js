@@ -15,6 +15,8 @@ export async function createDealAction(_prevState, formData) {
     expectedCloseDate: formData.get("expectedCloseDate")?.toString() || null,
     source: formData.get("source")?.toString(),
     trainingType: formData.get("trainingType")?.toString() || null,
+    programId: formData.get("programId") || null,
+    batchId: formData.get("batchId") || null,
   };
   if (!payload.name || !payload.stageId) return { error: "Deal name and stage are required." };
 
@@ -54,6 +56,8 @@ export async function convertContactToDealAction(_prev, formData) {
       trainingType: formData.get("trainingType")?.toString() || null,
       value: formData.get("value")?.toString(),
       expectedCloseDate: formData.get("expectedCloseDate")?.toString() || null,
+      programId: formData.get("programId") || null,
+      batchId: formData.get("batchId") || null,
     });
     revalidatePath("/deals");
     revalidatePath(`/contacts/${contactId}`);
@@ -61,5 +65,17 @@ export async function convertContactToDealAction(_prev, formData) {
   } catch (err) {
     if (err instanceof dealService.OpenDealExistsError) return { error: err.message, existingDealId: err.existingDealId };
     return { error: err.message || "Could not convert the lead." };
+  }
+}
+
+export async function setDealProgramAction(_prev, formData) {
+  const user = await requireUser();
+  const dealId = formData.get("dealId");
+  try {
+    await dealService.setDealProgram(user, dealId, { programId: formData.get("programId") || null, batchId: formData.get("batchId") || null });
+    revalidatePath(`/deals/${dealId}`);
+    return { success: true };
+  } catch (err) {
+    return { error: err.message || "Could not link the program." };
   }
 }

@@ -28,7 +28,7 @@ export function normalizeCompanyName(name) {
   return words.join(" ");
 }
 
-function websiteHost(url) {
+export function websiteHost(url) {
   if (!url) return "";
   try {
     return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./, "").toLowerCase();
@@ -90,6 +90,15 @@ export async function getCompanies(user, { page = 1, limit = 25, q = "", organiz
     data: rows.map((r) => ({ ...r.get({ plain: true }), contactCount: contactMap[r.id] || 0, activeDeals: dealMap[r.id] || 0 })),
     pagination: { page, limit, total: count, totalPages: Math.ceil(count / limit) || 1 },
   };
+}
+
+/** Id + name of every company the user may see, for select lists. */
+export async function listCompanyOptions(user, limit = 500) {
+  requirePermission(user, "companies.view");
+  const deptIds = await scopedDepartmentIds(user);
+  if (!deptIds.length) return [];
+  const rows = await Company.findAll({ where: { departmentId: { [Op.in]: deptIds } }, attributes: ["id", "name"], order: [["name", "ASC"]], limit });
+  return rows.map((r) => ({ id: r.id, name: r.name }));
 }
 
 export async function getCompanyById(user, id) {

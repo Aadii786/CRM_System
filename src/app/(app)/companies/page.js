@@ -12,7 +12,7 @@ import DataTable from "@/components/ui/DataTable";
 import Badge from "@/components/ui/Badge";
 import EmptyState from "@/components/ui/EmptyState";
 import Avatar from "@/components/ui/Avatar";
-import { Building2, Plus } from "lucide-react";
+import { Building2, Plus, Upload } from "lucide-react";
 import { ORGANIZATION_TYPES } from "@/lib/constants/crm";
 import { formatDate } from "@/lib/utils/format";
 
@@ -45,7 +45,12 @@ export default async function CompaniesPage({ searchParams }) {
       <PageHeader
         title="Companies"
         description="Corporate, government and institutional clients managed by IKL/HSM."
-        actions={hasPermission(user, "companies.create") && <Button href="/companies/new" variant="primary" icon={Plus}>Create Company</Button>}
+        actions={hasPermission(user, "companies.create") && (
+          <>
+            <Button href="/companies/import" variant="secondary" icon={Upload}>Import</Button>
+            <Button href="/companies/new" variant="primary" icon={Plus}>Create Company</Button>
+          </>
+        )}
       />
 
       <FilterBar>

@@ -6,6 +6,9 @@ import { listDocuments } from "@/lib/services/documentService";
 import { getListsForContact, listLists } from "@/lib/services/listService";
 import { listNotes } from "@/lib/services/noteService";
 import NotesPanel from "@/components/common/NotesPanel";
+import ContactProgramsPanel from "@/components/contacts/ContactProgramsPanel";
+import { listContactInterests, listContactOrganizations, listProgramOptions } from "@/lib/services/programService";
+import { listCompanyOptions } from "@/lib/services/companyService";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Tabs from "@/components/ui/Tabs";
@@ -32,6 +35,13 @@ export default async function ContactDetailPage({ params }) {
   const contact = contactRaw.get({ plain: true });
 
   const canSeeLists = hasPermission(user, "lists.view");
+  const canSeePrograms = hasPermission(user, "programs.view");
+  const [interests, organizations, programOptions, companyOptions] = await Promise.all([
+    canSeePrograms ? listContactInterests(user, id) : Promise.resolve([]),
+    canSeePrograms ? listContactOrganizations(user, id) : Promise.resolve([]),
+    canSeePrograms ? listProgramOptions(user) : Promise.resolve([]),
+    canSeePrograms && hasPermission(user, "companies.view") ? listCompanyOptions(user) : Promise.resolve([]),
+  ]);
   const [notesRaw, timelineRaw, related, documentsRaw, memberLists, allListsRaw] = await Promise.all([
     listNotes(user, "contact", id),
     getContactTimeline(user, id),
@@ -62,6 +72,9 @@ export default async function ContactDetailPage({ params }) {
             <div className="flex items-center gap-2.5">
               <h1 className="text-xl font-semibold text-ink">{contact.firstName} {contact.lastName}</h1>
               <Badge status={contact.status} />
+              {contact.isParticipant && <Badge tone="teal">Participant</Badge>}
+              {contact.isAlumnus && <Badge tone="purple">Alumnus</Badge>}
+              {!contact.isParticipant && !contact.isAlumnus && ["Lead", "Prospect"].includes(contact.contactType) && <Badge tone="neutral">{contact.contactType}</Badge>}
             </div>
             <p className="text-sm text-ink-muted mt-0.5">
               {contact.jobTitle ? `${contact.jobTitle} · ` : ""}{contact.email}
@@ -69,13 +82,14 @@ export default async function ContactDetailPage({ params }) {
             </p>
           </div>
         </div>
-        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} canConvert={hasPermission(user, "deals.create")} />
+        <ContactHeaderActions contact={contact} canEdit={hasPermission(user, "contacts.update")} canConvert={hasPermission(user, "deals.create")} programs={programOptions} />
       </div>
 
       <Tabs
         tabs={[
           { key: "overview", label: "Overview" },
           { key: "notes", label: "Notes", count: notes.length },
+          ...(canSeePrograms ? [{ key: "programs", label: "Programs & organizations", count: interests.length + organizations.length }] : []),
           { key: "engagement", label: "Engagement" },
           { key: "timeline", label: "Timeline", count: timeline.length },
           { key: "related", label: "Related" },
@@ -85,6 +99,16 @@ export default async function ContactDetailPage({ params }) {
       >
         <ContactOverview contact={contact} />
         <NotesPanel relatedType="contact" relatedId={contact.id} notes={notes} canAdd={hasPermission(user, "contacts.update")} />
+        {canSeePrograms && (
+          <ContactProgramsPanel
+            contact={contact}
+            interests={interests}
+            programs={programOptions}
+            organizations={organizations}
+            companies={companyOptions}
+            canEdit={hasPermission(user, "contacts.update")}
+          />
+        )}
         <ContactEngagement contact={contact} campaignRecipients={campaignRecipients} />
         <ContactTimeline activities={timeline} />
         <ContactRelated deals={deals} tasks={tasks} meetings={meetings} conversation={conversation} />

@@ -15,10 +15,15 @@ module.exports = (sequelize, DataTypes) => {
           "opened",
           "clicked",
           "bounced",
-          "unsubscribed"
+          "unsubscribed",
+          "failed"
         ),
         defaultValue: "queued",
       },
+      providerMessageId: DataTypes.STRING(190),
+      sentAt: DataTypes.DATE,
+      lastEventAt: DataTypes.DATE,
+      error: DataTypes.STRING(255),
     },
     {
       tableName: "campaign_recipients",

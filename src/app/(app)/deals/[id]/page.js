@@ -14,9 +14,11 @@ import DocumentsPanel from "@/components/documents/DocumentsPanel";
 import NotesPanel from "@/components/common/NotesPanel";
 import ProposalsPanel from "@/components/deals/ProposalsPanel";
 import FinancePanel from "@/components/deals/FinancePanel";
+import EngagementsPanel from "@/components/deals/EngagementsPanel";
+import DealProgramControl from "@/components/deals/DealProgramControl";
+import { listProgramOptions, listTrainers } from "@/lib/services/programService";
 import LogCallButton from "@/components/common/LogCallButton";
 import { formatCurrencyPKR, formatCurrencyFull, formatDate, formatDateTime } from "@/lib/utils/format";
-import { GraduationCap } from "lucide-react";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -53,6 +55,11 @@ export default async function DealDetailPage({ params }) {
   const proposals = relatedRaw.proposals.map((p) => p.get({ plain: true }));
   const invoices = relatedRaw.invoices.map((i) => i.get({ plain: true }));
   const documents = documentsRaw.map((d) => d.get({ plain: true }));
+  const canSeePrograms = hasPermission(user, "programs.view");
+  const [programOptions, trainerOptions] = await Promise.all([
+    canSeePrograms ? listProgramOptions(user) : Promise.resolve([]),
+    canSeePrograms ? listTrainers(user) : Promise.resolve([]),
+  ]);
 
   return (
     <div>
@@ -98,6 +105,9 @@ export default async function DealDetailPage({ params }) {
             <Row label="Stage">{deal.stage?.name}</Row>
             <Row label="Source">{deal.source}</Row>
             <Row label="Training Type">{deal.trainingType}</Row>
+            {canSeePrograms && (
+              <DealProgramControl dealId={deal.id} program={deal.program} batch={deal.batch} programs={programOptions} canEdit={hasPermission(user, "deals.update")} />
+            )}
             <Row label="Expected Close">{formatDate(deal.expectedCloseDate)}</Row>
             <Row label="Created">{formatDate(deal.createdAt)}</Row>
           </div>
@@ -108,23 +118,7 @@ export default async function DealDetailPage({ params }) {
         </div>
 
         <div className="flex flex-col gap-5">
-          <div>
-            <h3 className="text-sm font-semibold text-ink mb-2.5">Training Programs</h3>
-            {trainingPrograms.length === 0 ? <EmptyState icon={GraduationCap} title="No training program yet" /> : (
-              <div className="flex flex-col gap-2.5">
-                {trainingPrograms.map((t) => (
-                  <div key={t.id} className="rounded-lg border border-border bg-surface p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-ink">{t.title}</p>
-                      <Badge status={t.status}>{t.status}</Badge>
-                    </div>
-                    <p className="text-xs text-ink-muted">{t.trainingType} · Trainer: {t.Trainer?.name || "TBD"} · {formatDate(t.startDate)} - {formatDate(t.endDate)}</p>
-                    <p className="text-xs text-ink-muted mt-1">{t.participantsCount} participants · {t.location}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <EngagementsPanel dealId={deal.id} dealTrainingType={deal.trainingType} engagements={trainingPrograms} trainers={trainerOptions} canManage={hasPermission(user, "training.manage")} />
           <div>
             <h3 className="text-sm font-semibold text-ink mb-2.5">Training Needs Assessment (TNA)</h3>
             {tnas.length === 0 ? <EmptyState title="No TNA recorded yet" /> : (

@@ -52,10 +52,6 @@ export function deriveInvoiceStatus({ amount, paidAmount, dueDate }) {
   return paid > 0 ? "Partial" : "Unpaid";
 }
 
-export function paymentMethods() {
-  return PAYMENT_METHODS;
-}
-
 export async function createInvoice(user, dealId, payload) {
   requirePermission(user, "invoices.manage");
   const deal = await loadDeal(user, dealId);
@@ -84,26 +80,6 @@ export async function createInvoice(user, dealId, payload) {
 
   await Activity.create({ type: "payment", title: `Invoice ${invoiceNumber} recorded`, description: `PKR ${amount.toLocaleString("en-US")}`, dealId: deal.id, companyId: deal.companyId, contactId: deal.contactId, userId: user.id, occurredAt: new Date() });
   await recordAudit({ userId: user.id, action: `Recorded invoice ${invoiceNumber}`, module: "deals", resourceType: "Invoice", resourceId: invoice.id, departmentId: deal.departmentId });
-  return invoice;
-}
-
-export async function updateInvoice(user, id, payload) {
-  requirePermission(user, "invoices.manage");
-  const { invoice, deal } = await loadInvoice(user, id);
-
-  const invoiceNumber = payload.invoiceNumber !== undefined ? String(payload.invoiceNumber).trim() : invoice.invoiceNumber;
-  if (!invoiceNumber) throw new Error("Enter the invoice number from the finance system.");
-  if (invoiceNumber !== invoice.invoiceNumber) {
-    const clash = await Invoice.findOne({ where: { invoiceNumber } });
-    if (clash) throw new Error(`Invoice ${invoiceNumber} is already recorded.`);
-  }
-  const amount = payload.amount !== undefined ? money(payload.amount, "invoice amount") : Number(invoice.amount);
-  if (amount < Number(invoice.paidAmount)) throw new Error("The amount cannot be less than what has already been paid.");
-  const dueDate = payload.dueDate !== undefined ? dateOnly(payload.dueDate) : invoice.dueDate;
-  const issueDate = payload.issueDate !== undefined ? dateOnly(payload.issueDate) : invoice.issueDate;
-
-  await invoice.update({ invoiceNumber, amount, issueDate, dueDate, status: deriveInvoiceStatus({ amount, paidAmount: invoice.paidAmount, dueDate }) });
-  await recordAudit({ userId: user.id, action: `Updated invoice ${invoiceNumber}`, module: "deals", resourceType: "Invoice", resourceId: id, departmentId: deal.departmentId });
   return invoice;
 }
 

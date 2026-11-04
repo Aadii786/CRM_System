@@ -66,6 +66,7 @@ export function getNavSections(user) {
         { label: "Contacts", href: "/contacts", icon: "Users", tone: "blue", show: () => hasPermission(user, "contacts.view") },
         { label: "Companies", href: "/companies", icon: "Building2", tone: "cyan", show: () => hasPermission(user, "companies.view") },
         { label: "Deals", href: "/deals", icon: "Handshake", tone: "cyan", show: () => hasPermission(user, "deals.view") },
+        { label: "Programs", href: "/programs", icon: "GraduationCap", tone: "teal", show: () => hasPermission(user, "programs.view") },
         { label: "Activities", href: "/activities", icon: "Activity", tone: "indigo", show: () => hasPermission(user, "contacts.view") || hasPermission(user, "deals.view") },
         { label: "Tasks", href: "/tasks", icon: "CheckSquare", tone: "amber", show: () => hasPermission(user, "tasks.view") },
         { label: "Meetings", href: "/meetings", icon: "CalendarDays", tone: "teal", show: () => hasPermission(user, "meetings.view") },

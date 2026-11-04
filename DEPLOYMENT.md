@@ -138,3 +138,13 @@ Vercel automatically redeploys on every push to `main`.
   accounts by design, so anyone with the link can sign in as any of them.
   That's appropriate for a stakeholder demo, not for anything containing
   real data.
+
+
+---
+
+## Email delivery and the scheduler (Sprint 2)
+
+- **Public address:** set `APP_URL` to the address users and email recipients reach (e.g. `https://crm.ikl.com.pk`). Open-tracking, click-tracking and the unsubscribe link in every campaign email are built from it. Check it with `GET /api/health` (returns `{"ok":true,"database":"up"}`).
+- **Scheduler:** `vercel.json` calls `/api/cron/campaigns` every 5 minutes (and `/api/cron/reminders` hourly). On any other host, point a cron job at the same URLs, with `Authorization: Bearer <CRON_SECRET>`. Scheduled campaigns only send when this runs.
+- **Provider:** `EMAIL_PROVIDER=simulated` sends nothing. Plug in the real service as described in `docs/email-delivery.md`, then set `EMAIL_PROVIDER` and `EMAIL_WEBHOOK_SECRET`.
+- **Migrations:** run `npm run db:migrate` after every deploy (latest: 037).

@@ -6,6 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       filename: { type: DataTypes.STRING(255), allowNull: false },
+      // "contacts" or "companies"
+      entity: { type: DataTypes.STRING(20), allowNull: false, defaultValue: "contacts" },
       uploadedBy: DataTypes.INTEGER,
       departmentId: DataTypes.INTEGER,
       totalRows: { type: DataTypes.INTEGER, defaultValue: 0 },

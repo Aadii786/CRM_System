@@ -42,7 +42,7 @@ SESSION_SECRET=<generate a long random string>
 DEFAULT_ADMIN_EMAIL=admin@university.edu.pk
 DEFAULT_ADMIN_PASSWORD=<pick a real password>
 DEMO_USER_PASSWORD=<shared password for the 6 demo accounts>
-SEED_CONTACT_COUNT=58000
+SEED_CONTACT_COUNT=500
 ```
 
 Generate a `SESSION_SECRET`:

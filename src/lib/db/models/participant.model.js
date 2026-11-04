@@ -11,6 +11,8 @@ module.exports = (sequelize, DataTypes) => {
       organization: DataTypes.STRING(200),
       email: DataTypes.STRING(190),
       phone: DataTypes.STRING(40),
+      // The person's master contact record (one record per person).
+      contactId: DataTypes.BIGINT,
       attendance: {
         type: DataTypes.ENUM("Registered", "Attended", "No Show"),
         defaultValue: "Registered",
@@ -23,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     Participant.belongsTo(models.TrainingProgram, {
       foreignKey: "trainingProgramId",
     });
+    Participant.belongsTo(models.Contact, { foreignKey: "contactId", as: "contact" });
   };
 
   return Participant;

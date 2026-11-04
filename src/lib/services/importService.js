@@ -3,15 +3,45 @@ import { Op } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission } from "@/lib/permissions/rbac";
 import { departmentByKey } from "./departmentService";
+import { normalizeCompanyName } from "./companyService";
 import { recordAudit } from "./auditService";
 
-const { Contact, Import, ImportRow, ContactListMember, ContactList } = db;
+const { Contact, Company, Import, ImportRow, ContactListMember, ContactList } = db;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function listImports(user, limit = 20) {
-  requirePermission(user, "contacts.import");
-  return Import.findAll({ order: [["createdAt", "DESC"]], limit });
+export async function listImports(user, limit = 20, entity = "contacts") {
+  requirePermission(user, entity === "companies" ? "companies.create" : "contacts.import");
+  return Import.findAll({ where: { entity }, order: [["createdAt", "DESC"]], limit });
+}
+
+/**
+ * Links imported contacts to companies by the "company name" column: an
+ * existing company (same normalized name) is reused, a missing one is created,
+ * so a first load of IKL's contacts brings their organizations with them.
+ */
+async function resolveCompanies(user, dept, names) {
+  const wanted = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
+  const byNorm = new Map();
+  if (!wanted.length) return byNorm;
+  const existing = await Company.findAll({ where: { departmentId: dept.id }, attributes: ["id", "name"] });
+  for (const c of existing) byNorm.set(normalizeCompanyName(c.name), c.id);
+  const missing = [];
+  const seen = new Set();
+  for (const name of wanted) {
+    const key = normalizeCompanyName(name);
+    if (!key || byNorm.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    missing.push({ name, key });
+  }
+  if (missing.length) {
+    const created = await Company.bulkCreate(
+      missing.map((m) => ({ name: m.name, organizationType: "Corporate", status: "Prospect", country: "Pakistan", leadSource: "Other", departmentId: dept.id, ownerId: user.id })),
+      { validate: false }
+    );
+    created.forEach((c, i) => byNorm.set(missing[i].key, c.id));
+  }
+  return byNorm;
 }
 
 /** Returns which of the given emails already exist in this department (case-insensitive). */
@@ -78,6 +108,7 @@ export async function runImport(user, { filename, departmentKey, rows, listId })
 
   const toInsert = finalRows.filter((v) => v.status === "valid");
   let insertedContacts = [];
+  const companyIds = await resolveCompanies(user, dept, toInsert.map((v) => v.row.companyName || ""));
 
   if (toInsert.length > 0) {
     insertedContacts = await Contact.bulkCreate(
@@ -96,6 +127,7 @@ export async function runImport(user, { filename, departmentKey, rows, listId })
         optIn: ["Opted In", "Opted Out"].includes(v.row.optIn) ? v.row.optIn : "Unknown",
         contactType: ["Lead", "Prospect", "Customer", "Partner", "Other"].includes(v.row.contactType) ? v.row.contactType : "Lead",
         jobTitle: v.row.jobTitle || null,
+        companyId: v.row.companyName ? companyIds.get(normalizeCompanyName(v.row.companyName)) || null : null,
         city: v.row.city || null,
         country: v.row.country || "Pakistan",
         source: v.row.source || "Other",

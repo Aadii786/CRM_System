@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { getContacts, getContactStats } from "@/lib/services/contactService";
+import { listCompanyOptions } from "@/lib/services/companyService";
+import UrlDateInput from "@/components/ui/UrlDateInput";
 import PageHeader from "@/components/common/PageHeader";
 import FilterBar from "@/components/common/FilterBar";
 import SearchInput from "@/components/ui/SearchInput";
@@ -28,11 +30,17 @@ export default async function ContactsPage({ searchParams }) {
     status: sp.status || undefined,
     source: sp.source || undefined,
     engagementStatus: sp.engagement || undefined,
+    companyId: sp.company || undefined,
+    createdFrom: sp.createdFrom || undefined,
+    createdTo: sp.createdTo || undefined,
+    activityFrom: sp.activityFrom || undefined,
+    activityTo: sp.activityTo || undefined,
   };
 
-  const [{ data: rawContacts, pagination }, stats] = await Promise.all([
+  const [{ data: rawContacts, pagination }, stats, companyOptions] = await Promise.all([
     getContacts(user, filters),
     getContactStats(user),
+    hasPermission(user, "companies.view") ? listCompanyOptions(user) : Promise.resolve([]),
   ]);
   // Sequelize model instances aren't plain-serializable, so flatten before
   // they cross into the client-rendered table component.
@@ -44,6 +52,7 @@ export default async function ContactsPage({ searchParams }) {
     if (filters.status) params.set("status", filters.status);
     if (filters.source) params.set("source", filters.source);
     if (filters.engagementStatus) params.set("engagement", filters.engagementStatus);
+    for (const k of ["company", "createdFrom", "createdTo", "activityFrom", "activityTo"]) if (sp[k]) params.set(k, sp[k]);
     params.set("page", String(Math.max(1, targetPage)));
     return `/contacts?${params.toString()}`;
   }
@@ -98,6 +107,15 @@ export default async function ContactsPage({ searchParams }) {
         <UrlSelect paramName="status" allLabel="All statuses" options={CONTACT_STATUSES.map((s) => ({ value: s, label: s }))} className="w-40" />
         <UrlSelect paramName="engagement" allLabel="All engagement" options={ENGAGEMENT_STATUSES.map((s) => ({ value: s, label: s }))} className="w-44" />
         <UrlSelect paramName="source" allLabel="All sources" options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))} className="w-40" />
+        {companyOptions.length > 0 && (
+          <UrlSelect paramName="company" allLabel="All organizations" options={companyOptions.map((c) => ({ value: String(c.id), label: c.name }))} className="w-56" />
+        )}
+      </FilterBar>
+      <FilterBar>
+        <UrlDateInput paramName="createdFrom" label="Created from" />
+        <UrlDateInput paramName="createdTo" label="to" />
+        <UrlDateInput paramName="activityFrom" label="Last activity from" />
+        <UrlDateInput paramName="activityTo" label="to" />
       </FilterBar>
 
       <Suspense fallback={<div className="h-96 rounded-lg border border-border bg-surface animate-pulse" />}>

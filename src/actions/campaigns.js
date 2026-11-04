@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/requireUser";
 import * as campaignService from "@/lib/services/campaignService";
+import * as emailDelivery from "@/lib/services/emailDeliveryService";
 
 export async function createCampaignAction(_prevState, formData) {
   const user = await requireUser();
@@ -36,16 +37,39 @@ export async function createCampaignAction(_prevState, formData) {
 export async function sendCampaignAction(formData) {
   const user = await requireUser();
   const id = formData.get("id");
-  await campaignService.simulateSendCampaign(user, id);
-  revalidatePath(`/campaigns/${id}`);
-  revalidatePath("/campaigns");
+  try {
+    const result = await emailDelivery.dispatchCampaign(user, id);
+    revalidatePath(`/campaigns/${id}`);
+    revalidatePath("/campaigns");
+    return { success: true, ...result };
+  } catch (err) {
+    revalidatePath(`/campaigns/${id}`);
+    return { error: err.message || "Could not send the campaign." };
+  }
+}
+
+export async function simulateEngagementAction(formData) {
+  const user = await requireUser();
+  const id = formData.get("id");
+  try {
+    const result = await emailDelivery.simulateEngagement(user, id);
+    revalidatePath(`/campaigns/${id}`);
+    return { success: true, ...result };
+  } catch (err) {
+    return { error: err.message || "Could not simulate engagement." };
+  }
 }
 
 export async function updateCampaignStatusAction(formData) {
   const user = await requireUser();
   const id = formData.get("id");
   const status = formData.get("status");
-  await campaignService.updateCampaignStatus(user, id, status);
+  try {
+    await campaignService.updateCampaignStatus(user, id, status);
+  } catch (err) {
+    return { error: err.message || "Could not change the campaign." };
+  }
   revalidatePath(`/campaigns/${id}`);
   revalidatePath("/campaigns");
+  return { success: true };
 }

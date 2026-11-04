@@ -31,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       scheduledAt: DataTypes.DATE,
       sentAt: DataTypes.DATE,
+      // Delivery layer bookkeeping (see lib/email and emailDeliveryService).
+      provider: DataTypes.STRING(40),
+      startedAt: DataTypes.DATE,
+      errorMessage: DataTypes.STRING(500),
       // Aggregated counters kept in sync by campaignService as events land -
       // avoids COUNT(*) over campaign_events on every dashboard render.
       recipientsCount: { type: DataTypes.INTEGER, defaultValue: 0 },

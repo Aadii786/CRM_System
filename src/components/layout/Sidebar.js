@@ -15,7 +15,7 @@ const ICONS = {
   LayoutDashboard, Users, Building2, Handshake, Activity, CheckSquare,
   CalendarDays, Megaphone, Filter, Workflow, MessageCircle, LineChart,
   FileBarChart, GitCompareArrows, ShieldCheck, Plug, KeyRound, ScrollText,
-  Settings, PlayCircle, Landmark, Briefcase, ListChecks, FolderOpen,
+  Settings, PlayCircle, Landmark, Briefcase, ListChecks, FolderOpen, GraduationCap,
 };
 
 function NavLink({ item, collapsed, onNavigate }) {

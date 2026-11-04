@@ -1,7 +1,7 @@
 import "server-only";
 import { Op } from "sequelize";
 import db from "@/lib/db";
-import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
+import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { buildSegmentWhere } from "./segmentService";
 import { recordAudit } from "./auditService";
@@ -85,60 +85,19 @@ export async function createCampaign(user, payload) {
   return campaign;
 }
 
-/**
- * Simulated send (requirements #61-#62, #106): moves the campaign to Sent,
- * generates realistic delivery/open/click counters, and records the same
- * events against a representative sample of the target segment's contacts
- * so the recipients tab and contact timelines both stay consistent. No
- * real email is ever dispatched.
- */
-export async function simulateSendCampaign(user, campaignId) {
-  requirePermission(user, "campaigns.send");
-  const campaign = await Campaign.findByPk(campaignId, { include: [Segment] });
-  if (!campaign) throw new Error("Campaign not found.");
-
-  const audience = campaign.recipientsCount || 100;
-  const delivered = Math.round(audience * 0.97);
-  const opened = Math.round(delivered * 0.52);
-  const clicked = Math.round(opened * 0.2);
-  const bounced = audience - delivered;
-  const unsubscribed = Math.round(delivered * 0.004);
-
-  await campaign.update({
-    status: "Sent",
-    sentAt: new Date(),
-    deliveredCount: delivered,
-    openedCount: opened,
-    clickedCount: clicked,
-    bouncedCount: bounced,
-    unsubscribedCount: unsubscribed,
-  });
-
-  const where = campaign.Segment
-    ? buildSegmentWhere(await SegmentCondition.findAll({ where: { segmentId: campaign.segmentId } }), { departmentId: campaign.departmentId })
-    : { departmentId: campaign.departmentId };
-
-  const sample = await Contact.findAll({ where, limit: 100, order: [["leadScore", "DESC"]] });
-  for (const [i, contact] of sample.entries()) {
-    const status = i < clicked ? "clicked" : i < opened ? "opened" : i < delivered ? "delivered" : "bounced";
-    await CampaignRecipient.upsert({ campaignId: campaign.id, contactId: contact.id, status });
-    await CampaignEvent.create({ campaignId: campaign.id, contactId: contact.id, type: "sent", occurredAt: new Date() });
-    if (status !== "delivered") {
-      await CampaignEvent.create({ campaignId: campaign.id, contactId: contact.id, type: status, occurredAt: new Date() });
-    }
-    if (status === "clicked" || status === "opened") {
-      await contact.update({ engagementStatus: status === "clicked" ? "Clicked" : "Opened", lastActivityAt: new Date() });
-    }
-  }
-
-  await recordAudit({ userId: user.id, action: `Sent campaign "${campaign.name}"`, module: "campaigns", resourceType: "Campaign", resourceId: campaign.id });
-  return campaign;
-}
+const STATUS_CHANGES = {
+  Draft: ["Scheduled", "Paused"],
+  Scheduled: ["Paused", "Draft"],
+  Paused: ["Scheduled", "Draft"],
+  Failed: ["Draft"],
+};
 
 export async function updateCampaignStatus(user, id, status) {
   requirePermission(user, "campaigns.update");
-  const campaign = await Campaign.findByPk(id);
+  const campaign = await Campaign.findByPk(id, { include: [db.Department] });
   if (!campaign) throw new Error("Campaign not found.");
+  requireDepartmentAccess(user, campaign.Department?.key);
+  if (!(STATUS_CHANGES[campaign.status] || []).includes(status)) throw new Error(`A ${campaign.status.toLowerCase()} campaign cannot be set to ${status.toLowerCase()}.`);
   await campaign.update({ status });
   await recordAudit({ userId: user.id, action: `Campaign set to ${status}`, module: "campaigns", resourceType: "Campaign", resourceId: id });
   return campaign;

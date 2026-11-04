@@ -10,9 +10,10 @@ import Field, { Input, Select } from "@/components/ui/Field";
 import { convertContactToDealAction } from "@/actions/deals";
 import { useToast } from "@/components/ui/Toast";
 import { TRAINING_TYPES } from "@/lib/constants/crm";
+import ProgramSelect from "@/components/deals/ProgramSelect";
 
 /** One-click lead -> opportunity: opens a deal in the first pipeline stage and marks the lead Qualified. */
-export default function ConvertToOpportunityButton({ contact }) {
+export default function ConvertToOpportunityButton({ contact, programs = [] }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(null);
   const [existingDealId, setExistingDealId] = useState(null);
@@ -59,6 +60,7 @@ export default function ConvertToOpportunityButton({ contact }) {
               <Input id="cv-value" name="value" type="number" min="0" step="1000" placeholder="0" />
             </Field>
           </div>
+          {programs.length > 0 && <ProgramSelect programs={programs} idPrefix="cv" />}
           <Field label="Expected close date" htmlFor="cv-close">
             <Input id="cv-close" name="expectedCloseDate" type="date" />
           </Field>

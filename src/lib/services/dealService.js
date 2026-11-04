@@ -6,7 +6,7 @@ import { departmentIdsForKeys, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
 import { referencePrefixFor, formatReferenceNumber } from "@/lib/constants/departments";
 
-const { Pipeline, PipelineStage, Deal, Company, Contact, User, Department, Task, Meeting, Note, Activity, TrainingProgram, TNA, Proposal, Invoice, Payment } = db;
+const { Pipeline, PipelineStage, Deal, Company, Contact, User, Department, Task, Meeting, Note, Activity, TrainingProgram, TNA, Proposal, Invoice, Payment, Program, ProgramBatch } = db;
 
 async function scopedDepartmentIds(user) {
   const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
@@ -27,6 +27,17 @@ async function generateReferenceNumber(departmentKey, departmentId) {
     paranoid: false,
   });
   return formatReferenceNumber(prefix, year, count + 1);
+}
+
+/** Checks a program / batch belongs to the department (and the batch to the program). */
+async function validateProgramLink(departmentId, programId, batchId) {
+  if (!programId) return { programId: null, batchId: null };
+  const program = await Program.findByPk(programId);
+  if (!program || program.departmentId !== departmentId) throw new Error("Pick a program from this department's catalogue.");
+  if (!batchId) return { programId: program.id, batchId: null };
+  const batch = await ProgramBatch.findByPk(batchId);
+  if (!batch || batch.programId !== program.id) throw new Error("That batch does not belong to the chosen program.");
+  return { programId: program.id, batchId: batch.id };
 }
 
 export async function listPipelines(user) {
@@ -109,6 +120,8 @@ export async function getDealById(user, id) {
       { model: Department },
       { model: PipelineStage, as: "stage" },
       { model: Pipeline },
+      { model: Program, as: "program", attributes: ["id", "title", "code"] },
+      { model: ProgramBatch, as: "batch", attributes: ["id", "code", "startDate"] },
     ],
   });
   if (!deal) return null;
@@ -142,6 +155,7 @@ export async function createDeal(user, payload) {
   const pipeline = await Pipeline.findByPk(stage.pipelineId);
   const department = await Department.findByPk(pipeline.departmentId);
   const referenceNumber = await generateReferenceNumber(department.key, pipeline.departmentId);
+  const link = await validateProgramLink(pipeline.departmentId, payload.programId, payload.batchId);
 
   const deal = await Deal.create({
     referenceNumber,
@@ -157,6 +171,8 @@ export async function createDeal(user, payload) {
     expectedCloseDate: payload.expectedCloseDate || null,
     source: payload.source || "Other",
     trainingType: payload.trainingType || null,
+    programId: link.programId,
+    batchId: link.batchId,
     lastActivityAt: new Date(),
   });
 
@@ -267,6 +283,8 @@ export async function convertContactToDeal(user, contactId, payload = {}) {
     source: contact.source || "Other",
     trainingType: payload.trainingType || null,
     ownerId: payload.ownerId || contact.ownerId || user.id,
+    programId: payload.programId || null,
+    batchId: payload.batchId || null,
   });
 
   const progressed = ["New", "Engaged", "Interested"].includes(contact.status);
@@ -276,6 +294,18 @@ export async function convertContactToDeal(user, contactId, payload = {}) {
   });
   await Activity.create({ type: "status_change", title: "Lead converted to opportunity", description: `${name} (${deal.referenceNumber})`, contactId: contact.id, dealId: deal.id, companyId: contact.companyId, userId: user.id, occurredAt: new Date() });
   await recordAudit({ userId: user.id, action: `Converted ${fullName} to opportunity ${deal.referenceNumber}`, module: "deals", resourceType: "Deal", resourceId: deal.id, departmentId: contact.departmentId });
+  return deal;
+}
+
+/** Links (or unlinks) the catalogue program / batch an inquiry is about. */
+export async function setDealProgram(user, id, { programId, batchId }) {
+  requirePermission(user, "deals.update");
+  const deal = await Deal.findByPk(id, { include: [Department] });
+  if (!deal) throw new Error("Deal not found.");
+  requireDepartmentAccess(user, deal.Department?.key);
+  const link = await validateProgramLink(deal.departmentId, programId || null, batchId || null);
+  await deal.update({ programId: link.programId, batchId: link.batchId, lastActivityAt: new Date() });
+  await recordAudit({ userId: user.id, action: "Linked deal to a program", module: "deals", resourceType: "Deal", resourceId: id, departmentId: deal.departmentId });
   return deal;
 }
 

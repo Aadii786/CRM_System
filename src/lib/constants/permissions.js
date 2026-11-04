@@ -32,6 +32,7 @@ const PERMISSIONS = [
   { key: "deals.approve", module: "deals", description: "Approve a B2B deal to proceed from Approval into Execution" },
 
   // Training / financial (IKL-HSM)
+  { key: "programs.view", module: "training", description: "View the program catalogue and batches" },
   { key: "training.manage", module: "training", description: "Manage training programs, TNA, trainers" },
   { key: "proposals.manage", module: "training", description: "Manage proposals" },
   { key: "invoices.manage", module: "training", description: "Manage invoices & payments" },
