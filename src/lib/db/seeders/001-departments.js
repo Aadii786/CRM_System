@@ -1,13 +1,18 @@
 "use strict";
 
 const { DEPARTMENTS } = require("../../constants/departments");
+const { idMapByColumn } = require("./lib/lookup");
 
+// Idempotent: only departments that do not exist yet (by key) are inserted.
 module.exports = {
   async up(queryInterface) {
     const now = new Date();
+    const existing = await idMapByColumn(queryInterface, "departments", "key");
+    const missing = DEPARTMENTS.filter((d) => !existing[d.key]);
+    if (!missing.length) return;
     await queryInterface.bulkInsert(
       "departments",
-      DEPARTMENTS.map((d) => ({
+      missing.map((d) => ({
         key: d.key,
         name: d.name,
         description: d.description,
