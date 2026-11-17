@@ -20,3 +20,7 @@ node diff_workbooks.js old.xlsx out.xlsx      # compare two workbooks cell by ce
 ## Publishing to the shared Google Drive file
 
 The shared file is an `.xlsx` stored in Drive (not a native Google Sheet). **Do not edit it inside Google Sheets**: Google warns it will drop conditional formatting (the status colours). Replace the file instead: Drive > right-click the file > File information > Manage versions > Upload new version. The link and sharing stay the same and the old version stays restorable.
+
+## IKL's own entries (important)
+
+IKL edits the shared Drive file directly (answers, role reviews, first users, an extra "OTE_Open Questions" tab). Never upload a rebuilt workbook without carrying those over: read the live file first, put the cells in a JSON like `{ "openQuestionsF": {row: text}, "rolesF": {...}, "rolesG": {...}, "ote": [...] }` and run `IKL_INPUTS=<path to json> node build_ikl_workbook.js out.xlsx`. Keep that JSON **outside the repo** (it has names and email addresses). The old Drive version stays restorable under Manage versions.

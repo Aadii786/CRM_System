@@ -20,6 +20,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("sent", "delivered", "read", "failed"),
         defaultValue: "sent",
       },
+      providerMessageId: DataTypes.STRING(190),
+      campaignId: DataTypes.INTEGER,
       sentAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     },
     { tableName: "messages", updatedAt: false }

@@ -1,10 +1,17 @@
 "use strict";
 // IKL-facing workbook v2: 4 sprints, deadline 30 Nov 2026, no separate non-functional sheet
 const path = require("path");
+const fs = require("fs");
 const { DONE_NOW, addSprint1Report } = require("./sprint1_sheet");
+const { DONE_NOW_S2, addSprint2Report } = require("./sprint2_sheet");
+const { DONE_NOW_S3, addSprint3Report } = require("./sprint3_sheet");
 const ExcelJS = require("exceljs");
 
 const SRC = "E:/download/IKL CRM Progress Report Answered-1.xlsx";
+// Everything IKL typed into the shared Drive file (answers, role reviews, the OTE sheet). It holds names and
+// email addresses, so it is NOT kept in the repo: pass its path in IKL_INPUTS and it is applied on every rebuild,
+// so a new upload never overwrites what IKL wrote.
+const IKL = process.env.IKL_INPUTS ? JSON.parse(fs.readFileSync(process.env.IKL_INPUTS, "utf8")) : null;
 const OUT = process.argv[2] || path.join(__dirname, "IKL_CRM_Progress_Report_and_Sprint_Plan_v4.xlsx");
 const NAVY = "FF1F2A44", INK = "FF1F2937", GREY = "FF6B7280", BAND = "FFF5F7FA", LINE = "FFD9DEE7", WHITE = "FFFFFFFF";
 const D = (m, d) => new Date(Date.UTC(2026, m - 1, d));
@@ -60,17 +67,20 @@ const SPRINTS = {
     "Role permissions set up as in the Roles sheet (can be changed after IKL's review)"],
     demo: "Log in with the IKL roles; add a note; a duplicate company is blocked; create a proposal and approve it as the manager; convert a lead; record an invoice and a payment.",
     need: "Q14 roles and first users; Q17 invoice reference format" },
-  2: { title: "Live email, IKL data and program catalogue", ready: [], items: [
-    "Real email through the third-party service provided by the IT department: campaigns to real recipients, scheduled sending, unsubscribe link and opt-out page",
-    "Real tracking read back from the service: delivered, opened, clicked, bounced; campaign panel on the dashboard",
-    "IKL dashboard: leads panel and contact-to-converted funnel; filters by organization and date range",
-    "Import of corporate clients from Excel; first load of IKL's contacts and companies",
-    "Program catalogue with categories; program interests on leads and contacts",
-    "Scheduled batches (dates, venue, trainer, seats, fee); inquiries linked to programs",
-    "One person record carrying lead, participant and alumnus statuses",
-    "The CRM available to IKL users at an agreed web address"],
-    demo: "IKL's own contacts and companies in the system; a real test campaign arrives and unsubscribe works; programs and a batch are created.",
-    need: "Q15 consent; Q16 Excel files and focal person; Q18 program catalogue; Q19 registration rules. From the IT department: email service access" },
+  2: { title: "Live email, IKL data and program catalogue", readyLabel: "DELIVERED IN THIS SPRINT:", itemsLabel: "STILL TO CLOSE (waiting for the IT department):", ready: [
+    "Unsubscribe link in every email and a public opt-out page; opted-out contacts are skipped",
+    "Email delivery engine built and tested with a simulated sender: eligible contacts only, personalised messages, tracking of opens, clicks, bounces and unsubscribes, campaign counters",
+    "IKL dashboard: leads panel, contact-to-converted funnel and campaign panel; contact filters by organization and by date range",
+    "Import of corporate clients from Excel or CSV with duplicate preview and history",
+    "Program catalogue with IKL's categories; program interests on leads and contacts",
+    "Batches of a program (dates, venue, trainer, seats, fee) and in-house engagements; inquiries linked to programs and batches",
+    "One person record with lead, participant and alumnus markers and several organizations"], items: [
+    "Real sending and real tracking: switched on when IKL's email account (UMT-domain Mailchimp account) is handed over and the IT department has verified the sending domain",
+    "Scheduled campaigns that start by themselves: need the scheduler switched on at the final web address",
+    "The CRM at the agreed permanent web address (a temporary test address exists for demonstrations)",
+    "First load of IKL's own contacts and companies from the Excel files shared on Google Drive, checked with the IKL focal person"],
+    demo: "Programs and a batch, the IKL dashboard panels and filters, a company import, and a simulated campaign with opens, clicks and an unsubscribe. Real email follows once the account is handed over.",
+    need: "Email account and domain verification, and the permanent web address (IT department); Q15 consent; Q18 program calendar; Q19 registration rules" },
   3: { title: "Registrations, tracking and website", ready: [], items: [
     "Registrations (individual and company nominations), participant lists, attendance per program",
     "Completion, certificate details and alumni rule; program feedback entry",
@@ -90,6 +100,38 @@ const SPRINTS = {
     demo: "Final demonstration and hand-over on Monday 30 November. Acceptance sign-off.",
     need: "IKL nominates the acceptance person and training attendees; focal person available for data checks" },
 };
+const S3_PLANNED_ITEMS = SPRINTS[3].items;
+Object.assign(SPRINTS[3], {
+  title: "Registrations, tracking and website",
+  readyLabel: "DELIVERED IN THIS SPRINT:",
+  itemsLabel: "STILL TO CLOSE (waiting for the IT department, IKL or the website team):",
+  ready: [
+    "Registrations for a batch (one person or a company nomination), seat limit, fee and payment references; participant list per batch",
+    "Attendance, completion and certificate record, alumni rule, program feedback; program history on the person and the client",
+    "Contact filter by program and deal filters (program, organization, owner, status, dates)",
+    "Automations that run by themselves (wait, condition, email, WhatsApp, task); lead score from real activity",
+    "Reminders before due dates (notification and email) and a manager overview of overdue follow-ups",
+    "WhatsApp campaigns and replies in the shared inbox (demo mode until the IT department connects the real service)",
+    "Website forms channel: secure key, enquiry, brochure, registration and feedback forms, source tagging, duplicate check, owner notified, acknowledgement email",
+    "Welcome tour on first login and a Guide page for every role"],
+  items: [
+    "Real WhatsApp sending and replies: WhatsApp API details and approved templates from the IT department, and IKL's consent rule",
+    "Real email for acknowledgements, reminders and automations: same email account and domain verification as MIR-1.5",
+    "The IKL website must send its four forms to the CRM, and IKL confirms the form fields and the acknowledgement wording (Q20)",
+    "WhatsApp reminders to staff are not built (decision for IKL)"],
+  demo: "Register a participant and a company nomination, mark attendance and completion (alumnus), record feedback; a website form arrives as a lead with a notification and an acknowledgement; a WhatsApp campaign and a reply; an automation running by itself.",
+  need: "Q20 website forms and wording; Q21 existing forms; Q22 remaining Excel files; Q23 report list. From the IT department: WhatsApp API, email account, web address, scheduler",
+});
+// What the Sprint 1 report promised for Sprint 2 (history: that sheet keeps showing it as written on 26 Oct).
+const S2_PLANNED_ITEMS = [
+  "Real email through the third-party service provided by the IT department: campaigns to real recipients, scheduled sending, unsubscribe link and opt-out page",
+  "Real tracking read back from the service: delivered, opened, clicked, bounced; campaign panel on the dashboard",
+  "IKL dashboard: leads panel and contact-to-converted funnel; filters by organization and date range",
+  "Import of corporate clients from Excel; first load of IKL's contacts and companies",
+  "Program catalogue with categories; program interests on leads and contacts",
+  "Scheduled batches (dates, venue, trainer, seats, fee); inquiries linked to programs",
+  "One person record carrying lead, participant and alumnus statuses",
+  "The CRM available to IKL users at an agreed web address"];
 const TUESDAYS = [
   [D(10, 27), "Sprint 1", "Sprint 1 delivery: sales workspace (notes, duplicate check, proposals with approval, lead conversion, invoices and payments)."],
   [D(11, 3), "Sprint 2", "Progress demo: IKL data loaded, dashboard panels, first real test email."],
@@ -159,14 +201,23 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
   const fnRows = baseFn.concat(EXTRA.map((e) => [e[0], e[1], e[2], e[3], e[4], e[5], e[6], "", ""]));
   fnRows.forEach((r) => {
     const d = DONE_NOW[r[0]];
-    if (d) { r.was = r[4]; r[4] = "Done"; r[5] = d.where; r[6] = d.note; }
+    if (d) { r.was = r[4]; r[4] = "Done"; r[5] = d.where; r[6] = d.note; r.sprint = 1; }
+    const d2 = DONE_NOW_S2[r[0]];
+    if (d2) { r.was = r[4]; r[4] = d2.status; r[5] = d2.where; r[6] = d2.note; r.sprint = 2; }
+    const d3 = DONE_NOW_S3[r[0]];
+    if (d3) { r.was = r[4]; r[4] = d3.status; r[5] = d3.where; r[6] = d3.note; r.sprint = 3; }
   });
+  const origStatus = (r) => r.was || r[4];
+  // coverage as reported after Sprint 1 (26 Oct): Sprint 1 changes applied, Sprint 2 not yet
+  const afterS1 = fnRows.reduce((a, r) => { const s = r.sprint === 2 || r.sprint === 3 ? r.was : r[4]; return a + (s === "Done" ? 1 : s === "Partial" ? 0.5 : 0); }, 0) / fnRows.length;
+  // coverage as reported after Sprint 2 (11 Nov): Sprint 3 changes not yet applied
+  const afterS2 = fnRows.reduce((a, r) => { const s = r.sprint === 3 ? r.was : r[4]; return a + (s === "Done" ? 1 : s === "Partial" ? 0.5 : 0); }, 0) / fnRows.length;
   const qRows = rowsOf("Open Questions");
   const beyondRows = rowsOf("Beyond BRD", 4);
 
   const sprintOf = {}; Object.entries(SPRINT_FN).forEach(([s, refs]) => refs.forEach((r) => { sprintOf[r] = +s; }));
   const open = fnRows.filter((r) => r[4] !== "Done").map((r) => r[0]);
-  const bad = open.filter((k) => !sprintOf[k]).concat(Object.keys(sprintOf).filter((k) => !open.includes(k) && !DONE_NOW[k]));
+  const bad = open.filter((k) => !sprintOf[k]).concat(Object.keys(sprintOf).filter((k) => !open.includes(k) && !DONE_NOW[k] && !DONE_NOW_S2[k] && !DONE_NOW_S3[k]));
   if (bad.length) throw new Error("plan mismatch " + bad);
 
   const wb = new ExcelJS.Workbook(); wb.creator = "CRM Project Team";
@@ -188,15 +239,15 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
   for (let s = 1; s <= 4; s++) {
     const r = s + 4, t = SPRINTS[s], row = sp.getRow(r);
     let deliver = t.title.toUpperCase() + "\n";
-    if (t.ready.length) deliver += "READY NOW (already built):\n" + t.ready.map((x) => "✓ " + x).join("\n") + "\nNEW IN THIS SPRINT:\n";
+    if (t.ready.length) deliver += (t.readyLabel || "READY NOW (already built):") + "\n" + t.ready.map((x) => "✓ " + x).join("\n") + "\n" + (t.itemsLabel || "NEW IN THIS SPRINT:") + "\n";
     deliver += t.items.map((x) => "• " + x).join("\n");
     const refs = SPRINT_FN[s].join(", ");
     row.getCell(1).value = s; row.getCell(2).value = t.title;
     row.getCell(3).value = CAL[s].start; row.getCell(4).value = CAL[s].end;
     row.getCell(5).value = deliver; row.getCell(6).value = refs; row.getCell(7).value = t.demo; row.getCell(8).value = t.need;
-    row.getCell(9).value = s === 1 ? "Delivered" : "Planned";
-    row.getCell(10).value = s === 1 ? "Built and tested 26 Oct. IKL demonstration and sign-off to follow." : "";
-    for (let c = 1; c <= 10; c++) styleCell(row.getCell(c), { fill: s === 1 ? "FFECFDF5" : s % 2 ? undefined : BAND });
+    row.getCell(9).value = s <= 3 ? "Delivered" : "Planned";
+    row.getCell(10).value = s === 1 ? "Built and tested 26 Oct. IKL demonstration and sign-off to follow." : s === 2 ? "Built and tested by 10 Nov. IKL demonstration and sign-off to follow. Four functions (MIR-1.4, MIR-1.5, MIR-1.6, GO-1) close when the IT department hands over the email account and the web address." : s === 3 ? "Built and tested by 17 Nov. IKL demonstration and sign-off to follow. Eight functions stay Partial until the IT department connects real email and WhatsApp and the IKL website sends its forms (see the Sprint 3 Report tab)." : "";
+    for (let c = 1; c <= 10; c++) styleCell(row.getCell(c), { fill: s <= 3 ? "FFECFDF5" : s % 2 ? undefined : BAND });
     [1, 3, 4, 9].forEach((c) => { row.getCell(c).alignment = { horizontal: "center", vertical: "top", wrapText: true }; });
     row.getCell(1).font = F({ bold: true, color: { argb: NAVY }, size: 12 }); row.getCell(2).font = F({ bold: true, color: { argb: NAVY } });
     row.getCell(3).numFmt = fmtDate; row.getCell(4).numFmt = fmtDate; row.getCell(4).font = F({ bold: true });
@@ -229,13 +280,13 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
     const rr = i + 2, ref = r[0], s = sprintOf[ref];
     const row = fc.getRow(rr);
     const stripQ = (t) => String(t || "").replace(/\s*\((?:see )?Open Questions? Q\d+[^)]*\)/gi, "").replace(/\s+\./g, ".").trim();
-    let note = (DONE_NOW[ref] && DONE_NOW[ref].note) || NOTE_OVERRIDE[ref] || stripQ(r[6]);
+    let note = (DONE_NOW[ref] && DONE_NOW[ref].note) || (DONE_NOW_S2[ref] && DONE_NOW_S2[ref].note) || (DONE_NOW_S3[ref] && DONE_NOW_S3[ref].note) || NOTE_OVERRIDE[ref] || stripQ(r[6]);
     if (STRETCH.includes(ref)) note += (note ? " " : "") + "If time allows before 30 November; otherwise right after go-live.";
     row.values = [ref, r[1], r[2], stripQ(r[3]), r[4], r[5], note, s || "-",
       s ? { formula: `INDEX('Sprint Plan'!$D$5:$D$8,H${rr})`, result: CAL[s].end } : "-", r[7] || "", r[8] || ""];
-    const updated = Boolean(DONE_NOW[ref]);
+    const updated = Boolean(DONE_NOW[ref] || DONE_NOW_S2[ref] || DONE_NOW_S3[ref]);
     for (let c = 1; c <= 12; c++) styleCell(row.getCell(c), { fill: updated ? "FFECFDF5" : i % 2 === 0 ? BAND : undefined });
-    row.getCell(12).value = updated ? `Done in Sprint 1 (was ${r.was})` : "";
+    row.getCell(12).value = !updated ? "" : r.sprint === 3 ? (r[4] === "Done" ? `Done in Sprint 3 (was ${r.was})` : r.was === r[4] ? `Updated in Sprint 3 (still ${r[4]})` : `Moved forward in Sprint 3 (was ${r.was}, now ${r[4]})`) : r.sprint === 1 ? `Done in Sprint 1 (was ${r.was})` : r[4] === "Done" ? `Done in Sprint 2 (was ${r.was})` : r.was === r[4] ? `Updated in Sprint 2 (still ${r[4]})` : `Moved forward in Sprint 2 (was ${r.was}, now ${r[4]})`;
     row.getCell(12).font = F({ bold: true, color: { argb: "FF065F46" } });
     row.getCell(1).font = F({ bold: true, color: { argb: NAVY } });
     [5, 8, 9].forEach((c) => { row.getCell(c).alignment = { horizontal: "center", vertical: "top", wrapText: true }; });
@@ -254,6 +305,7 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
   qRows.forEach((r) => { oq.getRow(++n + 1).values = [r[0], r[1], r[2], r[3], r[4], r[5], USE[r[0]] || "", ""]; });
   ROUND2.forEach((q, i) => { oq.getRow(n + i + 2).values = [`Q${14 + i}`, q[0], q[1], q[2], q[3], "", q[5], q[4]]; });
   const lastQ = n + ROUND2.length + 1;
+  if (IKL) Object.entries(IKL.openQuestionsF).forEach(([rowNo, text]) => { oq.getRow(+rowNo).getCell(6).value = text; });
   for (let r = 2; r <= lastQ; r++) {
     const row = oq.getRow(r), round2 = r > n + 1;
     for (let c = 1; c <= 8; c++) styleCell(row.getCell(c), { fill: round2 ? "FFFFFBEB" : undefined });
@@ -261,6 +313,23 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
     row.getCell(8).numFmt = "ddd dd mmm"; row.getCell(8).alignment = { horizontal: "center", vertical: "top", wrapText: true };
     if (round2) row.getCell(8).font = F({ bold: true, color: { argb: "FF991B1B" } });
     row.height = est(Math.max(linesFor(row.getCell(3).value, 62), linesFor(row.getCell(4).value, 46), linesFor(row.getCell(6).value, 80), linesFor(row.getCell(7).value, 36)));
+  }
+
+  // ================================================= OTE questions (email service) - added in the shared file, answered by IKL
+  if (IKL && IKL.ote && IKL.ote.length) {
+    const ot = wb.addWorksheet("OTE_Open Questions", { views: [{ state: "frozen", ySplit: 1, showGridLines: false }] });
+    headerRow(ot, 1, ["#", "Topic", "Question for IKL", "Why we are asking", "Affects", "IKL Answer", "How the plan uses it", "Needed by"]);
+    [7, 20, 62, 46, 18, 80, 36, 17].forEach((w, i) => { ot.getColumn(i + 1).width = w; });
+    IKL.ote.forEach((q, i) => {
+      const row = ot.getRow(i + 2);
+      row.values = [q.id, q.topic, q.q, q.why, q.affects, q.answer, q.plan, new Date(Date.UTC(1899, 11, 30) + q.needed * 86400000)];
+      for (let c = 1; c <= 8; c++) styleCell(row.getCell(c), { fill: "FFFFFBEB" });
+      row.getCell(1).font = F({ bold: true, color: { argb: NAVY } }); row.getCell(2).font = F({ bold: true, color: { argb: NAVY } });
+      row.getCell(8).numFmt = "ddd dd mmm"; row.getCell(8).alignment = { horizontal: "center", vertical: "top", wrapText: true }; row.getCell(8).font = F({ bold: true, color: { argb: "FF991B1B" } });
+      row.height = est(Math.max(linesFor(q.q, 62), linesFor(q.why, 46), linesFor(q.answer, 80), linesFor(q.plan, 36)));
+    });
+    ot.orderNo = oq.orderNo - 0.5;
+    ot.properties.tabColor = { argb: "FFD97706" };
   }
 
   // ================================================= Beyond BRD
@@ -345,6 +414,10 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
     row.height = est(Math.max(1, linesFor(m[0], 44)));
   });
   const MXL = MX0 + 1 + MATRIX.length;
+  if (IKL) { // IKL's reviews (Agree / Change / New role), first users and comments
+    Object.entries(IKL.rolesF).forEach(([r, v]) => { rl.getRow(+r).getCell(6).value = v; });
+    Object.entries(IKL.rolesG).forEach(([r, v]) => { const row = rl.getRow(+r); row.getCell(7).value = v; row.height = Math.max(row.height || 18, est(linesFor(v, 40))); });
+  }
   rl.addConditionalFormatting({ ref: `B${MX0 + 2}:D${MXL}`, rules: [
     { type: "cellIs", operator: "equal", priority: 20, formulae: ['"Yes"'], style: { fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFD1FAE5" } }, font: { bold: true, color: { argb: "FF065F46" } } } },
     { type: "cellIs", operator: "equal", priority: 21, formulae: ['"View only"'], style: { fill: { type: "pattern", pattern: "solid", bgColor: { argb: "FFFEF3C7" } }, font: { color: { argb: "FF92400E" } } } },
@@ -356,14 +429,14 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
   headerRow(ds, 3, ["Topic", "Decision / what will be done", "Provided by", "Needed by", "Status", "Notes"]);
   [26, 90, 24, 17, 14, 44].forEach((w, i) => { ds.getColumn(i + 1).width = w; });
   const DEC = [
-    ["Email delivery", "Campaigns are sent through a third-party email service provided by the IT department (Mailchimp expected). IKL's own address (info@ikl.com.pk) stays the visible sender. More than 500 emails a day are expected. Delivered, opened, clicked and bounced figures are read back from the service into the CRM.", "IT department", D(10, 23), "Requested", "Needed: access to the service, a verified sending domain, and the exact product and plan."],
+    ["Email delivery", "Campaigns are sent through a third-party email service provided by the IT department (Mailchimp expected). IKL's own address (info@ikl.com.pk) stays the visible sender. More than 500 emails a day are expected. Delivered, opened, clicked and bounced figures are read back from the service into the CRM.", "IT department", D(10, 23), "Requested", IKL ? "IKL answered the email-service questions (sheet OTE_Open Questions): a UMT-domain account, about 2,000 contacts now, 12 campaigns a month. Still needed: handover of the account, access for the CRM and domain verification by the IT department. The delivery engine is built and tested with a simulated sender, so only the connection is left." : "Needed: access to the service, a verified sending domain, and the exact product and plan."],
     ["Who runs campaigns", "Campaigns are created and sent by the Marketing role only. Sales sees the results. Marketing and Sales work on the same shared IKL data (companies, groups and folders), tagged by team.", "Project team", null, "Confirmed", ""],
     ["WhatsApp", "IKL will use WhatsApp, including campaigns to lists. The IT department provides a third-party WhatsApp API that is connected to the CRM. This is an added request (not in the BRD) and is planned in Sprint 3.", "IT department", D(11, 3), "Requested", "Campaign messages need approved templates; approval takes time."],
     ["Website", "ikl.com.pk is built in-house (Next.js). The project team connects the website forms to the CRM; IKL provides the list of forms and wording (Q20).", "Project team", null, "Confirmed", ""],
     ["Invoices", "Invoices are issued in IKL's finance system. The CRM records a reference only: invoice number, date, amount and payment status, entered by the sales team (Q17). The CRM does not create invoices or calculate tax.", "IKL finance", D(10, 22), "Requested", ""],
     ["Document search", "Search covers names, titles, types, clients, programs, dates and the text inside PDF, Word and Excel files. Scanned images need OCR, which is not included.", "Project team", null, "Confirmed", ""],
     ["Acceptance and training", "IKL nominates the person who accepts each delivery and the staff to be trained. The project team schedules the training before go-live.", "IKL", D(11, 17), "Requested", "Training uses the forms and templates IKL shares (Q21)."],
-    ["Web address", "The CRM is reachable by IKL users at an agreed web address. Real email tracking and the website forms need this.", "IT department", D(11, 10), "Requested", ""],
+    ["Web address", "The CRM is reachable by IKL users at an agreed web address. Real email tracking and the website forms need this.", "IT department", D(11, 10), "Requested", "A temporary online test address is available for demonstrations. The agreed permanent address and hosting are still needed from the IT department."],
   ];
   DEC.forEach((d, i) => {
     const row = ds.getRow(4 + i);
@@ -386,7 +459,7 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
   const cntS = (st, f = () => true) => fnRows.filter((r) => r[4] === st && f(r)).length;
   const done = cntS("Done"), part = cntS("Partial"), pend = cntS("Pending");
   sm.getColumn(1).width = 12; sm.getColumn(2).width = 58; sm.getColumn(3).width = 14; [4, 5, 6, 7].forEach((c) => { sm.getColumn(c).width = 11; }); sm.getColumn(8).width = 13;
-  titleBlock(sm, "IKL CRM - progress and sprint plan", "Against BRD IKL-CRM-BRD-001 v0.1. Status as of 26 Oct 2026: Sprint 1 delivered. Final delivery: 30 November 2026, in four sprints. Figures recalculate when a status in 'Functional Checklist' is changed.", 8);
+  titleBlock(sm, "IKL CRM - progress and sprint plan", "Against BRD IKL-CRM-BRD-001 v0.1. Status as of 17 Nov 2026: Sprints 1, 2 and 3 delivered (some functions wait for the IT department's email, WhatsApp and web address, and for the IKL website to send its forms). Final delivery: 30 November 2026, in four sprints. Figures recalculate when a status in 'Functional Checklist' is changed.", 8);
   const sec = (r, t) => { const c = sm.getCell(r, 1); c.value = t; c.font = F({ bold: true, size: 11, color: { argb: NAVY } }); };
   sec(4, "Key figures");
   [
@@ -442,7 +515,7 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
   headerRow(sm, P0 + 1, ["Sprint", "Name", "Delivery", "Functions", "Tuesday demos", "", "", "Planned coverage*"]);
   sm.mergeCells(P0 + 1, 5, P0 + 1, 7);
   let cum = done + 0.5 * part;
-  const demoTxt = { 1: "Delivered", 2: "3 Nov, 10 Nov", 3: "17 Nov, 24 Nov", 4: "30 Nov (final)" };
+  const demoTxt = { 1: "Delivered", 2: "Delivered", 3: "Delivered", 4: "30 Nov (final)" };
   for (let s = 1; s <= 4; s++) {
     const r = P0 + 1 + s, inS = fnRows.filter((x) => sprintOf[x[0]] === s);
     inS.forEach((x) => { cum += x[4] === "Pending" ? 1 : x[4] === "Partial" ? 0.5 : 0; });
@@ -451,39 +524,51 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
     row.getCell(3).value = { formula: `'Sprint Plan'!D${4 + s}`, result: CAL[s].end };
     row.getCell(4).value = { formula: `COUNTIF(${H},${s})`, result: inS.length };
     row.getCell(5).value = demoTxt[s]; sm.mergeCells(r, 5, r, 7);
-    row.getCell(8).value = cum / N;
-    for (let c = 1; c <= 8; c++) styleCell(row.getCell(c), { fill: s === 1 ? "FFECFDF5" : undefined });
-    if (s === 1) { row.getCell(1).value = "Sprint 1 \u2713"; }
+    row.getCell(8).value = s === 1 ? afterS1 : s === 2 ? afterS2 : s === 3 ? (done + 0.5 * part) / N : cum / N; // delivered sprints show the actual figure
+    for (let c = 1; c <= 8; c++) styleCell(row.getCell(c), { fill: s <= 3 ? "FFECFDF5" : undefined });
+    if (s <= 3) { row.getCell(1).value = `Sprint ${s} \u2713`; }
     row.getCell(1).font = F({ bold: true, color: { argb: NAVY } }); [3, 4, 5, 8].forEach((c) => { row.getCell(c).alignment = { horizontal: "center", vertical: "middle", wrapText: true }; });
     row.getCell(3).numFmt = "dd mmm yyyy"; row.getCell(8).numFmt = "0%"; row.height = 22;
   }
   const NR = P0 + 7;
-  sm.getCell(NR, 2).value = "* Coverage = Done + half of Partial. Planned coverage assumes every function listed for the sprint is delivered. The live figure in Key figures changes as statuses are updated in Functional Checklist.";
+  sm.getCell(NR, 2).value = "* Coverage = Done + half of Partial. For delivered sprints the figure is the coverage reached; for later sprints it assumes every function listed for the sprint is delivered. The live figure in Key figures changes as statuses are updated in Functional Checklist.";
   sm.getCell(NR, 2).font = F({ italic: true, size: 9, color: { argb: GREY } }); sm.mergeCells(NR, 2, NR, 8); sm.getCell(NR, 2).alignment = { wrapText: true, vertical: "top" }; sm.getRow(NR).height = 28;
 
   const G0 = NR + 2;
   sec(G0, "Where the gaps are (Priority 1) and when they close");
   [
-    ["MIR 2", "Website forms integration - nothing is captured from the IKL website yet (0 of 7 functions). Closes in Sprint 3."],
-    ["CRM 3", "Programs, registrations, participants and attendance - the weakest area; training is recorded per client engagement, not as a program catalogue with registrations. Closes in Sprints 2-3."],
-    ["MIR 1", "Email campaigns are fully built, but sending is demo-mode: no real email is delivered and scheduled campaigns do not send on their own. Closes in Sprints 2-3."],
-    ["CRM 4", "Excel migration works for contacts only. Companies and contacts are loaded in Sprint 2; everything else in Sprint 4. Needs IKL's Excel files (Q16, Q22)."],
-    ["MIR 3", "Invoice and payment references and the revenue report are done (Sprint 1). Reports still cannot be exported; registration, team and program reports and the date range follow in Sprint 4."],
+    ["MIR 2", "Website forms: the CRM side is built and tested in Sprint 3 (secure key, four forms, source tag, duplicate check, owner notified, acknowledgement). It goes live when the IKL website sends its forms and IKL confirms the fields and wording (Q20)."],
+    ["CRM 3", "Done: catalogue, batches, registrations and nominations, attendance, completion with certificate record, alumni, feedback and program history (Sprints 2 and 3). TNA entry has no screen yet."],
+    ["MIR 1", "The email engine (queue, personalised messages, tracking, unsubscribe, counters) is built and tested with a simulated sender (Sprint 2). Automations now run by themselves (Sprint 3). No real email leaves the system until IKL's email account is handed over and the IT department verifies the sending domain; WhatsApp needs the IT department's API."],
+    ["CRM 4", "Companies and contacts can be imported from Excel (Sprint 2). IKL has shared its Excel files on Google Drive (Q16, Q22): loading IKL's own data and checking it with the focal person follows; everything else migrates in Sprint 4."],
+    ["MIR 3", "Invoice and payment references, the revenue report (Sprint 1), and the IKL dashboard panels for leads, the contact-to-converted funnel and campaigns (Sprint 2) are done. Reports still cannot be exported; registration, team and program reports and the date range follow in Sprint 4."],
   ].forEach((g, i) => {
     const r = G0 + 1 + i; sm.getCell(r, 1).value = g[0]; sm.getCell(r, 1).font = F({ bold: true, color: { argb: NAVY } }); sm.getCell(r, 1).alignment = { vertical: "top" };
     sm.getCell(r, 2).value = g[1]; sm.mergeCells(r, 2, r, 8); sm.getCell(r, 2).alignment = { wrapText: true, vertical: "top" }; sm.getCell(r, 2).font = F(); sm.getRow(r).height = 30;
   });
 
   const fnText = Object.fromEntries(fnRows.map((r) => [r[0], r[3]]));
-  const s1 = addSprint1Report(wb, { F, styleCell, headerRow, titleBlock, est, linesFor, solid, NAVY, BAND, GREY, box, SPRINT2_ITEMS: SPRINTS[2].items });
+  const s1 = addSprint1Report(wb, { F, styleCell, headerRow, titleBlock, est, linesFor, solid, NAVY, BAND, GREY, box, SPRINT2_ITEMS: S2_PLANNED_ITEMS });
   s1.fillRows(fnText);
   s1.ws.orderNo = sm.orderNo + 0.5;
   s1.ws.properties.tabColor = { argb: "FF059669" };
 
-  const doneBefore = done - fnRows.filter((r) => r.was).length;
-  const partBefore = part + fnRows.filter((r) => r.was === "Partial").length;
-  const pendBefore = pend + fnRows.filter((r) => r.was === "Pending").length;
+  const doneBefore = fnRows.filter((r) => origStatus(r) === "Done").length;
+  const partBefore = fnRows.filter((r) => origStatus(r) === "Partial").length;
+  const pendBefore = fnRows.filter((r) => origStatus(r) === "Pending").length;
   const covBefore = (doneBefore + 0.5 * partBefore) / N;
+  const s2 =addSprint2Report(wb, { F, styleCell, headerRow, titleBlock, est, linesFor, solid, NAVY, BAND, GREY, box, SPRINT3_ITEMS: S3_PLANNED_ITEMS,
+    counts: { before: Math.round(afterS1 * 100) + "%", after: Math.round(afterS2 * 100) + "%" } });
+  s2.fillRows(fnText);
+  s2.ws.orderNo = sm.orderNo + 0.6;
+  s2.ws.properties.tabColor = { argb: "FF059669" };
+  const s3 = addSprint3Report(wb, { F, styleCell, headerRow, titleBlock, est, linesFor, solid, NAVY, BAND, GREY, box, SPRINT4_ITEMS: SPRINTS[4].items,
+    counts: { before: Math.round(afterS2 * 100) + "%", after: Math.round(((done + 0.5 * part) / N) * 100) + "%" } });
+  s3.fillRows(fnText);
+  s3.ws.orderNo = sm.orderNo + 0.7;
+  s3.ws.properties.tabColor = { argb: "FF059669" };
+  const s3Done = Object.values(DONE_NOW_S3).filter((d) => d.status === "Done").length;
+  const s2Done = Object.values(DONE_NOW_S2).filter((d) => d.status === "Done").length;
   sm.getColumn(10).width = 28; [11, 12].forEach((c) => { sm.getColumn(c).width = 11; }); sm.getColumn(13).width = 12;
   sm.getCell("J4").value = "Since the last report (19 Oct)"; sm.getCell("J4").font = F({ bold: true, size: 11, color: { argb: NAVY } });
   ["Measure", "19 Oct", "Now", "Change"].forEach((l, i) => {
@@ -495,6 +580,8 @@ const statusRules = (tl) => [["Done", "FFD1FAE5", "FF065F46"], ["Partial", "FFFE
     ["Pending", pendBefore, { formula: "C8", result: pend }, { formula: "L8-K8", result: pend - pendBefore }, "down"],
     ["Coverage*", covBefore, { formula: "C9", result: (done + 0.5 * part) / N }, { formula: "L9-K9", result: (done + 0.5 * part) / N - covBefore }, "good"],
     ["Sprint 1 functions done", 0, 7, 7, "good"],
+    ["Sprint 2 functions done", 0, s2Done, s2Done, "good"],
+    ["Sprint 3 functions done", 0, s3Done, s3Done, "good"],
   ];
   cmp.forEach((r, i) => {
     const row = 6 + i;

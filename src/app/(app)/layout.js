@@ -1,8 +1,9 @@
 import { requireUser } from "@/lib/auth/requireUser";
 import { getNavSections } from "@/lib/constants/navigation";
 import { listForUser, unreadCount as getUnreadCount } from "@/lib/services/notificationService";
-import { reconcileOverdueTasksThrottled } from "@/lib/services/reminderService";
+import { runAllDueThrottled } from "@/lib/services/schedulerService";
 import AppShell from "@/components/layout/AppShell";
+import { guideKeyFor } from "@/lib/utils/guideKey";
 
 export default async function AppLayout({ children }) {
   const user = await requireUser();
@@ -15,7 +16,10 @@ export default async function AppLayout({ children }) {
   // renders - throttled so it isn't hitting the DB on every navigation.
   // /api/cron/reminders covers genuine 24/7 automation independent of
   // whether anyone is logged in (see vercel.json).
-  await reconcileOverdueTasksThrottled();
+  // Sprint 3: the same opportunistic trigger now also runs automation waits, scheduled campaigns and
+  // follow-up reminders, so hosts without cron (the test link) behave like a real deployment.
+  // Not awaited: a slow batch (many scheduled sends) must never delay the page the user asked for.
+  runAllDueThrottled().catch((err) => console.error("[scheduler] failed:", err?.message || err));
 
   const [notifications, unread] = await Promise.all([
     listForUser(user.id, 8),
@@ -33,7 +37,7 @@ export default async function AppLayout({ children }) {
   }));
 
   return (
-    <AppShell user={user} navSections={navSections} notifications={serializedNotifications} unreadCount={unread}>
+    <AppShell user={user} guideKey={guideKeyFor(user)} navSections={navSections} notifications={serializedNotifications} unreadCount={unread}>
       {children}
     </AppShell>
   );

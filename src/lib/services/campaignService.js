@@ -43,7 +43,7 @@ export async function getCampaignRecipients(user, campaignId, limit = 100) {
   requirePermission(user, "campaigns.view");
   return CampaignRecipient.findAll({
     where: { campaignId },
-    include: [{ model: Contact, attributes: ["id", "firstName", "lastName", "email"] }],
+    include: [{ model: Contact, attributes: ["id", "firstName", "lastName", "email", "phone", "whatsappNumber"] }],
     order: [["id", "ASC"]],
     limit,
   });
@@ -64,15 +64,20 @@ export async function createCampaign(user, payload) {
   // the creating user's department defaults (Settings > Departments) rather
   // than a single hardcoded university address, so Marketing, IKL/HSM and
   // any future department each look like they're mailing from themselves.
+  const channel = payload.channel === "whatsapp" ? "whatsapp" : "email";
+  if (channel === "whatsapp" && !String(payload.messageBody || "").trim()) throw new Error("Write the WhatsApp message.");
   const bodyDesign = Array.isArray(payload.bodyDesign) ? payload.bodyDesign : [];
   const campaign = await Campaign.create({
+    channel,
+    messageBody: channel === "whatsapp" ? String(payload.messageBody).trim() : null,
+    templateName: channel === "whatsapp" ? String(payload.templateName || "").trim() || null : null,
     name: payload.name,
-    subject: payload.subject,
+    subject: channel === "whatsapp" ? null : payload.subject,
     senderName: payload.senderName || dept.senderName || "University Admissions Office",
     senderEmail: payload.senderEmail || dept.senderEmail || "admissions@university.edu.pk",
     replyTo: payload.replyTo || dept.replyTo || payload.senderEmail || dept.senderEmail || "admissions@university.edu.pk",
     bodyDesign,
-    bodyHtml: renderEmailDesignToHtml(bodyDesign, { subject: payload.subject }),
+    bodyHtml: channel === "whatsapp" ? null : renderEmailDesignToHtml(bodyDesign, { subject: payload.subject }),
     segmentId: payload.segmentId || null,
     departmentId: dept.id,
     createdBy: user.id,
@@ -81,7 +86,7 @@ export async function createCampaign(user, payload) {
     recipientsCount,
   });
 
-  await recordAudit({ userId: user.id, action: "Created campaign", module: "campaigns", resourceType: "Campaign", resourceId: campaign.id, departmentId: dept.id });
+  await recordAudit({ userId: user.id, action: `Created ${channel === "whatsapp" ? "WhatsApp " : ""}campaign`, module: "campaigns", resourceType: "Campaign", resourceId: campaign.id, departmentId: dept.id });
   return campaign;
 }
 

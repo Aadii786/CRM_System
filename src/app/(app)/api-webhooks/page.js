@@ -1,5 +1,6 @@
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { listApiKeys, listWebhooks } from "@/lib/services/integrationService";
+import { listDepartments } from "@/lib/services/departmentService";
 import PageHeader from "@/components/common/PageHeader";
 import Card, { CardHeader } from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -12,7 +13,8 @@ export const metadata = { title: "API & Webhooks" };
 
 export default async function ApiWebhooksPage() {
   const user = await requireUserWithPermission("api.manage");
-  const [apiKeysRaw, webhooksRaw] = await Promise.all([listApiKeys(user), listWebhooks(user)]);
+  const [apiKeysRaw, webhooksRaw, departmentsRaw] = await Promise.all([listApiKeys(user), listWebhooks(user), listDepartments()]);
+  const departments = departmentsRaw.map((d) => ({ key: d.key, name: d.name }));
   const apiKeys = apiKeysRaw.map((k) => k.get({ plain: true }));
   const webhooks = webhooksRaw.map((w) => w.get({ plain: true }));
 
@@ -25,7 +27,7 @@ export default async function ApiWebhooksPage() {
 
       <Card padding="none" className="mb-6">
         <div className="p-5 pb-3">
-          <CardHeader title="API Keys" actions={<CreateApiKeyButton />} />
+          <CardHeader title="API Keys" actions={<CreateApiKeyButton departments={departments} />} />
         </div>
         {apiKeys.length === 0 ? (
           <div className="p-5 pt-0"><EmptyState icon={KeyRound} title="No API keys yet" /></div>
@@ -35,7 +37,7 @@ export default async function ApiWebhooksPage() {
               <div key={k.id} className="flex items-center justify-between px-5 py-3">
                 <div>
                   <p className="text-sm font-medium text-ink">{k.name}</p>
-                  <p className="text-xs font-mono text-ink-muted">{k.keyPrefix}{"•".repeat(24)}</p>
+                  <p className="text-xs font-mono text-ink-muted">{k.keyPrefix}{"•".repeat(24)}{k.departmentName ? ` · feeds ${k.departmentName}` : ""}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-ink-muted">{k.lastUsedAt ? `Last used ${timeAgo(k.lastUsedAt)}` : "Never used"}</span>

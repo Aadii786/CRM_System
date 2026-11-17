@@ -2,8 +2,13 @@
 
 import { Bell, CheckCheck } from "lucide-react";
 import DropdownMenu from "@/components/ui/DropdownMenu";
+import Link from "next/link";
 import { markAllNotificationsReadAction } from "@/actions/notifications";
 import { timeAgo } from "@/lib/utils/format";
+
+function Wrapper({ href, className, children }) {
+  return href ? <Link href={href} className={className}>{children}</Link> : <div className={className}>{children}</div>;
+}
 
 export default function NotificationsMenu({ notifications, unreadCount }) {
   return (
@@ -35,9 +40,10 @@ export default function NotificationsMenu({ notifications, unreadCount }) {
       ) : (
         <div className="flex flex-col">
           {notifications.map((n) => (
-            <div
+            <Wrapper
               key={n.id}
-              className={["flex flex-col gap-0.5 rounded-md px-2.5 py-2 text-left", !n.isRead ? "bg-primary-subtle/40" : ""].join(" ")}
+              href={n.link && n.link.startsWith("/") ? n.link : null}
+              className={["flex flex-col gap-0.5 rounded-md px-2.5 py-2 text-left", !n.isRead ? "bg-primary-subtle/40" : "", n.link && n.link.startsWith("/") ? "hover:bg-surface-alt" : ""].join(" ")}
             >
               <div className="flex items-center gap-1.5">
                 {!n.isRead && <span className="size-1.5 rounded-full bg-primary shrink-0" />}
@@ -45,7 +51,7 @@ export default function NotificationsMenu({ notifications, unreadCount }) {
               </div>
               {n.body && <p className="text-xs text-ink-muted">{n.body}</p>}
               <p className="text-[11px] text-ink-muted">{timeAgo(n.createdAt)}</p>
-            </div>
+            </Wrapper>
           ))}
         </div>
       )}

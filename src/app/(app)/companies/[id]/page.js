@@ -14,6 +14,8 @@ import Tabs from "@/components/ui/Tabs";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
 import DocumentsPanel from "@/components/documents/DocumentsPanel";
+import ProgramHistory from "@/components/programs/ProgramHistory";
+import { getCompanyProgramHistory } from "@/lib/services/registrationService";
 import { Pencil, Building2, Handshake, GraduationCap, FolderOpen } from "lucide-react";
 import { formatDate, formatDateTime, formatCurrencyPKR } from "@/lib/utils/format";
 
@@ -31,11 +33,13 @@ export default async function CompanyDetailPage({ params }) {
   const company = companyRaw.get({ plain: true });
 
   const canSeeLists = hasPermission(user, "lists.view");
-  const [notesRaw, relatedRaw, documentsRaw, foldersRaw] = await Promise.all([
+  const canSeePrograms = hasPermission(user, "programs.view");
+  const [notesRaw, relatedRaw, documentsRaw, foldersRaw, programHistory] = await Promise.all([
     listNotes(user, "company", id),
     getCompanyRelated(user, id),
     listDocuments(user, "company", id),
     canSeeLists ? getCompanyHierarchy(user, id) : Promise.resolve([]),
+    canSeePrograms ? getCompanyProgramHistory(user, id) : Promise.resolve({ registrations: [], engagements: [] }),
   ]);
   const notes = notesRaw.map((n) => n.get({ plain: true }));
   const contacts = relatedRaw.contacts.map((c) => c.get({ plain: true }));
@@ -72,7 +76,7 @@ export default async function CompanyDetailPage({ params }) {
           { key: "contacts", label: "Contacts", count: contacts.length },
           { key: "deals", label: "Deals", count: deals.length },
           { key: "folders", label: "Folders & Lists", count: folders.length },
-          { key: "training", label: "Training Programs", count: trainingPrograms.length },
+          { key: "training", label: "Program history", count: programHistory.registrations.length + Math.max(programHistory.engagements.length, trainingPrograms.length) },
           { key: "activity", label: "Activity" },
           { key: "tasks-meetings", label: "Tasks & Meetings" },
           { key: "documents", label: "Documents", count: documents.length },
@@ -166,7 +170,9 @@ export default async function CompanyDetailPage({ params }) {
           </div>
         )}
 
-        {trainingPrograms.length === 0 ? (
+        {canSeePrograms ? (
+          <ProgramHistory history={programHistory} showPerson />
+        ) : trainingPrograms.length === 0 ? (
           <EmptyState icon={GraduationCap} title="No training programs yet" />
         ) : (
           <div className="flex flex-col gap-2.5">

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IKL CRM - One-page overview</title>
+<style>
+  :root { --ink:#16213a; --muted:#5b6478; --line:#dfe3ec; --accent:#4f46e5; --ok:#0f7a4d; --todo:#a15c00; --bg:#fff; --soft:#f5f6fb; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ink:#e8ebf5; --muted:#a3abc0; --line:#2b3350; --accent:#8b86ff; --ok:#4cc38a; --todo:#f0b45a; --bg:#10152a; --soft:#182041; } }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+  .page{max-width:980px;margin:0 auto;padding:24px 16px}
+  h1{font-size:24px;margin:0 0 2px} h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:18px 0 8px}
+  p{margin:0 0 6px} .sub{color:var(--muted)}
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
+  .flow div{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+  .flow b{display:block;color:var(--accent)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px} .cols>div{border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+  ul{margin:4px 0 0;padding-left:18px} li{margin:2px 0}
+  .ok h3{color:var(--ok)} .todo h3{color:var(--todo)} h3{margin:0 0 4px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px} td,th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top} th{color:var(--muted);font-weight:600}
+  .foot{margin-top:14px;color:var(--muted);font-size:12px}
+  @media (max-width:720px){.flow{grid-template-columns:1fr 1fr}.cols{grid-template-columns:1fr}}
+  @media print{body{font-size:11.5px}.page{padding:0}h2{margin:12px 0 6px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>IKL CRM - one-page overview</h1>
+  <p class="sub">One CRM for IKL's corporate training and open-enrollment programs. Status after Sprint 3 (17 Nov 2026). Final delivery: 30 Nov 2026.</p>
+
+  <h2>How the system works</h2>
+  <div class="flow">
+    <div><b>1. Leads come in</b>Website forms, Excel import, by hand</div>
+    <div><b>2. Sales works them</b>Inquiries, proposals, invoice references</div>
+    <div><b>3. Programs run</b>Catalogue, batches, registrations, attendance</div>
+    <div><b>4. People complete</b>Alumni, certificate record, feedback</div>
+    <div><b>5. Marketing follows up</b>Email, WhatsApp, automations</div>
+  </div>
+  <p>Every person has <b>one record</b> (lead, participant, alumnus). Each role sees only what it is allowed to; every action is checked on the server.</p>
+
+  <h2>Who uses what</h2>
+  <table>
+    <tr><th>Role</th><th>Main work</th></tr>
+    <tr><td><b>Head of Department</b></td><td>Dashboard, approves proposals, team follow-ups, users and passwords, all reports.</td></tr>
+    <tr><td><b>Sales</b></td><td>Contacts, companies, deals, proposals, invoice/payment references, registrations, attendance, completion, feedback, tasks.</td></tr>
+    <tr><td><b>Marketing</b></td><td>Lists, segments, email and WhatsApp campaigns, automations, WhatsApp inbox, website forms.</td></tr>
+    <tr><td><b>Rector</b></td><td>Read-only: executive dashboard, departments, reports.</td></tr>
+  </table>
+  <p class="sub">New users get a short welcome tour on first login; the <b>Guide</b> page in the menu has the full step-by-step for every role and a glossary.</p>
+
+  <h2>What is built (Sprints 1 to 3)</h2>
+  <div class="cols">
+    <div class="ok"><h3>Working now</h3>
+      <ul>
+        <li>Contacts, companies (duplicate check), notes, search, Excel import</li>
+        <li>Deals pipeline, proposals with Head approval, invoice and payment references</li>
+        <li>Program catalogue and batches; program interests</li>
+        <li>Registrations, company nominations, seat limit, attendance, completion and certificate record, alumni, feedback</li>
+        <li>Program history on contacts and companies; filters by program, organization, dates</li>
+        <li>Email and WhatsApp campaigns, unsubscribe, open/click/reply tracking</li>
+        <li>Automations that run by themselves; real lead scoring</li>
+        <li>Reminders before due dates, manager overview of overdue follow-ups</li>
+        <li>Website forms into the CRM (enquiry, brochure, registration, feedback) with acknowledgement email</li>
+        <li>Roles, audit log, read-only Rector, IKL dashboard</li>
+      </ul>
+    </div>
+    <div class="todo"><h3>Not yet / waiting</h3>
+      <ul>
+        <li><b>Real email and WhatsApp delivery</b>: waiting for IT (UMT-domain Mailchimp account, domain verification, WhatsApp API and templates). Today both run in demo mode.</li>
+        <li><b>Permanent web address</b> and a real scheduler (cron) from IT</li>
+        <li><b>Website side</b>: ikl.com.pk must call the CRM form endpoints (document ready)</li>
+        <li><b>Sprint 4 (to 30 Nov):</b> loading IKL's real data, reports by program/source/date, Excel/PDF export, date range on dashboards, document search, backup and restore test, demo data removed, user acceptance test and training</li>
+        <li><b>Out of scope</b> unless approved: producing certificate documents, waiting lists, finance-system integration, WhatsApp reminders to staff, scanned-document OCR</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>What IKL needs to provide</h2>
+  <ul>
+    <li>The real WhatsApp API details and the UMT email account / domain verification (through IT)</li>
+    <li>Excel files of contacts, companies, participants and alumni; the program catalogue</li>
+    <li>Website form fields and acknowledgement wording; existing feedback and attendance forms</li>
+    <li>Review of the Roles sheet "Change" lines and the first users</li>
+  </ul>
+  <p class="foot">Technical documents: docs/website-forms.md, docs/whatsapp-and-automations.md, docs/email-delivery.md, DEPLOYMENT.md.</p>
+</div>
+</body>
+</html>

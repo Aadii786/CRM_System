@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, Pencil, Trash2, CalendarDays } from "lucide-react";
+import { CalendarPlus, Pencil, Trash2, CalendarDays, Users } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -16,7 +17,7 @@ import { formatCurrencyFull, formatDate } from "@/lib/utils/format";
 const STATUS_TONE = { Planned: "neutral", "Open for registration": "info", Running: "primary", Completed: "success", Cancelled: "danger" };
 
 /** Dated runs of a catalogue program: dates, venue, trainer, seats and fee. */
-export default function BatchesPanel({ programId, defaultFee, batches, trainers, canManage }) {
+export default function BatchesPanel({ programId, defaultFee, batches, trainers, canManage, stats = {} }) {
   const [editing, setEditing] = useState(null); // null closed, {} new, {id,...} edit
   const [error, setError] = useState(null);
   const [isPending, startTransition] = useTransition();
@@ -64,7 +65,7 @@ export default function BatchesPanel({ programId, defaultFee, batches, trainers,
           <table className="w-full text-sm">
             <thead className="bg-surface-alt text-xs uppercase tracking-wide text-ink-muted">
               <tr>
-                {["Batch", "Dates", "Venue", "Trainer", "Seats", "Fee", "Status", ""].map((h) => <th key={h} className="px-4 py-2.5 text-left font-medium">{h}</th>)}
+                {["Batch", "Dates", "Venue", "Trainer", "Registered", "Fee", "Status", ""].map((h) => <th key={h} className="px-4 py-2.5 text-left font-medium">{h}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -74,10 +75,17 @@ export default function BatchesPanel({ programId, defaultFee, batches, trainers,
                   <td className="px-4 py-3 text-ink-secondary">{formatDate(b.startDate)}{b.endDate && b.endDate !== b.startDate ? ` - ${formatDate(b.endDate)}` : ""}</td>
                   <td className="px-4 py-3 text-ink-secondary">{b.venue || "—"}</td>
                   <td className="px-4 py-3 text-ink-secondary">{b.trainer?.name || "—"}</td>
-                  <td className="px-4 py-3 text-ink-secondary tabular-nums">{b.capacity ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink-secondary tabular-nums">
+                    <Link href={`/programs/${programId}/batches/${b.id}`} className="hover:text-primary" title="Open the participant list">
+                      {stats[b.id]?.taken ?? 0}{b.capacity ? ` / ${b.capacity}` : ""}
+                    </Link>
+                    {stats[b.id]?.completed ? <span className="block text-xs text-ink-muted">{stats[b.id].completed} completed</span> : null}
+                    {stats[b.id]?.avgScore != null ? <span className="block text-xs text-ink-muted">Feedback {stats[b.id].avgScore}/5</span> : null}
+                  </td>
                   <td className="px-4 py-3 text-ink-secondary tabular-nums">{b.fee != null ? formatCurrencyFull(b.fee) : "—"}</td>
                   <td className="px-4 py-3"><Badge tone={STATUS_TONE[b.status] || "neutral"}>{b.status}</Badge></td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <Link href={`/programs/${programId}/batches/${b.id}`} title="Participants, attendance, certificates and feedback" className="inline-flex items-center gap-1 p-1.5 rounded text-xs text-ink-muted hover:text-primary hover:bg-surface-alt"><Users className="size-3.5" /> Roster</Link>
                     {canManage && (
                       <>
                         <button type="button" title="Edit batch" onClick={() => { setError(null); setEditing(b); }} className="p-1.5 rounded text-ink-muted hover:text-primary hover:bg-surface-alt"><Pencil className="size-3.5" /></button>

@@ -7,6 +7,10 @@ import { recordAudit } from "./auditService";
 import { getEmailProvider, providerName, isSimulatedProvider, ProviderNotConfiguredError } from "@/lib/email/provider";
 import { renderForRecipient } from "@/lib/email/render";
 import { verifyToken } from "@/lib/email/tokens";
+import { applyScoreEvent } from "./leadScoringService";
+import { fireTrigger, recordAutomationEmailEvent } from "./automationEngine";
+import { sendCampaignBatch, WHATSAPP_ELIGIBLE } from "./whatsappService";
+import { isSimulatedWhatsApp, whatsappProviderName } from "@/lib/whatsapp/provider";
 
 const { Campaign, CampaignRecipient, CampaignEvent, Contact, Company, SegmentCondition, Department, Activity } = db;
 
@@ -44,18 +48,20 @@ const ELIGIBLE = [
   { unsubscribedAt: null },
 ];
 
+const eligibleFor = (campaign) => (campaign.channel === "whatsapp" ? WHATSAPP_ELIGIBLE : ELIGIBLE);
+
 export async function audienceCounts(campaign) {
   const base = await audienceBase(campaign);
   const [total, eligible] = await Promise.all([
     Contact.count({ where: base }),
-    Contact.count({ where: { [Op.and]: [base, ...ELIGIBLE] } }),
+    Contact.count({ where: { [Op.and]: [base, ...eligibleFor(campaign)] } }),
   ]);
   return { total, eligible, excluded: total - eligible };
 }
 
 async function queueCampaign(campaign) {
   const base = await audienceBase(campaign);
-  const where = { [Op.and]: [base, ...ELIGIBLE] };
+  const where = { [Op.and]: [base, ...eligibleFor(campaign)] };
   let lastId = 0;
   for (;;) {
     const rows = await Contact.findAll({ where: { [Op.and]: [where, { id: { [Op.gt]: lastId } }] }, attributes: ["id"], order: [["id", "ASC"]], limit: 1000, raw: true });
@@ -95,9 +101,41 @@ export async function recomputeCounters(campaignId) {
 
 // ------------------------------------------------------------------- sending
 
+/** WhatsApp campaigns: same queue and counters, the message goes through the WhatsApp provider. */
+async function processWhatsappCampaign(campaign, { budgetMs }) {
+  const campaignId = campaign.id;
+  const deadline = Date.now() + budgetMs;
+  let sent = 0;
+  for (;;) {
+    const batch = await CampaignRecipient.findAll({
+      where: { campaignId, status: "queued", error: null },
+      include: [{ model: Contact, include: [{ model: Company, attributes: ["name"] }] }],
+      order: [["id", "ASC"]],
+      limit: 200,
+    });
+    if (!batch.length) break;
+    const result = await sendCampaignBatch(campaign, batch, { deadline });
+    sent += result.sent;
+    if (result.notConfigured) {
+      await campaign.update({ status: "Failed", errorMessage: String(result.notConfigured).slice(0, 500) });
+      await recomputeCounters(campaignId);
+      return { sent, remaining: 0, done: true, failed: true, error: result.notConfigured };
+    }
+    if (Date.now() > deadline) {
+      await recomputeCounters(campaignId);
+      return { sent, remaining: await CampaignRecipient.count({ where: { campaignId, status: "queued", error: null } }), done: false };
+    }
+    if (!result.processed) break;
+  }
+  await recomputeCounters(campaignId);
+  await campaign.update({ status: "Sent", sentAt: new Date() });
+  return { sent, remaining: 0, done: true };
+}
+
 export async function processCampaign(campaignId, { budgetMs = 8000 } = {}) {
   const campaign = await Campaign.findByPk(campaignId);
   if (!campaign || campaign.status !== "Sending") return { sent: 0, remaining: 0, done: true };
+  if (campaign.channel === "whatsapp") return processWhatsappCampaign(campaign, { budgetMs });
   const provider = getEmailProvider(campaign.provider || providerName());
   const started = Date.now();
   let sent = 0;
@@ -168,6 +206,10 @@ async function claim(campaignId, fromStatuses) {
     { status: "Sending", startedAt: new Date(), provider: providerName(), errorMessage: null },
     { where: { id: campaignId, status: { [Op.in]: fromStatuses } } }
   );
+  if (affected === 1) {
+    const c = await Campaign.findByPk(campaignId, { attributes: ["id", "channel"] });
+    if (c?.channel === "whatsapp") await Campaign.update({ provider: `whatsapp:${whatsappProviderName()}` }, { where: { id: campaignId } });
+  }
   return affected === 1;
 }
 
@@ -179,7 +221,7 @@ export async function dispatchCampaign(user, campaignId) {
   requireDepartmentAccess(user, campaign.Department?.key);
   if (campaign.status === "Sent") throw new Error("This campaign has already been sent.");
   if (campaign.status === "Failed") throw new Error("This campaign failed. Set it back to Draft, fix the problem and send again.");
-  if (!campaign.bodyHtml) throw new Error("The campaign has no content yet.");
+  if (campaign.channel === "whatsapp" ? !campaign.messageBody : !campaign.bodyHtml) throw new Error("The campaign has no content yet.");
 
   if (campaign.status !== "Sending") {
     if (!(await claim(campaignId, ["Draft", "Scheduled", "Paused"]))) throw new Error("This campaign is already being sent.");
@@ -188,14 +230,14 @@ export async function dispatchCampaign(user, campaignId) {
     const queued = await queueCampaign(fresh);
     if (!queued) {
       await fresh.update({ status: "Draft" });
-      throw new Error("No one can be emailed: the audience is empty or everyone has unsubscribed, bounced or opted out.");
+      throw new Error("No one can be contacted: the audience is empty or everyone has unsubscribed, bounced or opted out.");
     }
     await recordAudit({ userId: user.id, action: `Started sending campaign "${campaign.name}" to ${queued} recipients`, module: "campaigns", resourceType: "Campaign", resourceId: campaignId, departmentId: campaign.departmentId });
     const result = await processCampaign(campaignId);
-    return { ...result, queued, excluded: counts.excluded, simulated: isSimulatedProvider() };
+    return { ...result, queued, excluded: counts.excluded, simulated: campaign.channel === "whatsapp" ? isSimulatedWhatsApp() : isSimulatedProvider() };
   }
   const result = await processCampaign(campaignId);
-  return { ...result, queued: await CampaignRecipient.count({ where: { campaignId } }), excluded: 0, simulated: isSimulatedProvider() };
+  return { ...result, queued: await CampaignRecipient.count({ where: { campaignId } }), excluded: 0, simulated: campaign.channel === "whatsapp" ? isSimulatedWhatsApp() : isSimulatedProvider() };
 }
 
 /** Scheduler entry point: start what is due, keep sending what is unfinished. */
@@ -235,7 +277,7 @@ export async function recordEmailEvent({ campaignId, contactId, type, metadata =
   const recipient = await CampaignRecipient.findOne({ where: { campaignId, contactId } });
   if (!recipient) return { ignored: "not a recipient" };
 
-  const campaign = await Campaign.findByPk(campaignId, { attributes: ["id", "name", "departmentId"] });
+  const campaign = await Campaign.findByPk(campaignId, { attributes: ["id", "name", "departmentId", "channel"] });
   const contact = await Contact.findByPk(contactId);
   if (!campaign || !contact) return { ignored: "missing record" };
 
@@ -263,8 +305,20 @@ export async function recordEmailEvent({ campaignId, contactId, type, metadata =
   if (type !== "delivered") await contact.update(patch);
 
   if (first && type !== "delivered") {
-    const titles = { opened: "Opened", clicked: "Clicked a link in", bounced: "Email bounced for", unsubscribed: "Unsubscribed from" };
+    const wa = campaign.channel === "whatsapp";
+    const titles = wa
+      ? { opened: "Read WhatsApp message of", clicked: "Replied to WhatsApp campaign", bounced: "WhatsApp message failed for", unsubscribed: "Opted out of" }
+      : { opened: "Opened", clicked: "Clicked a link in", bounced: "Email bounced for", unsubscribed: "Unsubscribed from" };
     await Activity.create({ type: "campaign", title: `${titles[type]} campaign: ${campaign.name}`, contactId, userId: null, occurredAt });
+    // Real engagement feeds lead scoring and can start automations (CRM-2.2, MIR-1.8).
+    if (type === "opened") {
+      if (!wa) await applyScoreEvent(contact, "Email opened");
+      await fireTrigger("email_opened", contact, { campaignId });
+    }
+    if (type === "clicked") {
+      if (!wa) await applyScoreEvent(contact, "Email clicked");
+      await fireTrigger("email_clicked", contact, { campaignId });
+    }
   }
   if (recompute) await recomputeCounters(campaignId);
   return { recorded: true, first };
@@ -288,6 +342,10 @@ export async function unsubscribeByToken(token) {
 export async function recordClickByToken(token) {
   const payload = verifyToken(token);
   if (!payload || payload.t !== "c" || !/^https?:\/\//i.test(payload.url || "")) return null;
+  if (payload.a) {
+    await recordAutomationEmailEvent(payload.a, payload.u, "clicked").catch(() => {});
+    return payload.url;
+  }
   await recordEmailEvent({ campaignId: payload.c, contactId: payload.u, type: "clicked", metadata: { url: payload.url } }).catch(() => {});
   return payload.url;
 }
@@ -295,6 +353,10 @@ export async function recordClickByToken(token) {
 export async function recordOpenByToken(token) {
   const payload = verifyToken(token);
   if (!payload || payload.t !== "o") return false;
+  if (payload.a) {
+    await recordAutomationEmailEvent(payload.a, payload.u, "opened").catch(() => {});
+    return true;
+  }
   await recordEmailEvent({ campaignId: payload.c, contactId: payload.u, type: "opened" }).catch(() => {});
   return true;
 }
@@ -319,4 +381,29 @@ export async function simulateEngagement(user, campaignId) {
   await recomputeCounters(campaignId);
   await recordAudit({ userId: user.id, action: `Simulated engagement for campaign "${campaign.name}" (demo)`, module: "campaigns", resourceType: "Campaign", resourceId: campaignId, departmentId: campaign.departmentId });
   return { events };
+}
+
+
+// ------------------------------------------------- operational (one-to-one) email
+
+/**
+ * One operational email: a form acknowledgement to a visitor, a reminder to a staff member. It goes
+ * through the same provider as campaigns, uses the department's sender identity, and has no marketing
+ * tracking or unsubscribe footer. Never throws: returns { ok, simulated, error? }.
+ */
+export async function sendOperationalEmail({ departmentId, to, toName = "", subject, text, html = null, metadata = {} }) {
+  try {
+    if (!to) return { ok: false, error: "No email address." };
+    const dept = departmentId ? await Department.findByPk(departmentId) : null;
+    const provider = getEmailProvider(providerName());
+    const safe = String(text || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    const body = html || `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1f2937;max-width:600px">${safe.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px">${p.replace(/\n/g, "<br>")}</p>`).join("")}</div>`;
+    const result = await provider.send({
+      to, toName, from: dept?.senderEmail, fromName: dept?.senderName, replyTo: dept?.replyTo || dept?.senderEmail,
+      subject, html: body, text, headers: {}, metadata: { ...metadata, operational: true },
+    });
+    return { ok: Boolean(result?.ok), simulated: Boolean(provider.simulated), error: result?.ok ? undefined : result?.error || "The provider did not accept the message." };
+  } catch (err) {
+    return { ok: false, error: String(err.message || err).slice(0, 250), notConfigured: err instanceof ProviderNotConfiguredError };
+  }
 }

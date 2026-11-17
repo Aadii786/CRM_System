@@ -3,6 +3,7 @@ import { hasPermission } from "@/lib/permissions/rbac";
 import { listConversations, listAssignableUsers } from "@/lib/services/conversationService";
 import PageHeader from "@/components/common/PageHeader";
 import WhatsAppInbox from "@/components/conversations/WhatsAppInbox";
+import { isSimulatedWhatsApp, whatsappProviderName } from "@/lib/whatsapp/provider";
 
 export const metadata = { title: "WhatsApp Conversations" };
 
@@ -19,9 +20,11 @@ export default async function ConversationsPage() {
     <div>
       <PageHeader
         title="WhatsApp"
-        description="Simulated WhatsApp business inbox - no real messages are sent (requirements #26-#27, #63)."
+        description={isSimulatedWhatsApp()
+          ? `Shared WhatsApp inbox. Provider: ${whatsappProviderName()} (demo): nothing leaves the system until the WhatsApp service from the IT department is connected. Real replies arrive here through /api/whatsapp/webhook.`
+          : "Shared WhatsApp inbox: replies from contacts land here and on the contact's history."}
       />
-      <WhatsAppInbox conversations={conversations} users={users} currentUserId={user.id} canAssign={hasPermission(user, "conversations.assign")} />
+      <WhatsAppInbox simulated={isSimulatedWhatsApp()} conversations={conversations} users={users} currentUserId={user.id} canAssign={hasPermission(user, "conversations.assign")} />
     </div>
   );
 }

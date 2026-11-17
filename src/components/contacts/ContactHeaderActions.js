@@ -73,8 +73,12 @@ function WhatsappModal({ contact, open, onClose }) {
       const fd = new FormData();
       fd.set("contactId", contact.id);
       fd.set("body", message);
-      await sendDemoWhatsappAction(fd);
-      push("WhatsApp message sent (demo). Added to the conversation.");
+      const result = await sendDemoWhatsappAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
+      push("WhatsApp message sent. It is in the person's conversation and history.");
       onClose();
       router.refresh();
     });

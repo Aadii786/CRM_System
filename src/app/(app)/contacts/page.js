@@ -3,6 +3,7 @@ import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { getContacts, getContactStats } from "@/lib/services/contactService";
 import { listCompanyOptions } from "@/lib/services/companyService";
+import { listProgramOptions } from "@/lib/services/programService";
 import UrlDateInput from "@/components/ui/UrlDateInput";
 import PageHeader from "@/components/common/PageHeader";
 import FilterBar from "@/components/common/FilterBar";
@@ -31,16 +32,19 @@ export default async function ContactsPage({ searchParams }) {
     source: sp.source || undefined,
     engagementStatus: sp.engagement || undefined,
     companyId: sp.company || undefined,
+    programId: sp.program || undefined,
+    programRole: sp.programRole || undefined,
     createdFrom: sp.createdFrom || undefined,
     createdTo: sp.createdTo || undefined,
     activityFrom: sp.activityFrom || undefined,
     activityTo: sp.activityTo || undefined,
   };
 
-  const [{ data: rawContacts, pagination }, stats, companyOptions] = await Promise.all([
+  const [{ data: rawContacts, pagination }, stats, companyOptions, programOptions] = await Promise.all([
     getContacts(user, filters),
     getContactStats(user),
     hasPermission(user, "companies.view") ? listCompanyOptions(user) : Promise.resolve([]),
+    hasPermission(user, "programs.view") ? listProgramOptions(user) : Promise.resolve([]),
   ]);
   // Sequelize model instances aren't plain-serializable, so flatten before
   // they cross into the client-rendered table component.
@@ -52,7 +56,7 @@ export default async function ContactsPage({ searchParams }) {
     if (filters.status) params.set("status", filters.status);
     if (filters.source) params.set("source", filters.source);
     if (filters.engagementStatus) params.set("engagement", filters.engagementStatus);
-    for (const k of ["company", "createdFrom", "createdTo", "activityFrom", "activityTo"]) if (sp[k]) params.set(k, sp[k]);
+    for (const k of ["company", "program", "programRole", "createdFrom", "createdTo", "activityFrom", "activityTo"]) if (sp[k]) params.set(k, sp[k]);
     params.set("page", String(Math.max(1, targetPage)));
     return `/contacts?${params.toString()}`;
   }
@@ -109,6 +113,23 @@ export default async function ContactsPage({ searchParams }) {
         <UrlSelect paramName="source" allLabel="All sources" options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))} className="w-40" />
         {companyOptions.length > 0 && (
           <UrlSelect paramName="company" allLabel="All organizations" options={companyOptions.map((c) => ({ value: String(c.id), label: c.name }))} className="w-56" />
+        )}
+        {programOptions.length > 0 && (
+          <UrlSelect paramName="program" allLabel="All programs" options={programOptions.map((p) => ({ value: String(p.id), label: p.title }))} className="w-56" />
+        )}
+        {sp.program && (
+          <UrlSelect
+            paramName="programRole"
+            allLabel="Interested, registered or inquired"
+            options={[
+              { value: "interested", label: "Interested in the program" },
+              { value: "registered", label: "Registered" },
+              { value: "attended", label: "Attended" },
+              { value: "completed", label: "Completed (alumni)" },
+              { value: "inquiry", label: "Made an inquiry" },
+            ]}
+            className="w-64"
+          />
         )}
       </FilterBar>
       <FilterBar>

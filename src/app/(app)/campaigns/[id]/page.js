@@ -10,6 +10,7 @@ import FunnelBars from "@/components/charts/FunnelBars";
 import DataTable from "@/components/ui/DataTable";
 import CampaignActions from "@/components/campaigns/CampaignActions";
 import { isSimulatedProvider, providerName } from "@/lib/email/provider";
+import { isSimulatedWhatsApp, whatsappProviderName } from "@/lib/whatsapp/provider";
 import { formatDate, formatPercent } from "@/lib/utils/format";
 import { Send, Eye, MousePointerClick, XCircle } from "lucide-react";
 
@@ -29,11 +30,13 @@ export default async function CampaignDetailPage({ params }) {
   const recipientsRaw = await getCampaignRecipients(user, id, 100);
   const recipients = recipientsRaw.map((r) => r.get({ plain: true }));
 
+  const wa = campaign.channel === "whatsapp";
+  const simulatedChannel = wa ? isSimulatedWhatsApp() : isSimulatedProvider();
   const funnelStages = [
     { label: "Sent", value: campaign.recipientsCount },
     { label: "Delivered", value: campaign.deliveredCount },
-    { label: "Opened", value: campaign.openedCount },
-    { label: "Clicked", value: campaign.clickedCount },
+    { label: wa ? "Read" : "Opened", value: campaign.openedCount },
+    { label: wa ? "Replied" : "Clicked", value: campaign.clickedCount },
   ];
 
   return (
@@ -41,18 +44,20 @@ export default async function CampaignDetailPage({ params }) {
       <PageHeader
         breadcrumbs={[{ label: "Campaigns", href: "/campaigns" }, { label: campaign.name }]}
         title={campaign.name}
-        description={campaign.subject}
+        description={wa ? `WhatsApp · ${(campaign.messageBody || "").slice(0, 120)}` : campaign.subject}
         actions={
           <>
             <Badge status={campaign.status} />
-            <CampaignActions campaign={campaign} canSend={hasPermission(user, "campaigns.send")} simulated={isSimulatedProvider()} />
+            <CampaignActions campaign={campaign} canSend={hasPermission(user, "campaigns.send")} simulated={!wa && isSimulatedProvider()} />
           </>
         }
       />
 
-      {isSimulatedProvider() && (
+      {simulatedChannel && (
         <p className="mb-4 rounded-md border border-warning-border bg-warning-subtle px-3.5 py-2.5 text-sm text-ink">
-          Email provider: <strong>{providerName()}</strong> (demo). Nothing leaves the system until the real email service is connected. Opens, clicks and unsubscribes still work through the same tracking links.
+          {wa
+            ? <>WhatsApp provider: <strong>{whatsappProviderName()}</strong> (demo). Nothing leaves the system until the WhatsApp service from the IT department is connected. Replies arrive through the WhatsApp webhook.</>
+            : <>Email provider: <strong>{providerName()}</strong> (demo). Nothing leaves the system until the real email service is connected. Opens, clicks and unsubscribes still work through the same tracking links.</>}
         </p>
       )}
       {campaign.status === "Failed" && campaign.errorMessage && (
@@ -64,8 +69,8 @@ export default async function CampaignDetailPage({ params }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
         <MetricCard label="Recipients" value={campaign.recipientsCount.toLocaleString()} icon={Send} />
-        <MetricCard label="Open Rate" value={formatPercent(campaign.deliveredCount ? (campaign.openedCount / campaign.deliveredCount) * 100 : 0)} icon={Eye} />
-        <MetricCard label="Click Rate" value={formatPercent(campaign.deliveredCount ? (campaign.clickedCount / campaign.deliveredCount) * 100 : 0)} icon={MousePointerClick} />
+        <MetricCard label={wa ? "Read Rate" : "Open Rate"} value={formatPercent(campaign.deliveredCount ? (campaign.openedCount / campaign.deliveredCount) * 100 : 0)} icon={Eye} />
+        <MetricCard label={wa ? "Reply Rate" : "Click Rate"} value={formatPercent(campaign.deliveredCount ? (campaign.clickedCount / campaign.deliveredCount) * 100 : 0)} icon={MousePointerClick} />
         <MetricCard label="Bounced" value={campaign.bouncedCount.toLocaleString()} icon={XCircle} />
       </div>
 
@@ -77,8 +82,9 @@ export default async function CampaignDetailPage({ params }) {
         <Card>
           <h3 className="text-sm font-semibold text-ink mb-4">Campaign Details</h3>
           <dl className="flex flex-col divide-y divide-border">
-            <DetailRow label="Sender" value={`${campaign.senderName} <${campaign.senderEmail}>`} />
-            <DetailRow label="Reply-To" value={campaign.replyTo} />
+            <DetailRow label="Channel" value={wa ? "WhatsApp" : "Email"} />
+            {!wa && <DetailRow label="Sender" value={`${campaign.senderName} <${campaign.senderEmail}>`} />}
+            {!wa && <DetailRow label="Reply-To" value={campaign.replyTo} />}
             <DetailRow label="Audience" value={campaign.Segment?.name || "All Contacts"} />
             <DetailRow label="Unsubscribed" value={campaign.unsubscribedCount.toLocaleString()} />
             <DetailRow label="Sent At" value={campaign.sentAt ? formatDate(campaign.sentAt) : "Not sent yet"} />
@@ -88,25 +94,29 @@ export default async function CampaignDetailPage({ params }) {
       </div>
 
       <Card className="mb-6">
-        <h3 className="text-sm font-semibold text-ink mb-4">Email Preview</h3>
-        <iframe
-          title="Email preview"
-          srcDoc={campaign.bodyHtml || "<p>(no content)</p>"}
-          className="w-full rounded-md border border-border bg-white"
-          style={{ height: 480 }}
-        />
+        <h3 className="text-sm font-semibold text-ink mb-4">{wa ? "Message" : "Email Preview"}</h3>
+        {wa ? (
+          <div className="max-w-lg whitespace-pre-wrap rounded-lg border border-border bg-[#e7f5dd] p-3.5 text-sm text-[#1f2d1a]">{campaign.messageBody}</div>
+        ) : (
+          <iframe
+            title="Email preview"
+            srcDoc={campaign.bodyHtml || "<p>(no content)</p>"}
+            className="w-full rounded-md border border-border bg-white"
+            style={{ height: 480 }}
+          />
+        )}
       </Card>
 
       <Card padding="none">
         <div className="p-5 pb-0">
           <h3 className="text-sm font-semibold text-ink mb-1">Recipients</h3>
-          <p className="text-xs text-ink-muted mb-4">Showing up to 100 recipients. People who unsubscribed, bounced or opted out are never included.</p>
+          <p className="text-xs text-ink-muted mb-4">Showing up to 100 recipients. People who unsubscribed, bounced or opted out are never included{wa ? "; neither is anyone without a phone number." : "."}</p>
         </div>
         <div className="px-5 pb-5">
           <DataTable
             columns={[
               { key: "name", header: "Contact", render: (r) => `${r.Contact?.firstName} ${r.Contact?.lastName}` },
-              { key: "email", header: "Email", render: (r) => r.Contact?.email },
+              { key: "email", header: wa ? "Phone" : "Email", render: (r) => (wa ? r.Contact?.whatsappNumber || r.Contact?.phone || "—" : r.Contact?.email) },
               { key: "status", header: "Status", render: (r) => <Badge status={r.status === "clicked" ? "Converted" : r.status === "opened" ? "Engaged" : r.status === "bounced" || r.status === "failed" ? "Bounced" : r.status === "unsubscribed" ? "Unsubscribed" : "New"}>{r.status}</Badge> },
             ]}
             rows={recipients}

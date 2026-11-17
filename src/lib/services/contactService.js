@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
+import { fireTrigger } from "./automationEngine";
 
 const { Contact, Company, Department, User, Tag, Activity, Deal, Task, Meeting, CampaignRecipient, Campaign, Conversation, PipelineStage } = db;
 
@@ -25,6 +26,8 @@ export async function getContacts(user, {
   source,
   engagementStatus,
   companyId,
+  programId,
+  programRole,
   createdFrom,
   createdTo,
   activityFrom,
@@ -66,6 +69,19 @@ export async function getContacts(user, {
     if (b) cond[Op.lt] = new Date(b.getTime() + 86400000);
     and.push({ [field]: cond });
   };
+  // Program filter (MIR-5.3): people interested in, registered for, attended or completed a program.
+  const progId = Number(programId);
+  if (Number.isInteger(progId) && progId > 0) {
+    const role = ["interested", "registered", "attended", "completed", "inquiry"].includes(programRole) ? programRole : "any";
+    const interested = `SELECT contact_id FROM contact_interests WHERE program_id = ${progId}`;
+    const registered = `SELECT contact_id FROM registrations WHERE program_id = ${progId} AND status <> 'Cancelled'`;
+    const attended = `${registered} AND attendance = 'Attended'`;
+    const completed = `${registered} AND completion_status = 'Completed'`;
+    const inquiry = `SELECT contact_id FROM deals WHERE program_id = ${progId} AND contact_id IS NOT NULL`;
+    const pick = { interested, registered, attended, completed, inquiry }[role];
+    const ids = pick ? [pick] : [interested, registered, inquiry];
+    and.push({ id: { [Op.in]: literal(`(${ids.join(" UNION ")})`) } });
+  }
   range("createdAt", createdFrom, createdTo);
   range("lastActivityAt", activityFrom, activityTo);
   if (and.length) where[Op.and] = and;
@@ -230,6 +246,7 @@ export async function createContact(user, payload) {
   }
 
   await recordAudit({ userId: user.id, action: "Created contact", module: "contacts", resourceType: "Contact", resourceId: contact.id, departmentId: dept.id });
+  await fireTrigger("contact_added", contact, {});
 
   return contact;
 }

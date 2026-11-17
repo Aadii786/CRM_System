@@ -14,6 +14,9 @@ module.exports = (sequelize, DataTypes) => {
       currentNodeId: DataTypes.INTEGER,
       startedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
       completedAt: DataTypes.DATE,
+      // When the scheduler should look at this person next (wait steps) and what the run remembers.
+      nextRunAt: DataTypes.DATE,
+      context: DataTypes.JSON,
     },
     { tableName: "automation_executions", updatedAt: false }
   );

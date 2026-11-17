@@ -9,6 +9,8 @@ import NotesPanel from "@/components/common/NotesPanel";
 import ContactProgramsPanel from "@/components/contacts/ContactProgramsPanel";
 import { listContactInterests, listContactOrganizations, listProgramOptions } from "@/lib/services/programService";
 import { listCompanyOptions } from "@/lib/services/companyService";
+import { getContactProgramHistory } from "@/lib/services/registrationService";
+import ProgramHistory from "@/components/programs/ProgramHistory";
 import PageHeader from "@/components/common/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Tabs from "@/components/ui/Tabs";
@@ -36,11 +38,12 @@ export default async function ContactDetailPage({ params }) {
 
   const canSeeLists = hasPermission(user, "lists.view");
   const canSeePrograms = hasPermission(user, "programs.view");
-  const [interests, organizations, programOptions, companyOptions] = await Promise.all([
+  const [interests, organizations, programOptions, companyOptions, programHistory] = await Promise.all([
     canSeePrograms ? listContactInterests(user, id) : Promise.resolve([]),
     canSeePrograms ? listContactOrganizations(user, id) : Promise.resolve([]),
     canSeePrograms ? listProgramOptions(user) : Promise.resolve([]),
     canSeePrograms && hasPermission(user, "companies.view") ? listCompanyOptions(user) : Promise.resolve([]),
+    canSeePrograms ? getContactProgramHistory(user, id) : Promise.resolve({ registrations: [], inhouse: [], inquiries: [] }),
   ]);
   const [notesRaw, timelineRaw, related, documentsRaw, memberLists, allListsRaw] = await Promise.all([
     listNotes(user, "contact", id),
@@ -90,6 +93,7 @@ export default async function ContactDetailPage({ params }) {
           { key: "overview", label: "Overview" },
           { key: "notes", label: "Notes", count: notes.length },
           ...(canSeePrograms ? [{ key: "programs", label: "Programs & organizations", count: interests.length + organizations.length }] : []),
+          ...(canSeePrograms ? [{ key: "history", label: "Program history", count: programHistory.registrations.length + programHistory.inhouse.length + programHistory.inquiries.length }] : []),
           { key: "engagement", label: "Engagement" },
           { key: "timeline", label: "Timeline", count: timeline.length },
           { key: "related", label: "Related" },
@@ -109,6 +113,7 @@ export default async function ContactDetailPage({ params }) {
             canEdit={hasPermission(user, "contacts.update")}
           />
         )}
+        {canSeePrograms && <ProgramHistory history={programHistory} />}
         <ContactEngagement contact={contact} campaignRecipients={campaignRecipients} />
         <ContactTimeline activities={timeline} />
         <ContactRelated deals={deals} tasks={tasks} meetings={meetings} conversation={conversation} />

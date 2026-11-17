@@ -28,6 +28,8 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "Pending",
       },
       completedAt: DataTypes.DATE,
+      reminderSentAt: DataTypes.DATE,
+      escalatedAt: DataTypes.DATE,
     },
     { tableName: "tasks" }
   );

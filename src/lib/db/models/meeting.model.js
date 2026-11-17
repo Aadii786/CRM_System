@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       attendees: DataTypes.JSON,
       notes: DataTypes.TEXT,
       outcome: DataTypes.STRING(255),
+      reminderSentAt: DataTypes.DATE,
       status: {
         type: DataTypes.ENUM("Scheduled", "Completed", "Cancelled"),
         defaultValue: "Scheduled",

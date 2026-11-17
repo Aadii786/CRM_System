@@ -12,7 +12,7 @@ import { replyInConversationAction, simulateInboundReplyAction, assignConversati
 import { useToast } from "@/components/ui/Toast";
 import { timeAgo, formatDateTime } from "@/lib/utils/format";
 
-export default function WhatsAppInbox({ conversations, users, currentUserId, canAssign }) {
+export default function WhatsAppInbox({ conversations, users, currentUserId, canAssign, simulated = true }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedId, setSelectedId] = useState(conversations[0]?.id ?? null);
@@ -38,7 +38,11 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
       const fd = new FormData();
       fd.set("conversationId", selected.id);
       fd.set("body", replyText.trim());
-      await replyInConversationAction(fd);
+      const result = await replyInConversationAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
       setReplyText("");
       push("Message sent.");
       router.refresh();
@@ -50,8 +54,12 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
     startTransition(async () => {
       const fd = new FormData();
       fd.set("conversationId", selected.id);
-      await simulateInboundReplyAction(fd);
-      push("Simulated inbound reply - contact auto-qualified.");
+      const result = await simulateInboundReplyAction(fd);
+      if (result?.error) {
+        push(result.error, { type: "error" });
+        return;
+      }
+      push("Demo reply recorded: the lead score, history and automations reacted as they do for a real reply.");
       router.refresh();
     });
   }
@@ -158,9 +166,11 @@ export default function WhatsAppInbox({ conversations, users, currentUserId, can
                 <Send className="size-4" />
               </button>
             </div>
-            <button onClick={simulateReply} disabled={isPending} className="self-start inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-primary">
-              <RefreshCcw className="size-3.5" /> Simulate contact reply (demo trigger for automation)
-            </button>
+            {simulated && (
+              <button onClick={simulateReply} disabled={isPending} className="self-start inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-primary">
+                <RefreshCcw className="size-3.5" /> Simulate contact reply (demo only)
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
+import { applyScoreEvent } from "./leadScoringService";
 
 const { Meeting, Contact, Company, Deal, User } = db;
 
@@ -61,7 +62,13 @@ export async function updateMeetingStatus(user, id, status, outcome) {
   requirePermission(user, "meetings.update");
   const meeting = await Meeting.findByPk(id);
   if (!meeting) throw new Error("Meeting not found.");
+  const wasCompleted = meeting.status === "Completed";
   await meeting.update({ status, outcome: outcome ?? meeting.outcome });
+  // A meeting that really took place is real engagement (CRM-2.2).
+  if (status === "Completed" && !wasCompleted && meeting.contactId) {
+    const contact = await Contact.findByPk(meeting.contactId);
+    if (contact) await applyScoreEvent(contact, "Meeting attended", user.id);
+  }
   await recordAudit({ userId: user.id, action: `Meeting marked ${status}`, module: "meetings", resourceType: "Meeting", resourceId: id });
   return meeting;
 }

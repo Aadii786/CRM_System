@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, departmentByKey, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
+import { buildStepNode, runDueAutomations } from "./automationEngine";
 
 const { Automation, AutomationNode, AutomationExecution, AutomationExecutionLog, Contact, User } = db;
 
@@ -49,6 +50,8 @@ const TRIGGER_LABELS = {
   whatsapp_response: "WhatsApp Response",
   deal_stage_changed: "Deal Stage Changed",
   form_submitted: "Form Submitted",
+  registration_created: "Registration Created",
+  program_completed: "Program Completed",
 };
 
 /** Creates a new automation with just its trigger node (requirements #22-#23). */
@@ -174,4 +177,83 @@ export async function runDemoAutomation(user, automationId, batchSize = 12) {
   await recordAudit({ userId: user.id, action: `Ran demo automation "${automation.name}" (${contacts.length} contacts, ${converted} converted)`, module: "automations", resourceType: "Automation", resourceId: automationId });
 
   return { processed: contacts.length, converted, steps };
+}
+
+
+// ------------------------------------------------ building a workflow (Sprint 3)
+
+async function loadForEdit(user, id) {
+  requirePermission(user, "automations.create");
+  const automation = await Automation.findByPk(id, { include: [{ model: AutomationNode, as: "nodes" }] });
+  if (!automation) throw new Error("Automation not found.");
+  const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
+  const ids = await departmentIdsForKeys(keys);
+  if (!ids.includes(automation.departmentId)) throw new Error("You cannot change this automation.");
+  return automation;
+}
+
+/** Adds one step at the end of the workflow (a condition's yes branch first, then no). */
+export async function addAutomationStep(user, id, kind, input) {
+  const automation = await loadForEdit(user, id);
+  const fields = buildStepNode(kind, input);
+  const nodes = automation.nodes;
+  const hasChild = new Set(nodes.map((n) => n.parentId).filter((v) => v != null));
+  const leaves = nodes.filter((n) => !hasChild.has(n.id)).sort((a, b) => b.order - a.order || b.id - a.id);
+  let leaf = leaves[0];
+  let branch = null;
+  // A condition that already has a Yes step takes the No step next, so both paths can be built.
+  const conditionWithOneBranch = nodes.find((n) => n.type === "condition" && nodes.filter((c) => c.parentId === n.id).length === 1);
+  if (conditionWithOneBranch && leaf && leaf.parentId === conditionWithOneBranch.id) {
+    leaf = conditionWithOneBranch;
+    branch = nodes.find((c) => c.parentId === conditionWithOneBranch.id).branch === "yes" ? "no" : "yes";
+  } else if (leaf?.type === "condition") {
+    branch = "yes";
+  }
+  if (!leaf) throw new Error("The workflow has no trigger.");
+  if (leaf.type === "exit") throw new Error("The workflow already ends. Remove the last step first.");
+  const node = await AutomationNode.create({ automationId: automation.id, parentId: leaf.id, branch, ...fields, order: Math.max(...nodes.map((n) => n.order), 0) + 1 });
+  await recordAudit({ userId: user.id, action: `Added step "${fields.label}" to automation "${automation.name}"`, module: "automations", resourceType: "Automation", resourceId: automation.id, departmentId: automation.departmentId });
+  return node;
+}
+
+export async function removeLastAutomationStep(user, id) {
+  const automation = await loadForEdit(user, id);
+  const nodes = automation.nodes;
+  const hasChild = new Set(nodes.map((n) => n.parentId).filter((v) => v != null));
+  const leaf = nodes.filter((n) => !hasChild.has(n.id) && n.type !== "trigger").sort((a, b) => b.order - a.order || b.id - a.id)[0];
+  if (!leaf) throw new Error("There is no step to remove.");
+  if (automation.status === "Active" && (automation.totalActive || 0) > 0) throw new Error("People are still running through this workflow. Pause it before removing a step.");
+  await leaf.destroy();
+  await recordAudit({ userId: user.id, action: `Removed step "${leaf.label}" from automation "${automation.name}"`, module: "automations", resourceType: "Automation", resourceId: automation.id, departmentId: automation.departmentId });
+  return leaf;
+}
+
+/** Limits a workflow to one program or one kind of website form. */
+export async function setAutomationTriggerFilter(user, id, { programId, formType }) {
+  const automation = await loadForEdit(user, id);
+  const cfg = { ...(automation.triggerConfig || {}) };
+  if (programId !== undefined) { if (programId) cfg.programId = Number(programId); else delete cfg.programId; }
+  if (formType !== undefined) { if (formType) cfg.formType = String(formType); else delete cfg.formType; }
+  await automation.update({ triggerConfig: cfg });
+  return automation;
+}
+
+/** Activate or pause. A workflow needs at least one step after its trigger to be activated. */
+export async function setAutomationStatus(user, id, status) {
+  requirePermission(user, "automations.execute");
+  if (!["Active", "Paused", "Draft"].includes(status)) throw new Error("Unknown status.");
+  const automation = await Automation.findByPk(id, { include: [{ model: AutomationNode, as: "nodes" }] });
+  if (!automation) throw new Error("Automation not found.");
+  const keys = getAccessibleDepartmentKeys(user, await allDepartmentKeys());
+  if (!(await departmentIdsForKeys(keys)).includes(automation.departmentId)) throw new Error("You cannot change this automation.");
+  if (status === "Active" && automation.nodes.length < 2) throw new Error("Add at least one step after the trigger before activating.");
+  await automation.update({ status });
+  await recordAudit({ userId: user.id, action: `Automation set to ${status}`, module: "automations", resourceType: "Automation", resourceId: id, departmentId: automation.departmentId });
+  return automation;
+}
+
+/** Runs everything that is due right now (the scheduler does this on its own every few minutes). */
+export async function runDueAutomationsNow(user) {
+  requirePermission(user, "automations.execute");
+  return runDueAutomations();
 }

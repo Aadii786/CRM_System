@@ -69,6 +69,8 @@ const modelDefiners = [
   require("./programBatch.model.js"),
   require("./contactInterest.model.js"),
   require("./contactCompany.model.js"),
+  require("./registration.model.js"),
+  require("./formSubmission.model.js"),
 ];
 
 const db = {};

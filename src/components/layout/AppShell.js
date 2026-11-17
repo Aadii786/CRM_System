@@ -4,8 +4,9 @@ import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import DemoEnvironmentBanner from "./DemoEnvironmentBanner";
+import WelcomeTour from "./WelcomeTour";
 
-export default function AppShell({ user, navSections, notifications, unreadCount, children }) {
+export default function AppShell({ user, navSections, notifications, unreadCount, guideKey, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -28,6 +29,7 @@ export default function AppShell({ user, navSections, notifications, unreadCount
         />
         <DemoEnvironmentBanner />
         <main className="p-4 md:p-6 max-w-[1600px]">{children}</main>
+        <WelcomeTour userId={user.id} userName={user.name} guideKey={guideKey} />
       </div>
     </div>
   );

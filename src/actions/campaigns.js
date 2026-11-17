@@ -22,8 +22,12 @@ export async function createCampaignAction(_prevState, formData) {
     bodyDesign,
     segmentId: formData.get("segmentId") || null,
     schedule: formData.get("schedule")?.toString() || null,
+    channel: formData.get("channel")?.toString() === "whatsapp" ? "whatsapp" : "email",
+    messageBody: formData.get("messageBody")?.toString(),
+    templateName: formData.get("templateName")?.toString(),
   };
-  if (!payload.name || !payload.subject) return { error: "Campaign name and subject are required." };
+  if (!payload.name) return { error: "Campaign name is required." };
+  if (payload.channel === "email" && !payload.subject) return { error: "Campaign name and subject are required." };
 
   try {
     const campaign = await campaignService.createCampaign(user, payload);

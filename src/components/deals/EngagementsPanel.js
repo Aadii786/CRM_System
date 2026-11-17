@@ -10,6 +10,7 @@ import Modal from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
 import Field, { Input, Select } from "@/components/ui/Field";
 import { createEngagementAction, updateEngagementAction, deleteEngagementAction, addParticipantAction, removeParticipantAction } from "@/actions/programs";
+import { setParticipantAttendanceAction } from "@/actions/registrations";
 import { useToast } from "@/components/ui/Toast";
 import { TRAINING_TYPES } from "@/lib/constants/crm";
 import { formatCurrencyFull, formatDate } from "@/lib/utils/format";
@@ -109,7 +110,13 @@ export default function EngagementsPanel({ dealId, dealTrainingType, engagements
                         <span className="text-xs text-ink-muted">{[p.designation, p.email].filter(Boolean).map((x) => ` · ${x}`).join("")}</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        <Badge tone="neutral">{p.attendance}</Badge>
+                        {canManage ? (
+                          <Select aria-label="Attendance" value={p.attendance} disabled={isPending} onChange={(e) => act(setParticipantAttendanceAction, { id: p.id, attendance: e.target.value }, "Attendance saved.")} className="w-32 h-8 text-xs">
+                            {["Registered", "Attended", "No Show"].map((a) => <option key={a}>{a}</option>)}
+                          </Select>
+                        ) : (
+                          <Badge tone="neutral">{p.attendance}</Badge>
+                        )}
                         {canManage && (
                           <button type="button" title="Remove participant" disabled={isPending} onClick={() => act(removeParticipantAction, { id: p.id }, "Participant removed.", `Remove ${p.name}?`)} className="p-1 rounded text-ink-muted hover:text-danger hover:bg-surface-alt"><X className="size-3.5" /></button>
                         )}

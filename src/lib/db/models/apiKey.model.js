@@ -14,6 +14,8 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "active",
       },
       lastUsedAt: DataTypes.DATE,
+      // The department the website's forms feed (its records land in this department).
+      departmentId: DataTypes.INTEGER,
       createdBy: DataTypes.INTEGER,
     },
     { tableName: "api_keys" }

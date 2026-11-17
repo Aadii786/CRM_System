@@ -30,4 +30,15 @@ const PROGRAM_STATUSES = ["Active", "Archived"];
 
 const BATCH_STATUSES = ["Planned", "Open for registration", "Running", "Completed", "Cancelled"];
 
-module.exports = { PROGRAM_CATEGORIES, PROGRAM_TYPES, PROGRAM_STATUSES, BATCH_STATUSES };
+// Registrations (Sprint 3). A cancelled registration frees its seat. Attendance and completion are
+// recorded per person per batch; the certificate fields only record what IKL issued.
+const REGISTRATION_STATUSES = ["Registered", "Confirmed", "Cancelled"];
+const ATTENDANCE_STATUSES = ["Registered", "Attended", "No Show"];
+const PAYMENT_STATUSES = ["Unpaid", "Partially paid", "Paid", "Waived"];
+const COMPLETION_STATUSES = ["In progress", "Completed", "Not completed"];
+const REGISTRATION_SOURCES = ["Manual", "Website", "Nomination"];
+
+module.exports = {
+  PROGRAM_CATEGORIES, PROGRAM_TYPES, PROGRAM_STATUSES, BATCH_STATUSES,
+  REGISTRATION_STATUSES, ATTENDANCE_STATUSES, PAYMENT_STATUSES, COMPLETION_STATUSES, REGISTRATION_SOURCES,
+};

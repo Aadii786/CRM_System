@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
         ),
         defaultValue: "Draft",
       },
+      // "email" (default) or "whatsapp"; WhatsApp campaigns use messageBody instead of the email design.
+      channel: { type: DataTypes.STRING(20), allowNull: false, defaultValue: "email" },
+      messageBody: DataTypes.TEXT,
+      templateName: DataTypes.STRING(100),
       scheduledAt: DataTypes.DATE,
       sentAt: DataTypes.DATE,
       // Delivery layer bookkeeping (see lib/email and emailDeliveryService).

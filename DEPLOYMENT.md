@@ -12,7 +12,7 @@ Live address: `https://crmsystem-production-e882.up.railway.app` (Railway projec
 | --- | --- |
 | App service | GitHub repo `CRM_System`, builder Railpack, public domain with target port `8080` |
 | Database | Railway MySQL service; the app reads it through reference variables `DB_HOST=${{MySQL.MYSQLHOST}}`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (so no password is ever copied by hand) |
-| Variables | `DB_*`, `DB_DIALECT=mysql`, `PORT=8080`, `APP_URL` (the public address above), `SESSION_SECRET`, `CRON_SECRET`, `EMAIL_WEBHOOK_SECRET`, `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`, `DEMO_USER_PASSWORD`, `SEED_CONTACT_COUNT=500`, `EMAIL_PROVIDER=simulated` |
+| Variables | `DB_*`, `DB_DIALECT=mysql`, `PORT=8080`, `APP_URL` (the public address above), `SESSION_SECRET`, `CRON_SECRET`, `EMAIL_WEBHOOK_SECRET`, `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`, `DEMO_USER_PASSWORD`, `SEED_CONTACT_COUNT=500`, `EMAIL_PROVIDER=simulated`. Sprint 3 adds (all optional): `WHATSAPP_PROVIDER=simulated`, `WHATSAPP_WEBHOOK_SECRET`, `WHATSAPP_API_URL` / `WHATSAPP_API_TOKEN` (when IT hands over the API), `REMINDER_HOURS_AHEAD` |
 | Pre-deploy command | `npm run db:migrate` (runs new migrations before each deploy; never put `db:seed` here, the data seeders would duplicate rows) |
 | `DEMO_LOGIN_MODE` | not set, so the login screen shows only the Rector and the IKL team |
 

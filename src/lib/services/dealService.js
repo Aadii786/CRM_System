@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys, hasPermission } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
+import { fireTrigger } from "./automationEngine";
 import { referencePrefixFor, formatReferenceNumber } from "@/lib/constants/departments";
 
 const { Pipeline, PipelineStage, Deal, Company, Contact, User, Department, Task, Meeting, Note, Activity, TrainingProgram, TNA, Proposal, Invoice, Payment, Program, ProgramBatch } = db;
@@ -52,7 +53,21 @@ export async function listPipelines(user) {
 }
 
 /** Deals grouped by stage for the Kanban board (requirements #32-#33). */
-export async function getPipelineBoard(user, pipelineId) {
+/** Search + filters for the deals board: keyword, program, organization, owner, status and created-date range. */
+function boardFilters({ q, programId, companyId, ownerId, status, createdFrom, createdTo } = {}) {
+  const where = {};
+  const day = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || "") ? new Date(`${s}T00:00:00`) : null);
+  if (q) where[Op.or] = [{ name: { [Op.like]: `%${q}%` } }, { referenceNumber: { [Op.like]: `%${q}%` } }];
+  if (Number(programId) > 0) where.programId = Number(programId);
+  if (Number(companyId) > 0) where.companyId = Number(companyId);
+  if (Number(ownerId) > 0) where.ownerId = Number(ownerId);
+  if (["open", "won", "lost"].includes(status)) where.status = status;
+  const a = day(createdFrom), b = day(createdTo);
+  if (a || b) where.createdAt = { ...(a ? { [Op.gte]: a } : {}), ...(b ? { [Op.lt]: new Date(b.getTime() + 86400000) } : {}) };
+  return where;
+}
+
+export async function getPipelineBoard(user, pipelineId, filters = {}) {
   requirePermission(user, "deals.view");
   const deptIds = await scopedDepartmentIds(user);
   if (deptIds.length === 0) return null;
@@ -68,7 +83,7 @@ export async function getPipelineBoard(user, pipelineId) {
   // would immediately vanish from the board instead of visibly sitting in
   // that column.
   const deals = await Deal.findAll({
-    where: { pipelineId },
+    where: { pipelineId, ...boardFilters(filters) },
     include: [
       { model: Company, attributes: ["id", "name"] },
       { model: Contact, as: "contact", attributes: ["id", "firstName", "lastName"] },
@@ -226,6 +241,10 @@ export async function moveDealStage(user, dealId, stageId) {
   if (status === "won") await markLeadConverted(user, deal);
 
   await recordAudit({ userId: user.id, action: `Moved deal to ${stage.name}`, module: "deals", resourceType: "Deal", resourceId: dealId });
+  if (deal.contactId) {
+    const contact = await Contact.findByPk(deal.contactId);
+    if (contact) await fireTrigger("deal_stage_changed", contact, { stageId: stage.id, programId: deal.programId });
+  }
   return deal;
 }
 

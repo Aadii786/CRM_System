@@ -8,7 +8,8 @@ import Badge from "@/components/ui/Badge";
 import MetricCard from "@/components/ui/MetricCard";
 import DataTable from "@/components/ui/DataTable";
 import AutomationCanvas from "@/components/automation/AutomationCanvas";
-import RunDemoAutomationButton from "@/components/automation/RunDemoAutomationButton";
+import AutomationBuilder from "@/components/automation/AutomationBuilder";
+import { listProgramOptions } from "@/lib/services/programService";
 import { Users, CheckCircle2, LogOut, TrendingUp } from "lucide-react";
 import { formatPercent, formatDate } from "@/lib/utils/format";
 
@@ -25,6 +26,7 @@ export default async function AutomationDetailPage({ params }) {
   if (!automationRaw) notFound();
   const automation = automationRaw.get({ plain: true });
 
+  const programs = hasPermission(user, "programs.view") ? await listProgramOptions(user) : [];
   const executionsRaw = await getAutomationExecutions(user, id, 20);
   const executions = executionsRaw.map((e) => e.get({ plain: true }));
 
@@ -39,7 +41,6 @@ export default async function AutomationDetailPage({ params }) {
         actions={
           <>
             <Badge status={automation.status} />
-            <RunDemoAutomationButton automationId={automation.id} canExecute={hasPermission(user, "automations.execute")} />
           </>
         }
       />
@@ -57,10 +58,20 @@ export default async function AutomationDetailPage({ params }) {
         <AutomationCanvas nodes={automation.nodes} />
       </Card>
 
+      <Card className="mb-6">
+        <h3 className="text-sm font-semibold text-ink mb-3">Build and run</h3>
+        <AutomationBuilder
+          automation={{ id: automation.id, status: automation.status, triggerType: automation.triggerType, triggerConfig: automation.triggerConfig }}
+          programs={programs.map((p) => ({ id: p.id, title: p.title }))}
+          canEdit={hasPermission(user, "automations.create")}
+          canExecute={hasPermission(user, "automations.execute")}
+        />
+      </Card>
+
       <Card padding="none">
         <div className="p-5 pb-0">
           <h3 className="text-sm font-semibold text-ink mb-1">Recent Executions</h3>
-          <p className="text-xs text-ink-muted mb-4">Individual contacts that have entered this automation.</p>
+          <p className="text-xs text-ink-muted mb-4">Individual contacts that have entered this automation, and when they move on next.</p>
         </div>
         <div className="px-5 pb-5">
           <DataTable
@@ -69,6 +80,7 @@ export default async function AutomationDetailPage({ params }) {
               { key: "score", header: "Lead Score", render: (e) => e.Contact?.leadScore },
               { key: "status", header: "Execution Status", render: (e) => <Badge status={e.status === "completed" ? "Completed" : e.status === "exited" ? "Cancelled" : "In Progress"}>{e.status}</Badge> },
               { key: "started", header: "Started", render: (e) => formatDate(e.startedAt) },
+              { key: "next", header: "Next step", render: (e) => (e.status === "active" ? (e.nextRunAt ? formatDate(e.nextRunAt, { hour: "numeric", minute: "2-digit" }) : "Running") : "—") },
             ]}
             rows={executions}
           />

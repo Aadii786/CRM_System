@@ -4,6 +4,8 @@ import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, allDepartmentKeys } from "./departmentService";
 import { recordAudit } from "./auditService";
+import { sendWhatsappToContact, handleInboundMessage, contactNumber } from "./whatsappService";
+import { isSimulatedWhatsApp } from "@/lib/whatsapp/provider";
 
 const { Conversation, Message, Contact, User } = db;
 
@@ -41,123 +43,50 @@ export async function getConversation(user, id) {
 }
 
 /**
- * Finds or opens a WhatsApp conversation for a contact and appends an
- * outbound message. This is the "Send WhatsApp" demo interaction
- * (requirements #61) - simulated only, no real WhatsApp API is called
- * (requirements #63/#106).
+ * Sends a WhatsApp message to a contact (opens their conversation if needed). It goes through the
+ * WhatsApp provider: the simulated one in demo mode, the IT department's API once connected.
  */
 export async function sendDemoWhatsappMessage(user, contactId, body) {
   requirePermission(user, "conversations.reply");
   const contact = await Contact.findByPk(contactId);
   if (!contact) throw new Error("Contact not found.");
-
-  let conversation = await Conversation.findOne({ where: { contactId } });
-  if (!conversation) {
-    conversation = await Conversation.create({
-      contactId,
-      channel: "whatsapp",
-      status: "assigned",
-      assignedTo: user.id,
-      departmentId: contact.departmentId,
-      lastMessageAt: new Date(),
-      lastMessagePreview: body.slice(0, 120),
-      unreadCount: 0,
-    });
-  }
-
-  await Message.create({
-    conversationId: conversation.id,
-    direction: "outbound",
-    senderType: "user",
-    senderId: user.id,
-    body,
-    status: "sent",
-    sentAt: new Date(),
-  });
-
-  await conversation.update({
-    lastMessageAt: new Date(),
-    lastMessagePreview: body.slice(0, 120),
-    status: conversation.status === "closed" ? "assigned" : conversation.status,
-    assignedTo: conversation.assignedTo || user.id,
-  });
-
-  await db.Activity.create({
-    type: "whatsapp",
-    title: "WhatsApp message sent",
-    description: body,
-    contactId,
-    userId: user.id,
-    occurredAt: new Date(),
-  });
-
-  await recordAudit({ userId: user.id, action: "Sent WhatsApp message (demo)", module: "conversations", resourceType: "Conversation", resourceId: conversation.id });
-
-  return conversation;
+  const result = await sendWhatsappToContact(contact, body, { userId: user.id });
+  if (!result.ok) throw new Error(result.error || "The message could not be sent.");
+  await recordAudit({ userId: user.id, action: `Sent WhatsApp message${result.simulated ? " (demo mode)" : ""}`, module: "conversations", resourceType: "Conversation", resourceId: result.conversationId });
+  return Conversation.findByPk(result.conversationId);
 }
 
 export async function replyInConversation(user, conversationId, body) {
   requirePermission(user, "conversations.reply");
   const conversation = await Conversation.findByPk(conversationId, { include: [Contact] });
   if (!conversation) throw new Error("Conversation not found.");
-
-  await Message.create({
-    conversationId,
-    direction: "outbound",
-    senderType: "user",
-    senderId: user.id,
-    body,
-    status: "sent",
-    sentAt: new Date(),
-  });
-  await conversation.update({ lastMessageAt: new Date(), lastMessagePreview: body.slice(0, 120) });
-
-  await db.Activity.create({
-    type: "whatsapp",
-    title: "WhatsApp message sent",
-    description: body,
-    contactId: conversation.contactId,
-    userId: user.id,
-    occurredAt: new Date(),
-  });
-
+  const result = await sendWhatsappToContact(conversation.Contact, body, { userId: user.id });
+  if (!result.ok) throw new Error(result.error || "The message could not be sent.");
+  // Replying clears the unread badge: someone has dealt with it.
+  await conversation.update({ unreadCount: 0 });
   return conversation;
 }
 
 /**
- * Simulates the contact replying (requirements #27: demonstrate whether a
- * WhatsApp reply can trigger automation). In this demo the "reply" is
- * operator-triggered rather than from a real WhatsApp webhook.
+ * Demo only (simulated WhatsApp provider): produces a reply from the contact through the same
+ * path a real webhook reply takes, so scoring and automations react exactly as they will for real.
  */
 export async function simulateInboundReply(user, conversationId, body) {
   requirePermission(user, "conversations.reply");
+  if (!isSimulatedWhatsApp()) throw new Error("Replies can only be simulated while the WhatsApp provider is the simulated one.");
   const conversation = await Conversation.findByPk(conversationId, { include: [Contact] });
   if (!conversation) throw new Error("Conversation not found.");
-
-  await Message.create({
-    conversationId,
-    direction: "inbound",
-    senderType: "contact",
-    body,
-    status: "delivered",
-    sentAt: new Date(),
-  });
-  await conversation.update({
-    lastMessageAt: new Date(),
-    lastMessagePreview: body.slice(0, 120),
-    status: "open",
-    unreadCount: conversation.unreadCount + 1,
-  });
-
-  await db.Activity.create({
-    type: "whatsapp",
-    title: "WhatsApp reply received",
-    description: body,
-    contactId: conversation.contactId,
-    occurredAt: new Date(),
-  });
-
+  const number = contactNumber(conversation.Contact);
+  if (!number) throw new Error("This person has no phone number to reply from.");
+  const result = await handleInboundMessage({ from: number, text: body });
+  if (!result.recorded) throw new Error(`The reply was not recorded (${result.ignored || "unknown reason"}).`);
   return conversation;
+}
+
+/** Marks a conversation as read when staff open it. */
+export async function markConversationRead(user, conversationId) {
+  requirePermission(user, "conversations.view");
+  await Conversation.update({ unreadCount: 0 }, { where: { id: conversationId } });
 }
 
 export async function listAssignableUsers(user) {

@@ -2,6 +2,7 @@ import "server-only";
 import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess } from "@/lib/permissions/rbac";
 import { recordAudit } from "./auditService";
+import { syncAlumni } from "./registrationService";
 
 const { TrainingProgram, Participant, Deal, Department, Contact, Trainer, Activity } = db;
 
@@ -74,9 +75,30 @@ export async function updateEngagement(user, id, payload) {
   const { engagement, deal } = await loadEngagement(user, id);
   const f = fields(payload, engagement.get({ plain: true }), deal);
   if (f.trainerId && !(await Trainer.findByPk(f.trainerId))) throw new Error("That trainer does not exist.");
+  const wasCompleted = engagement.status === "Completed";
   await engagement.update(f);
   await recordAudit({ userId: user.id, action: `Updated training engagement "${f.title}"`, module: "deals", resourceType: "TrainingProgram", resourceId: id, departmentId: deal.departmentId });
+  // Alumnus rule: people who attended an engagement that is now Completed become alumni (CRM-1.7).
+  if (wasCompleted !== (f.status === "Completed")) await syncEngagementAlumni(id);
   return engagement;
+}
+
+async function syncEngagementAlumni(engagementId) {
+  const people = await Participant.findAll({ where: { trainingProgramId: engagementId }, attributes: ["contactId"] });
+  for (const p of people) if (p.contactId) await syncAlumni(p.contactId);
+}
+
+/** Attendance of an in-house participant (CRM-3.6). */
+export async function setParticipantAttendance(user, participantId, attendance) {
+  if (!["Registered", "Attended", "No Show"].includes(attendance)) throw new Error("Pick Registered, Attended or No Show.");
+  requirePermission(user, "training.manage");
+  const participant = await Participant.findByPk(participantId);
+  if (!participant) throw new Error("Participant not found.");
+  const { engagement, deal } = await loadEngagement(user, participant.trainingProgramId);
+  await participant.update({ attendance });
+  if (participant.contactId) await syncAlumni(participant.contactId);
+  await recordAudit({ userId: user.id, action: `Marked ${participant.name} "${attendance}" in "${engagement.title}"`, module: "deals", resourceType: "Participant", resourceId: participantId, departmentId: deal.departmentId });
+  return participant;
 }
 
 export async function deleteEngagement(user, id) {
@@ -148,8 +170,7 @@ export async function removeParticipant(user, participantId) {
   await participant.destroy();
   await refreshCount(engagement.id);
   if (participant.contactId) {
-    const stillAttending = await Participant.count({ where: { contactId: participant.contactId } });
-    if (!stillAttending) await Contact.update({ isParticipant: false }, { where: { id: participant.contactId, isAlumnus: false } });
+    await syncAlumni(participant.contactId);
   }
   await recordAudit({ userId: user.id, action: `Removed participant ${participant.name} from "${engagement.title}"`, module: "deals", resourceType: "Participant", resourceId: participantId, departmentId: deal.departmentId });
 }

@@ -4,16 +4,14 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/requireUser";
 import { requirePermission, requireDepartmentAccess } from "@/lib/permissions/rbac";
 import db from "@/lib/db";
-import { applyScoreEvent } from "@/lib/services/leadScoringService";
 import { sendDemoWhatsappMessage, replyInConversation, simulateInboundReply, assignConversation } from "@/lib/services/conversationService";
 import { recordAudit } from "@/lib/services/auditService";
 
 const { Contact } = db;
 
 /**
- * Simulated "Send Email" quick action (requirements #16/#61). Logs the
- * activity and applies the configured lead-scoring points for an email
- * open - this is a demo shortcut standing in for a real send+open event.
+ * "Send Email" quick action on a contact: logs a one-off demo email on the timeline. It no longer
+ * adds lead-score points: scoring now follows real opens, clicks, replies and meetings (CRM-2.2).
  */
 export async function sendDemoEmailAction(formData) {
   const user = await requireUser();
@@ -32,7 +30,6 @@ export async function sendDemoEmailAction(formData) {
     occurredAt: new Date(),
   });
   await contact.update({ engagementStatus: "Delivered", lastActivityAt: new Date() });
-  await applyScoreEvent(contact, "Email opened", user.id);
   await recordAudit({ userId: user.id, action: "Sent demo email", module: "contacts", resourceType: "Contact", resourceId: contactId });
 
   revalidatePath(`/contacts/${contactId}`);
@@ -43,22 +40,30 @@ export async function sendDemoWhatsappAction(formData) {
   const contactId = formData.get("contactId");
   const body = formData.get("body") || "Hi! Following up on your interest in our programs - happy to answer any questions.";
 
-  const conversation = await sendDemoWhatsappMessage(user, contactId, body);
-  const contact = await Contact.findByPk(contactId);
-  if (contact) await contact.update({ engagementStatus: "Engaged", lastActivityAt: new Date() });
-
-  revalidatePath(`/contacts/${contactId}`);
-  revalidatePath("/conversations");
-  return { conversationId: conversation.id };
+  try {
+    const conversation = await sendDemoWhatsappMessage(user, contactId, body);
+    const contact = await Contact.findByPk(contactId);
+    if (contact) await contact.update({ lastActivityAt: new Date() });
+    revalidatePath(`/contacts/${contactId}`);
+    revalidatePath("/conversations");
+    return { conversationId: conversation.id };
+  } catch (err) {
+    return { error: err?.message || "The message could not be sent." };
+  }
 }
 
 export async function replyInConversationAction(formData) {
   const user = await requireUser();
   const conversationId = formData.get("conversationId");
   const body = formData.get("body");
-  if (!body || !body.trim()) return;
-  await replyInConversation(user, conversationId, body.trim());
-  revalidatePath(`/conversations`);
+  if (!body || !body.trim()) return { error: "Write a message first." };
+  try {
+    await replyInConversation(user, conversationId, body.trim());
+    revalidatePath(`/conversations`);
+    return { success: true };
+  } catch (err) {
+    return { error: err?.message || "The message could not be sent." };
+  }
 }
 
 /**
@@ -70,16 +75,14 @@ export async function simulateInboundReplyAction(formData) {
   const user = await requireUser();
   const conversationId = formData.get("conversationId");
   const body = formData.get("body") || "Yes, I'm interested - please share more details.";
-  const conversation = await simulateInboundReply(user, conversationId, body);
-
-  const contact = await Contact.findByPk(conversation.contactId);
-  if (contact) {
-    await applyScoreEvent(contact, "WhatsApp reply", null);
-    if (contact.status !== "Converted") await contact.update({ status: "Qualified", engagementStatus: "Engaged" });
+  try {
+    const conversation = await simulateInboundReply(user, conversationId, body);
+    revalidatePath("/conversations");
+    revalidatePath(`/contacts/${conversation.contactId}`);
+    return { success: true };
+  } catch (err) {
+    return { error: err?.message || "The reply could not be recorded." };
   }
-
-  revalidatePath("/conversations");
-  revalidatePath(`/contacts/${conversation.contactId}`);
 }
 
 export async function assignConversationAction(formData) {

@@ -6,20 +6,23 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Field, { Input, Select } from "@/components/ui/Field";
+import Field, { Input, Select, Textarea } from "@/components/ui/Field";
 import Badge from "@/components/ui/Badge";
 import { createCampaignAction } from "@/actions/campaigns";
 import { useToast } from "@/components/ui/Toast";
 import EmailBuilder from "@/components/campaigns/EmailBuilder/EmailBuilder";
 import { renderEmailDesignToHtml } from "@/lib/emailDesign/render";
 
-const STEPS = ["Campaign Details", "Audience", "Email Content", "Schedule", "Review & Send"];
+const STEPS = ["Campaign Details", "Audience", "Content", "Schedule", "Review & Send"];
 
 const initialState = { error: null };
 
 export default function CampaignWizard({ segments, defaultSender }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [form, setForm] = useState({
+    channel: "email",
+    messageBody: "",
+    templateName: "",
     name: "",
     subject: "",
     senderName: defaultSender?.senderName || "University Admissions Office",
@@ -46,6 +49,7 @@ export default function CampaignWizard({ segments, defaultSender }) {
   }
 
   const selectedSegment = segments.find((s) => String(s.id) === String(form.segmentId));
+  const whatsapp = form.channel === "whatsapp";
 
   function next() {
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
@@ -78,23 +82,33 @@ export default function CampaignWizard({ segments, defaultSender }) {
       <Card>
         {stepIndex === 0 && (
           <div className="flex flex-col gap-4 max-w-lg">
+            <Field label="Channel" htmlFor="channel" hint={whatsapp ? "Sent through the WhatsApp service provided by the IT department. Replies come back to the WhatsApp inbox." : "Sent through the email service provided by the IT department."}>
+              <Select id="channel" value={form.channel} onChange={(e) => update({ channel: e.target.value })}>
+                <option value="email">Email</option>
+                <option value="whatsapp">WhatsApp</option>
+              </Select>
+            </Field>
             <Field label="Campaign Name" htmlFor="name" required>
-              <Input id="name" value={form.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. Fall Admissions - Email #1" />
+              <Input id="name" value={form.name} onChange={(e) => update({ name: e.target.value })} placeholder={whatsapp ? "e.g. Leadership batch reminder" : "e.g. Fall Admissions - Email #1"} />
             </Field>
-            <Field label="Subject Line" htmlFor="subject" required>
-              <Input id="subject" value={form.subject} onChange={(e) => update({ subject: e.target.value })} placeholder="e.g. Discover programs built for you" />
-            </Field>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Sender Name" htmlFor="senderName">
-                <Input id="senderName" value={form.senderName} onChange={(e) => update({ senderName: e.target.value })} />
-              </Field>
-              <Field label="Sender Email" htmlFor="senderEmail">
-                <Input id="senderEmail" value={form.senderEmail} onChange={(e) => update({ senderEmail: e.target.value })} />
-              </Field>
-            </div>
-            <Field label="Reply-To" htmlFor="replyTo">
-              <Input id="replyTo" value={form.replyTo} onChange={(e) => update({ replyTo: e.target.value })} />
-            </Field>
+            {!whatsapp && (
+              <>
+                <Field label="Subject Line" htmlFor="subject" required>
+                  <Input id="subject" value={form.subject} onChange={(e) => update({ subject: e.target.value })} placeholder="e.g. Discover programs built for you" />
+                </Field>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field label="Sender Name" htmlFor="senderName">
+                    <Input id="senderName" value={form.senderName} onChange={(e) => update({ senderName: e.target.value })} />
+                  </Field>
+                  <Field label="Sender Email" htmlFor="senderEmail">
+                    <Input id="senderEmail" value={form.senderEmail} onChange={(e) => update({ senderEmail: e.target.value })} />
+                  </Field>
+                </div>
+                <Field label="Reply-To" htmlFor="replyTo">
+                  <Input id="replyTo" value={form.replyTo} onChange={(e) => update({ replyTo: e.target.value })} />
+                </Field>
+              </>
+            )}
           </div>
         )}
 
@@ -117,7 +131,18 @@ export default function CampaignWizard({ segments, defaultSender }) {
 
         {stepIndex === 2 && (
           <div>
-            <EmailBuilder elements={form.bodyDesign} onChange={(bodyDesign) => update({ bodyDesign })} />
+            {whatsapp ? (
+              <div className="flex flex-col gap-4 max-w-lg">
+                <Field label="Message" htmlFor="messageBody" required hint="You can use {{firstName}}, {{lastName}}, {{fullName}} and {{company}}. Keep it short; WhatsApp business messages must follow the approved template wording if the provider requires templates.">
+                  <Textarea id="messageBody" rows={7} value={form.messageBody} onChange={(e) => update({ messageBody: e.target.value })} placeholder={"Hello {{firstName}}, registration for our next Leadership Essentials batch is open. Reply YES and our team will call you."} />
+                </Field>
+                <Field label="Approved template name (optional)" htmlFor="templateName" hint="Only if the WhatsApp provider asks for an approved template.">
+                  <Input id="templateName" value={form.templateName} onChange={(e) => update({ templateName: e.target.value })} />
+                </Field>
+              </div>
+            ) : (
+              <EmailBuilder elements={form.bodyDesign} onChange={(bodyDesign) => update({ bodyDesign })} />
+            )}
           </div>
         )}
 
@@ -131,6 +156,9 @@ export default function CampaignWizard({ segments, defaultSender }) {
 
         {stepIndex === 4 && (
           <form action={formAction} className="flex flex-col gap-4">
+            <input type="hidden" name="channel" value={form.channel} />
+            <input type="hidden" name="messageBody" value={form.messageBody} />
+            <input type="hidden" name="templateName" value={form.templateName} />
             <input type="hidden" name="name" value={form.name} />
             <input type="hidden" name="subject" value={form.subject} />
             <input type="hidden" name="senderName" value={form.senderName} />
@@ -142,21 +170,29 @@ export default function CampaignWizard({ segments, defaultSender }) {
 
             <dl className="max-w-lg divide-y divide-border rounded-md border border-border">
               <ReviewRow label="Name" value={form.name} />
-              <ReviewRow label="Subject" value={form.subject} />
+              <ReviewRow label="Channel" value={whatsapp ? "WhatsApp" : "Email"} />
+              {!whatsapp && <ReviewRow label="Subject" value={form.subject} />}
               <ReviewRow label="Audience" value={`${selectedSegment?.name || "—"} (${(selectedSegment?.contactCount || 0).toLocaleString()})`} />
-              <ReviewRow label="Sender" value={`${form.senderName} <${form.senderEmail}>`} />
+              {!whatsapp && <ReviewRow label="Sender" value={`${form.senderName} <${form.senderEmail}>`} />}
               <ReviewRow label="Schedule" value={form.schedule ? new Date(form.schedule).toLocaleString() : <Badge tone="neutral">Save as draft</Badge>} />
             </dl>
 
-            <div>
-              <p className="text-xs text-ink-muted mb-1.5">Email Preview</p>
-              <iframe
-                title="Email preview"
-                srcDoc={renderEmailDesignToHtml(form.bodyDesign, { subject: form.subject })}
-                className="w-full rounded-md border border-border bg-white"
-                style={{ height: 420 }}
-              />
-            </div>
+            {whatsapp ? (
+              <div className="max-w-lg">
+                <p className="text-xs text-ink-muted mb-1.5">Message preview</p>
+                <div className="whitespace-pre-wrap rounded-lg border border-border bg-[#e7f5dd] p-3.5 text-sm text-[#1f2d1a]">{form.messageBody.replace(/\{\{\s*(firstName|fullName)\s*\}\}/g, "Ayesha").replace(/\{\{\s*lastName\s*\}\}/g, "Khan").replace(/\{\{\s*company\s*\}\}/g, "Your company")}</div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-ink-muted mb-1.5">Email Preview</p>
+                <iframe
+                  title="Email preview"
+                  srcDoc={renderEmailDesignToHtml(form.bodyDesign, { subject: form.subject })}
+                  className="w-full rounded-md border border-border bg-white"
+                  style={{ height: 420 }}
+                />
+              </div>
+            )}
 
             {state?.error && <p className="text-sm text-danger">{state.error}</p>}
             <div className="flex justify-between max-w-lg">
@@ -175,7 +211,7 @@ export default function CampaignWizard({ segments, defaultSender }) {
               variant="primary"
               iconRight={ArrowRight}
               onClick={next}
-              disabled={(stepIndex === 0 && (!form.name || !form.subject)) || (stepIndex === 2 && form.bodyDesign.length === 0)}
+              disabled={(stepIndex === 0 && (!form.name || (!whatsapp && !form.subject))) || (stepIndex === 2 && (whatsapp ? !form.messageBody.trim() : form.bodyDesign.length === 0))}
             >
               Continue
             </Button>

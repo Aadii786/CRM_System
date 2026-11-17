@@ -8,16 +8,7 @@ import Button from "@/components/ui/Button";
 import { createAutomationAction } from "@/actions/automations";
 import { useToast } from "@/components/ui/Toast";
 
-const TRIGGERS = [
-  { value: "contact_added", label: "Contact Added" },
-  { value: "segment_entered", label: "Contact Enters Segment" },
-  { value: "campaign_sent", label: "Campaign Sent" },
-  { value: "email_opened", label: "Email Opened" },
-  { value: "email_clicked", label: "Email Clicked" },
-  { value: "whatsapp_response", label: "WhatsApp Response" },
-  { value: "deal_stage_changed", label: "Deal Stage Changed" },
-  { value: "form_submitted", label: "Form Submitted" },
-];
+import { TRIGGER_OPTIONS as TRIGGERS } from "@/lib/constants/automations";
 
 const initialState = { error: null };
 

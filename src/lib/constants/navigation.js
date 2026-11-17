@@ -80,6 +80,7 @@ export function getNavSections(user) {
         { label: "Companies", href: "/companies", icon: "Building2", tone: "cyan", show: () => hasPermission(user, "companies.view") },
         { label: "Deals", href: "/deals", icon: "Handshake", tone: "cyan", show: () => hasPermission(user, "deals.view") },
         { label: "Programs", href: "/programs", icon: "GraduationCap", tone: "teal", show: () => hasPermission(user, "programs.view") },
+        { label: "Registrations", href: "/registrations", icon: "ClipboardList", tone: "teal", show: () => hasPermission(user, "programs.view") },
         { label: "Activities", href: "/activities", icon: "Activity", tone: "indigo", show: () => hasPermission(user, "contacts.view") || hasPermission(user, "deals.view") },
         { label: "Tasks", href: "/tasks", icon: "CheckSquare", tone: "amber", show: () => hasPermission(user, "tasks.view") },
         { label: "Meetings", href: "/meetings", icon: "CalendarDays", tone: "teal", show: () => hasPermission(user, "meetings.view") },
@@ -94,6 +95,7 @@ export function getNavSections(user) {
         { label: "Segments", href: "/segments", icon: "Filter", tone: "purple", show: () => hasPermission(user, "segments.view") },
         { label: "Automations", href: "/automations", icon: "Workflow", tone: "purple", show: () => hasPermission(user, "automations.view") },
         { label: "WhatsApp", href: "/conversations", icon: "MessageCircle", tone: "green", show: () => hasPermission(user, "conversations.view") },
+        { label: "Website forms", href: "/website-forms", icon: "Globe", tone: "blue", show: () => hasPermission(user, "contacts.view") && Boolean(user?.department) && !user.department.isUniversityWide },
       ],
     },
     {
@@ -134,7 +136,10 @@ export function getNavSections(user) {
     },
     {
       title: "",
-      items: [{ label: "Demo Center", href: "/demo-center", icon: "PlayCircle", tone: "amber", show: () => true }],
+      items: [
+        { label: "Guide", href: "/guide", icon: "BookOpen", tone: "amber", show: () => true },
+        { label: "Demo Center", href: "/demo-center", icon: "PlayCircle", tone: "amber", show: () => true },
+      ],
     },
   ];
 

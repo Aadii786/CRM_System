@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { getProgramById, listTrainers } from "@/lib/services/programService";
+import { getBatchStatsForProgram } from "@/lib/services/registrationService";
 import PageHeader from "@/components/common/PageHeader";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -36,6 +37,9 @@ export default async function ProgramDetailPage({ params }) {
   const batches = program.batches || [];
   const canManage = hasPermission(user, "training.manage");
   const trainers = canManage ? await listTrainers(user) : [];
+  const batchStats = await getBatchStatsForProgram(user, program.id);
+  const registered = Object.values(batchStats).reduce((a, s) => a + s.taken, 0);
+  const completed = Object.values(batchStats).reduce((a, s) => a + s.completed, 0);
 
   return (
     <div>
@@ -52,8 +56,10 @@ export default async function ProgramDetailPage({ params }) {
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 mb-6">
         <MetricCard label="Batches" value={batches.length} icon={CalendarDays} tone="blue" />
+        <MetricCard label="Registrations" value={registered} icon={Users} tone="teal" />
+        <MetricCard label="Completed" value={completed} icon={Users} tone="green" />
         <MetricCard label="Interested leads" value={result.interestedCount} icon={Users} tone="purple" />
         <MetricCard label="Linked inquiries" value={result.dealCount} icon={Handshake} tone="cyan" />
       </div>
@@ -70,7 +76,7 @@ export default async function ProgramDetailPage({ params }) {
 
         <div>
           <h3 className="text-sm font-semibold text-ink mb-2.5">Batches</h3>
-          <BatchesPanel programId={program.id} defaultFee={program.defaultFee} batches={batches} trainers={trainers} canManage={canManage && program.status === "Active"} />
+          <BatchesPanel programId={program.id} defaultFee={program.defaultFee} batches={batches} trainers={trainers} stats={batchStats} canManage={canManage && program.status === "Active"} />
         </div>
       </div>
     </div>

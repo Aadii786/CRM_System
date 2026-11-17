@@ -121,7 +121,7 @@ export async function createApiKeyAction(_prevState, formData) {
   const user = await requireUser();
   const name = formData.get("name")?.toString().trim();
   if (!name) return { error: "Key name is required." };
-  const result = await integrationService.createApiKey(user, name);
+  const result = await integrationService.createApiKey(user, name, formData.get("departmentKey")?.toString() || null);
   revalidatePath("/api-webhooks");
   return { success: true, rawKey: result.rawKeyOnceOnly, prefix: result.keyPrefix };
 }

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { Plus, Copy, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
-import Field, { Input } from "@/components/ui/Field";
+import Field, { Input, Select } from "@/components/ui/Field";
 import { createApiKeyAction } from "@/actions/admin";
 import { useToast } from "@/components/ui/Toast";
 
-export default function CreateApiKeyButton() {
+export default function CreateApiKeyButton({ departments = [] }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(null);
   const [rawKey, setRawKey] = useState(null);
@@ -67,6 +67,14 @@ export default function CreateApiKeyButton() {
             <Field label="Key Name" htmlFor="key-name" required>
               <Input id="key-name" name="name" required placeholder="e.g. Website Integration" autoFocus />
             </Field>
+            {departments.length > 0 && (
+              <Field label="Feeds department" htmlFor="key-dept" hint="Forms sent with this key create their leads and registrations in this department (choose IKL for the website).">
+                <Select id="key-dept" name="departmentKey" defaultValue={departments.find((d) => d.key === "ikl-hsm")?.key || ""}>
+                  <option value="">No department (not for website forms)</option>
+                  {departments.map((d) => <option key={d.key} value={d.key}>{d.name}</option>)}
+                </Select>
+              </Field>
+            )}
             {error && <p className="text-sm text-danger">{error}</p>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
