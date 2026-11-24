@@ -17,7 +17,8 @@ import fs from "fs/promises";
  * This is fine for local development; swap this module for a real
  * provider before deploying anywhere serverless.
  */
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+// UPLOAD_DIR lets a host point this at a persistent disk (for example a Railway volume); the default is ./uploads.
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 
 async function ensureUploadDir() {
   await fs.mkdir(UPLOAD_DIR, { recursive: true });

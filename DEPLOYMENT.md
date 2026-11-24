@@ -43,3 +43,16 @@ hash is stored in the database at seed time.
   app is ever moved to Vercel (its crons run once a day on the free plan).
 - Emails are simulated; nothing is sent until IT picks a provider (see `docs/email-delivery.md`).
 - Railway's trial gives about 30 days or US$5 of credit; add a plan before it runs out.
+
+## Sprint 4 settings (go-live)
+
+| Variable | What it does |
+| --- | --- |
+| `UPLOAD_DIR` | Where attached documents are stored. On Railway add a **Volume** to the app service (for example mounted at `/data`) and set `UPLOAD_DIR=/data/uploads`; without it every deploy deletes the attached files. |
+| `APP_MODE=live` | Go-live switch: removes the demo banner, the one-click demo logins and the Demo Center. Leave unset on the test link. |
+| `EMAIL_CAPTURE_SECRET` | Bearer secret for `POST /api/email/capture` (one-to-one emails copied to the CRM, see `docs/email-delivery.md`). |
+
+Backups, the restore test, the response-time check and the demo-data cleanup are scripts (`npm run db:backup`,
+`db:backup:verify`, `perf:check`, `golive:cleanup`); the order of the go-live steps is in `docs/go-live-runbook.md`.
+Run them with the Railway CLI (`railway run npm run db:backup:verify`) or from a machine that can reach the database.
+Migration `041` (document search) runs with the normal pre-deploy `npm run db:migrate`.

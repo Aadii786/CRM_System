@@ -147,6 +147,7 @@ const DEMO_USERS = [
  * by crafting a request.
  */
 function loginDemoUsers() {
+  if (String(process.env.APP_MODE || "").toLowerCase() === "live") return []; // go-live: no one-click demo logins
   return process.env.DEMO_LOGIN_MODE === "all" ? DEMO_USERS : DEMO_USERS.filter((u) => u.visibleOnLogin);
 }
 

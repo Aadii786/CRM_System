@@ -1,5 +1,5 @@
 import "server-only";
-import { Op, fn, col, literal } from "sequelize";
+import { Op, fn, col, literal, where as sqlWhere } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, getAccessibleDepartmentKeys, hasPermission } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, listDepartments, allDepartmentKeys } from "./departmentService";
@@ -8,6 +8,29 @@ const {
   Contact, Company, Deal, Campaign, Automation, Conversation, Message,
   Proposal, TrainingProgram, Invoice, Payment, Department, Task,
 } = db;
+
+/**
+ * Date range helpers (MIR-3.9). `range` comes from resolveRange(); with no range every figure is all-time.
+ * Snapshot figures (how many contacts, open deals, pipeline value) are never filtered; figures about what
+ * happened (new leads, won deals, proposals sent, invoices, campaigns) are limited to the chosen period.
+ */
+function rangeCond(range) {
+  if (!range || !range.active) return null;
+  const c = {};
+  if (range.from) c[Op.gte] = range.from;
+  if (range.to) c[Op.lte] = range.to;
+  return c;
+}
+function inRange(where, field, range) {
+  const c = rangeCond(range);
+  return c ? { ...where, [field]: c } : where;
+}
+/** Deals won in the period: the closing date, or the last update for deals closed before closing dates were kept. */
+function wonInRange(where, range) {
+  const c = rangeCond(range);
+  if (!c) return where;
+  return { ...where, [Op.and]: [sqlWhere(fn("COALESCE", col("closed_at"), col("updated_at")), c)] };
+}
 
 async function idsForKey(key) {
   const rows = await Department.findAll({ where: { key } });
@@ -19,7 +42,7 @@ async function idsForKey(key) {
  * #11-#12). All numbers come from real aggregate queries (COUNT/SUM/GROUP
  * BY) against the seeded database - nothing here is a hard-coded constant.
  */
-export async function getUniversityOverview(user) {
+export async function getUniversityOverview(user, range = null) {
   requirePermission(user, "executive.dashboard.view");
 
   const marketingIds = await idsForKey("marketing");
@@ -45,14 +68,14 @@ export async function getUniversityOverview(user) {
     whatsappMessages,
   ] = await Promise.all([
     Contact.count({ where: { departmentId: { [Op.in]: allDeptIds } } }),
-    Contact.count({ where: { departmentId: { [Op.in]: allDeptIds }, status: "New" } }),
+    Contact.count({ where: inRange({ departmentId: { [Op.in]: allDeptIds }, status: "New" }, "createdAt", range) }),
     Contact.count({ where: { departmentId: { [Op.in]: allDeptIds }, status: "Qualified" } }),
     Deal.count({ where: { departmentId: { [Op.in]: iklIds }, status: "open" } }),
-    Deal.count({ where: { departmentId: { [Op.in]: iklIds }, status: "won" } }),
-    Deal.count({ where: { departmentId: { [Op.in]: iklIds } } }),
-    Campaign.count({ where: { departmentId: { [Op.in]: marketingIds } } }),
+    Deal.count({ where: wonInRange({ departmentId: { [Op.in]: iklIds }, status: "won" }, range) }),
+    Deal.count({ where: inRange({ departmentId: { [Op.in]: iklIds } }, "createdAt", range) }),
+    Campaign.count({ where: inRange({ departmentId: { [Op.in]: marketingIds } }, "createdAt", range) }),
     Campaign.findOne({
-      where: { departmentId: { [Op.in]: marketingIds }, status: "Sent" },
+      where: inRange({ departmentId: { [Op.in]: marketingIds }, status: "Sent" }, "sentAt", range),
       attributes: [
         [fn("SUM", col("recipients_count")), "sent"],
         [fn("SUM", col("delivered_count")), "delivered"],
@@ -61,12 +84,12 @@ export async function getUniversityOverview(user) {
       ],
       raw: true,
     }),
-    Proposal.count({ where: {} }),
-    Proposal.count({ where: { status: "Accepted" } }),
+    Proposal.count({ where: inRange({}, "sentDate", range) }),
+    Proposal.count({ where: inRange({ status: "Accepted" }, "sentDate", range) }),
     TrainingProgram.count(),
     TrainingProgram.count({ where: { status: "Completed" } }),
-    Invoice.findOne({ attributes: [[fn("SUM", col("paid_amount")), "paid"]], raw: true }),
-    Invoice.findOne({ attributes: [[fn("SUM", literal("amount - paid_amount")), "pending"]], where: { status: { [Op.in]: ["Unpaid", "Partial", "Overdue"] } }, raw: true }),
+    Invoice.findOne({ attributes: [[fn("SUM", col("paid_amount")), "paid"]], where: inRange({}, "issueDate", range), raw: true }),
+    Invoice.findOne({ attributes: [[fn("SUM", literal("amount - paid_amount")), "pending"]], where: inRange({ status: { [Op.in]: ["Unpaid", "Partial", "Overdue"] } }, "issueDate", range), raw: true }),
     Conversation.count({ where: { departmentId: { [Op.in]: allDeptIds } } }),
     Message.count(),
   ]);
@@ -202,7 +225,7 @@ export async function getConversionFunnel() {
   ];
 }
 
-export async function getMarketingDashboard(user) {
+export async function getMarketingDashboard(user, range = null) {
   requirePermission(user, "dashboard.view");
   const marketingIds = await idsForKey("marketing");
   const where = { departmentId: { [Op.in]: marketingIds } };
@@ -211,12 +234,12 @@ export async function getMarketingDashboard(user) {
     total, newContacts, active, inactive, campaigns, campaignAgg, qualified, converted,
   ] = await Promise.all([
     Contact.count({ where }),
-    Contact.count({ where: { ...where, createdAt: { [Op.gte]: new Date(Date.now() - 30 * 86400000) } } }),
+    range && range.active ? Contact.count({ where: inRange(where, "createdAt", range) }) : Contact.count({ where: { ...where, createdAt: { [Op.gte]: new Date(Date.now() - 30 * 86400000) } } }),
     Contact.count({ where: { ...where, engagementStatus: { [Op.in]: ["Engaged", "Opened", "Clicked"] } } }),
     Contact.count({ where: { ...where, engagementStatus: "Inactive" } }),
-    Campaign.count({ where }),
+    Campaign.count({ where: inRange(where, "createdAt", range) }),
     Campaign.findOne({
-      where: { ...where, status: "Sent" },
+      where: inRange({ ...where, status: "Sent" }, "sentAt", range),
       attributes: [
         [fn("SUM", col("recipients_count")), "sent"],
         [fn("SUM", col("delivered_count")), "delivered"],
@@ -262,7 +285,7 @@ async function revenueDepartmentIds(user) {
   return departmentIdsForKeys(keys);
 }
 
-export async function getRevenueDashboard(user) {
+export async function getRevenueDashboard(user, range = null) {
   requirePermission(user, "reports.view");
   const deptIds = await revenueDepartmentIds(user);
   const inDept = { [Op.in]: deptIds.length ? deptIds : [0] };
@@ -270,22 +293,22 @@ export async function getRevenueDashboard(user) {
 
   const [pipelineAgg, wonAgg, pendingAgg, paidAgg, dealCount, wonCount] = await Promise.all([
     Deal.findOne({ where: { departmentId: inDept, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Deal.findOne({ where: { departmentId: inDept, status: "won" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Invoice.findOne({ attributes: [[fn("SUM", literal("amount - paid_amount")), "pending"]], where: { status: { [Op.in]: ["Unpaid", "Partial", "Overdue"] } }, include: [viaDeal()], raw: true }),
-    Payment.findOne({ attributes: [[fn("SUM", col("Payment.amount")), "paid"]], include: [{ model: Invoice, attributes: [], required: true, include: [viaDeal()] }], raw: true }),
-    Deal.count({ where: { departmentId: inDept } }),
-    Deal.count({ where: { departmentId: inDept, status: "won" } }),
+    Deal.findOne({ where: wonInRange({ departmentId: inDept, status: "won" }, range), attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
+    Invoice.findOne({ attributes: [[fn("SUM", literal("amount - paid_amount")), "pending"]], where: inRange({ status: { [Op.in]: ["Unpaid", "Partial", "Overdue"] } }, "issueDate", range), include: [viaDeal()], raw: true }),
+    Payment.findOne({ attributes: [[fn("SUM", col("Payment.amount")), "paid"]], where: inRange({}, "paidAt", range), include: [{ model: Invoice, attributes: [], required: true, include: [viaDeal()] }], raw: true }),
+    Deal.count({ where: inRange({ departmentId: inDept }, "createdAt", range) }),
+    Deal.count({ where: wonInRange({ departmentId: inDept, status: "won" }, range) }),
   ]);
 
   const revenueByType = await Deal.findAll({
-    where: { departmentId: inDept, status: "won" },
+    where: wonInRange({ departmentId: inDept, status: "won" }, range),
     attributes: ["trainingType", [fn("SUM", col("value")), "revenue"]],
     group: ["trainingType"],
     raw: true,
   });
 
   const revenueByCompany = await Deal.findAll({
-    where: { departmentId: inDept, status: "won" },
+    where: wonInRange({ departmentId: inDept, status: "won" }, range),
     include: [{ model: Company, attributes: [] }],
     attributes: ["companyId", [col("Company.name"), "companyName"], [fn("SUM", col("Deal.value")), "revenue"]],
     group: ["companyId", "Company.id", "Company.name"],
@@ -295,7 +318,7 @@ export async function getRevenueDashboard(user) {
   });
 
   const revenueByOwner = await Deal.findAll({
-    where: { departmentId: inDept, status: "won" },
+    where: wonInRange({ departmentId: inDept, status: "won" }, range),
     include: [{ model: db.User, as: "owner", attributes: [] }],
     attributes: ["ownerId", [col("owner.name"), "ownerName"], [fn("SUM", col("Deal.value")), "revenue"]],
     group: ["ownerId", "owner.id", "owner.name"],
@@ -316,45 +339,53 @@ export async function getRevenueDashboard(user) {
   };
 }
 
-export async function getIklDashboard(user) {
+export async function getIklDashboard(user, range = null) {
   requirePermission(user, "dashboard.view");
   const iklIds = await idsForKey("ikl-hsm");
+  const inIkl = { departmentId: { [Op.in]: iklIds } };
+  const dealsInIkl = { departmentId: { [Op.in]: iklIds } };
+  const proposalWhere = inRange({ status: { [Op.in]: ["Sent", "Accepted", "Rejected"] } }, "sentDate", range);
+  const acceptedWhere = inRange({ status: "Accepted" }, "sentDate", range);
+  const invoiceWhere = inRange({}, "issueDate", range);
 
   const [
     companies, contacts, openDeals, wonDeals, pipelineValueAgg, wonValueAgg,
     proposalsSent, proposalsAccepted, invoicesAgg, paymentsAgg,
   ] = await Promise.all([
-    Company.count({ where: { departmentId: { [Op.in]: iklIds } } }),
-    Contact.count({ where: { departmentId: { [Op.in]: iklIds } } }),
-    Deal.count({ where: { departmentId: { [Op.in]: iklIds }, status: "open" } }),
-    Deal.count({ where: { departmentId: { [Op.in]: iklIds }, status: "won" } }),
-    Deal.findOne({ where: { departmentId: { [Op.in]: iklIds }, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Deal.findOne({ where: { departmentId: { [Op.in]: iklIds }, status: "won" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Proposal.count({ where: { status: { [Op.in]: ["Sent", "Accepted", "Rejected"] } } }),
-    Proposal.count({ where: { status: "Accepted" } }),
-    Invoice.findOne({ attributes: [[fn("SUM", col("amount")), "total"]], raw: true }),
-    Invoice.findOne({ attributes: [[fn("SUM", col("paid_amount")), "paid"]], raw: true }),
+    Company.count({ where: inIkl }),
+    Contact.count({ where: inIkl }),
+    Deal.count({ where: { ...dealsInIkl, status: "open" } }),
+    Deal.count({ where: wonInRange({ ...dealsInIkl, status: "won" }, range) }),
+    Deal.findOne({ where: { ...dealsInIkl, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
+    Deal.findOne({ where: wonInRange({ ...dealsInIkl, status: "won" }, range), attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
+    Proposal.count({ where: proposalWhere }),
+    Proposal.count({ where: acceptedWhere }),
+    Invoice.findOne({ where: invoiceWhere, attributes: [[fn("SUM", col("amount")), "total"]], raw: true }),
+    Invoice.findOne({ where: invoiceWhere, attributes: [[fn("SUM", col("paid_amount")), "paid"]], raw: true }),
   ]);
 
-  // Leads panel and contact-to-converted funnel (MIR-3.1, MIR-3.4), IKL only.
-  const inIkl = { departmentId: { [Op.in]: iklIds } };
+  // Leads panel and contact-to-converted funnel (MIR-3.1, MIR-3.4), IKL only. With a date range these count
+  // the contacts created in the period; without one, all contacts (and "new" means the last 30 days).
+  const leadBase = inRange(inIkl, "createdAt", range);
   const since = new Date(Date.now() - 30 * 86400000);
-  const [newLeads, activeLeads, qualifiedLeads, engagedPlus, qualifiedPlus, convertedCount] = await Promise.all([
-    Contact.count({ where: { ...inIkl, createdAt: { [Op.gte]: since } } }),
-    Contact.count({ where: { ...inIkl, engagementStatus: { [Op.notIn]: ["Inactive", "Bounced", "Unsubscribed"] } } }),
-    Contact.count({ where: { ...inIkl, status: "Qualified" } }),
-    Contact.count({ where: { ...inIkl, status: { [Op.in]: ["Engaged", "Interested", "Qualified", "Converted"] } } }),
-    Contact.count({ where: { ...inIkl, status: { [Op.in]: ["Qualified", "Converted"] } } }),
-    Contact.count({ where: { ...inIkl, status: "Converted" } }),
+  const [leadTotal, newLeads, activeLeads, qualifiedLeads, engagedPlus, qualifiedPlus, convertedCount] = await Promise.all([
+    Contact.count({ where: leadBase }),
+    range && range.active ? Contact.count({ where: leadBase }) : Contact.count({ where: { ...inIkl, createdAt: { [Op.gte]: since } } }),
+    Contact.count({ where: { ...leadBase, engagementStatus: { [Op.notIn]: ["Inactive", "Bounced", "Unsubscribed"] } } }),
+    Contact.count({ where: { ...leadBase, status: "Qualified" } }),
+    Contact.count({ where: { ...leadBase, status: { [Op.in]: ["Engaged", "Interested", "Qualified", "Converted"] } } }),
+    Contact.count({ where: { ...leadBase, status: { [Op.in]: ["Qualified", "Converted"] } } }),
+    Contact.count({ where: { ...leadBase, status: "Converted" } }),
   ]);
 
-  // Campaign panel (MIR-3.2): only for users who may see campaigns.
+  // Campaign panel (MIR-3.2): only for users who may see campaigns. A campaign counts in the period it was sent.
   let campaignPanel = null;
   if (hasPermission(user, "campaigns.view")) {
+    const sentWhere = inRange({ ...inIkl, status: "Sent" }, "sentAt", range);
     const [count, sentRows] = await Promise.all([
-      Campaign.count({ where: inIkl }),
+      Campaign.count({ where: inRange(inIkl, "createdAt", range) }),
       Campaign.findOne({
-        where: { ...inIkl, status: "Sent" },
+        where: sentWhere,
         attributes: [
           [fn("COUNT", col("id")), "sent"],
           [fn("SUM", col("recipients_count")), "recipients"],
@@ -392,9 +423,9 @@ export async function getIklDashboard(user) {
     proposalAcceptanceRate: proposalsSent ? (proposalsAccepted / proposalsSent) * 100 : 0,
     totalInvoiced: Number(invoicesAgg?.total || 0),
     totalPaid: Number(paymentsAgg?.paid || 0),
-    leads: { total: contacts, newLast30: newLeads, active: activeLeads, inactive: Math.max(contacts - activeLeads, 0), qualified: qualifiedLeads },
+    leads: { total: leadTotal, newLast30: newLeads, active: activeLeads, inactive: Math.max(leadTotal - activeLeads, 0), qualified: qualifiedLeads },
     funnel: [
-      { label: "Contacts", value: contacts },
+      { label: "Contacts", value: leadTotal },
       { label: "Engaged", value: engagedPlus },
       { label: "Qualified", value: qualifiedPlus },
       { label: "Converted", value: convertedCount },
@@ -410,7 +441,7 @@ export async function getIklDashboard(user) {
  * Scoped to the viewer's own department only (never called for a
  * university-wide user - the dashboard router sends those to /executive).
  */
-export async function getDepartmentDashboard(user) {
+export async function getDepartmentDashboard(user, range = null) {
   requirePermission(user, "dashboard.view");
   const deptIds = await departmentIdsForKeys([user.department?.key].filter(Boolean));
   const where = { departmentId: { [Op.in]: deptIds } };
@@ -420,12 +451,12 @@ export async function getDepartmentDashboard(user) {
     campaigns, openTasks, overdueTasks, upcomingMeetings,
   ] = await Promise.all([
     Contact.count({ where }),
-    Contact.count({ where: { ...where, createdAt: { [Op.gte]: new Date(Date.now() - 30 * 86400000) } } }),
+    range && range.active ? Contact.count({ where: inRange(where, "createdAt", range) }) : Contact.count({ where: { ...where, createdAt: { [Op.gte]: new Date(Date.now() - 30 * 86400000) } } }),
     Company.count({ where }),
     Deal.count({ where: { ...where, status: "open" } }),
-    Deal.count({ where: { ...where, status: "won" } }),
+    Deal.count({ where: wonInRange({ ...where, status: "won" }, range) }),
     Deal.findOne({ where: { ...where, status: "open" }, attributes: [[fn("SUM", col("value")), "sum"]], raw: true }),
-    Campaign.count({ where }),
+    Campaign.count({ where: inRange(where, "createdAt", range) }),
     Task.count({ where: { ...where, status: { [Op.in]: ["Pending", "In Progress"] } } }),
     Task.count({ where: { ...where, status: "Overdue" } }),
     db.Meeting.count({ where: { ...where, status: "Scheduled" } }),

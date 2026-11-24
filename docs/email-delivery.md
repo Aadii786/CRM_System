@@ -53,3 +53,22 @@ curl http://localhost:3000/api/health                 # is the app up
 curl http://localhost:3000/api/cron/campaigns         # run the scheduler once (no CRON_SECRET locally)
 ```
 Tokens are signed with `EMAIL_LINK_SECRET` (or `SESSION_SECRET`); a tampered token is rejected and redirects to `/`.
+
+## One-to-one emails on the timeline (MIR-4.4)
+
+Two ways, both ending as an "email" entry on the person's history (direction, subject, start of the text):
+
+1. **By hand.** On a contact or a deal press **Log Email**: sent or received, date, subject, text.
+2. **Copy to the CRM.** Staff put a CRM mailbox (for example `crm@ikl.com.pk`) in Bcc, or forward a received mail to it. The IT
+   department routes that mailbox to `POST /api/email/capture`:
+
+```
+POST /api/email/capture?department=ikl-hsm
+Authorization: Bearer <EMAIL_CAPTURE_SECRET>
+{ "from": "staff@ikl.com.pk", "to": ["client@company.com"], "cc": [], "subject": "...", "text": "...",
+  "date": "2026-11-24T09:30:00Z", "messageId": "<abc@mail>", "direction": "sent" }   // direction is optional
+```
+
+The person is found by email among the senders and recipients (staff addresses are ignored). The same `messageId` is never
+recorded twice; a message with no known customer address is ignored (the answer says why). A provider-specific adapter converts
+the mail service's inbound format to the JSON above, the same way as for delivery events.

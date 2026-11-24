@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import { sendDemoEmailAction, sendDemoWhatsappAction } from "@/actions/engagement";
 import { createTaskAction } from "@/actions/tasks";
 import LogCallButton from "@/components/common/LogCallButton";
+import LogEmailButton from "@/components/common/LogEmailButton";
 import ConvertToOpportunityButton from "@/components/contacts/ConvertToOpportunityButton";
 
 export default function ContactHeaderActions({ contact, canEdit, canConvert, canTask = false, canLog = false, canMessage = false, programs = [] }) {
@@ -43,6 +44,7 @@ export default function ContactHeaderActions({ contact, canEdit, canConvert, can
         </Button>
       )}
       {canLog && <LogCallButton contactId={contact.id} revalidatePathValue={`/contacts/${contact.id}`} />}
+      {canLog && <LogEmailButton contactId={contact.id} revalidatePathValue={`/contacts/${contact.id}`} />}
       {canLog && (
         <Button variant="secondary" icon={Mail} onClick={handleSendEmail} loading={isPending}>
           Send Email

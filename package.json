@@ -13,7 +13,12 @@
     "db:seed": "sequelize-cli db:seed:all",
     "db:seed:undo": "sequelize-cli db:seed:undo:all",
     "db:setup": "npm run db:create && npm run db:migrate && npm run db:seed",
-    "db:reset": "sequelize-cli db:drop && npm run db:setup"
+    "db:reset": "sequelize-cli db:drop && npm run db:setup",
+    "db:backup": "node scripts/db-backup.js",
+    "db:restore": "node scripts/db-restore.js",
+    "db:backup:verify": "node scripts/db-backup-verify.js",
+    "golive:cleanup": "node scripts/go-live-cleanup.js",
+    "perf:check": "node scripts/perf-check.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

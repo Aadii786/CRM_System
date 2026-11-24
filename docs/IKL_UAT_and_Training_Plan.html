@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IKL CRM - Acceptance test and training plan</title>
+<style>
+  :root { --ink:#16213a; --muted:#5b6478; --line:#cfd5e2; --accent:#3b3fb6; --soft:#f4f5fb; --bg:#fff; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ink:#e8ebf5; --muted:#a3abc0; --line:#2b3350; --accent:#9a98ff; --soft:#182041; --bg:#10152a; } }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.5 "Segoe UI",system-ui,sans-serif}
+  .page{max-width:1000px;margin:0 auto;padding:24px 16px}
+  h1{font-size:24px;margin:0 0 2px} h2{font-size:14px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin:26px 0 8px;break-after:avoid}
+  h3{font-size:14px;margin:16px 0 6px;break-after:avoid} p{margin:0 0 8px} .sub{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:10px} th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+  th{background:var(--soft);font-weight:600} td.n{width:34px;text-align:center;color:var(--muted)} td.r{width:78px} td.c{width:150px}
+  tr{break-inside:avoid} .box{border:1px solid var(--line);border-radius:6px;padding:10px 14px;background:var(--soft)}
+  .sign td{height:44px} ul{margin:4px 0 8px;padding-left:20px}
+  @media (max-width:720px){ table{font-size:12px} td.c{width:90px} }
+  @media print{ body{font-size:11px} .page{padding:0;max-width:none} h2{margin-top:16px} .break{break-before:page} }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>IKL CRM - acceptance test and training plan</h1>
+  <p class="sub">For the person IKL nominates to accept the system, and for the staff who will use it. Final delivery: Monday 30 November 2026. Print this page and tick as you go.</p>
+
+  <h2>How the acceptance test works</h2>
+  <div class="box">
+    <ul>
+      <li>One tester per role (Head of Department, Sales, Marketing) works through that role's scenarios on the system with a real login. Scenarios marked "all roles" are done once.</li>
+      <li>For each scenario: follow the steps, compare with the expected result, write <b>Pass</b> or <b>Fail</b> and a short comment.</li>
+      <li>Email and WhatsApp run in demonstration mode until the IT department connects the real services; those scenarios are accepted on what is recorded, and repeated once the services are live.</li>
+      <li>Accepted when every scenario is Pass, or each Fail has a written decision (fix before go-live, or accept and fix later).</li>
+    </ul>
+  </div>
+
+  <h2>A. All roles</h2>
+  <table>
+    <tr><th>#</th><th>Scenario</th><th>Steps</th><th>Expected result</th><th class="r">Pass / Fail</th><th class="c">Comment</th></tr>
+    <tr><td class="n">A1</td><td>Sign in and first look</td><td>Open the CRM address, sign in with your own email and password.</td><td>The welcome tour for your role opens once; the menu shows only what your role may use.</td><td></td><td></td></tr>
+    <tr><td class="n">A2</td><td>Find a person</td><td>Contacts: search a name, then filter by status and by program.</td><td>The list narrows correctly in under two seconds.</td><td></td><td></td></tr>
+    <tr><td class="n">A3</td><td>One record per person</td><td>Try to add a contact with an email that already exists.</td><td>The system points to the existing record; no duplicate is created.</td><td></td><td></td></tr>
+    <tr><td class="n">A4</td><td>Notes, calls and emails on the history</td><td>On a contact: add a note, Log Call, Log Email.</td><td>All three appear on the contact's history with date and your name.</td><td></td><td></td></tr>
+    <tr><td class="n">A5</td><td>Attach and find a document</td><td>Attach a PDF or Word file to a company. Open Documents and search a word that is inside the file.</td><td>The file is found with the sentence around the word; type, client and date filters work.</td><td></td><td></td></tr>
+    <tr><td class="n">A6</td><td>Dashboard date range</td><td>Open your dashboard; choose Last 30 days, then a custom range.</td><td>Figures about activity change with the period; totals such as open deals stay the same; the chosen period is shown.</td><td></td><td></td></tr>
+    <tr><td class="n">A7</td><td>Roles are respected</td><td>Try to open a screen your role does not have (for example Users as Sales).</td><td>Access is refused; the menu never showed it.</td><td></td><td></td></tr>
+  </table>
+
+  <h2>B. Head of Department</h2>
+  <table>
+    <tr><th>#</th><th>Scenario</th><th>Steps</th><th>Expected result</th><th class="r">Pass / Fail</th><th class="c">Comment</th></tr>
+    <tr><td class="n">B1</td><td>Add a team member</td><td>Users: add a Sales user and give the role; reset their password.</td><td>The person can sign in; the role limits what they see.</td><td></td><td></td></tr>
+    <tr><td class="n">B2</td><td>Approve a proposal</td><td>A salesperson submits a proposal on a deal; you open it and approve.</td><td>The proposal can then be marked sent; before approval it cannot.</td><td></td><td></td></tr>
+    <tr><td class="n">B3</td><td>Team follow-ups</td><td>Tasks: open Team follow-ups.</td><td>You see each person's open and overdue follow-ups.</td><td></td><td></td></tr>
+    <tr><td class="n">B4</td><td>Reports and export</td><td>Reports: open Registrations by batch, By program, By source, Team performance. Choose a period. Download Excel and PDF of one report.</td><td>The files open; their numbers equal the screen; the period is written on them.</td><td></td><td></td></tr>
+    <tr><td class="n">B5</td><td>Import IKL's program data</td><td>Programs > Import program data: download the template, fill one program, one batch, two people, one registration; Check; Import.</td><td>The check lists new records and any problem rows; after Import the records exist; repeating the import changes nothing.</td><td></td><td></td></tr>
+  </table>
+
+  <h2>C. Sales</h2>
+  <table>
+    <tr><th>#</th><th>Scenario</th><th>Steps</th><th>Expected result</th><th class="r">Pass / Fail</th><th class="c">Comment</th></tr>
+    <tr><td class="n">C1</td><td>Lead to opportunity</td><td>On a contact: Convert to opportunity; move the deal through the stages.</td><td>A deal with a reference number appears on the board; winning it marks the person a client.</td><td></td><td></td></tr>
+    <tr><td class="n">C2</td><td>Proposal, invoice and payment</td><td>On the deal: create a proposal and submit it; record an invoice reference and a payment.</td><td>Status and amounts show on the deal and in the Revenue report.</td><td></td><td></td></tr>
+    <tr><td class="n">C3</td><td>Register a person</td><td>Programs > a program > Roster: register one person.</td><td>The person is on the roster; seats used go up; a full batch refuses another registration.</td><td></td><td></td></tr>
+    <tr><td class="n">C4</td><td>Company nomination</td><td>Roster > Company nomination: paste three names with emails.</td><td>Everyone is registered with one reference; any refused person is listed with the reason.</td><td></td><td></td></tr>
+    <tr><td class="n">C5</td><td>Attendance, completion, certificate, feedback</td><td>Mark Attended; Complete with a certificate number; record a feedback score.</td><td>The person becomes an alumnus; the program page shows the feedback average.</td><td></td><td></td></tr>
+    <tr><td class="n">C6</td><td>Program history</td><td>Open the person and their company.</td><td>The Program history tab shows registrations, attendance, completion and feedback.</td><td></td><td></td></tr>
+  </table>
+
+  <h2>D. Marketing</h2>
+  <table>
+    <tr><th>#</th><th>Scenario</th><th>Steps</th><th>Expected result</th><th class="r">Pass / Fail</th><th class="c">Comment</th></tr>
+    <tr><td class="n">D1</td><td>List and segment</td><td>Create a list; create a segment (for example source = Website).</td><td>The segment count matches the contacts filter.</td><td></td><td></td></tr>
+    <tr><td class="n">D2</td><td>Email campaign</td><td>Campaigns > New (Email): audience, subject, content; send now; open the campaign.</td><td>Sent, delivered, opened, clicked counters show; people who unsubscribed are skipped.</td><td></td><td></td></tr>
+    <tr><td class="n">D3</td><td>Unsubscribe</td><td>Open the unsubscribe link of a test email.</td><td>The person is opted out and is skipped by the next campaign.</td><td></td><td></td></tr>
+    <tr><td class="n">D4</td><td>WhatsApp campaign and inbox</td><td>Campaigns > New (WhatsApp); then open the WhatsApp screen.</td><td>Sends are recorded; a reply appears in the inbox and on the person's history.</td><td></td><td></td></tr>
+    <tr><td class="n">D5</td><td>Automation</td><td>Create "website form received > send email > wait > if opened create a task"; activate it.</td><td>A new website enquiry starts it; every step is in the log.</td><td></td><td></td></tr>
+    <tr><td class="n">D6</td><td>Website forms</td><td>Submit a test enquiry from the website (or the test link).</td><td>A lead with source Website appears with an owner and a notification; the same email twice gives one contact.</td><td></td><td></td></tr>
+    <tr><td class="n">D7</td><td>Reports and export (Marketing)</td><td>Reports > By source: choose a period; download Excel.</td><td>Leads, qualified and converted by source match the contacts filters.</td><td></td><td></td></tr>
+  </table>
+
+  <h2 class="break">Training plan (about 3 hours in total)</h2>
+  <table>
+    <tr><th>Session</th><th>For</th><th>Content</th><th>Length</th></tr>
+    <tr><td>1. Everyone</td><td>All users</td><td>The idea of one record per person; sign in; the welcome tour and the Guide; contacts, companies, notes, calls and emails on the history; search and Documents; dashboards and the date range.</td><td>60 min</td></tr>
+    <tr><td>2. Sales and Head</td><td>Sales team, Head of Department</td><td>Deals and the pipeline; proposals and approval; invoice and payment references; programs, batches, roster, nomination, attendance, completion and feedback; follow-ups and team follow-ups; reports and export; Import program data (Head).</td><td>75 min</td></tr>
+    <tr><td>3. Marketing</td><td>Marketing team, Head</td><td>Lists and segments; email and WhatsApp campaigns and their results; unsubscribe; automations; website forms; shared WhatsApp inbox; reports by source.</td><td>60 min</td></tr>
+  </table>
+  <p>Bring: a laptop, your login, and one real example of your daily work. Each session ends with the trainees doing the scenarios above on their own login. The Guide page in the menu and the one-page overview stay available afterwards.</p>
+
+  <h2>Sign-off</h2>
+  <table class="sign">
+    <tr><th>Role tested</th><th>Tester (name)</th><th>Scenarios passed</th><th>Signature</th><th>Date</th></tr>
+    <tr><td>All roles (A)</td><td></td><td>&nbsp;/ 7</td><td></td><td></td></tr>
+    <tr><td>Head of Department (B)</td><td></td><td>&nbsp;/ 5</td><td></td><td></td></tr>
+    <tr><td>Sales (C)</td><td></td><td>&nbsp;/ 6</td><td></td><td></td></tr>
+    <tr><td>Marketing (D)</td><td></td><td>&nbsp;/ 7</td><td></td><td></td></tr>
+  </table>
+  <table class="sign">
+    <tr><th>Final acceptance</th><th>Name</th><th>Signature</th><th>Date</th></tr>
+    <tr><td>IKL (person nominated to accept)</td><td></td><td></td><td></td></tr>
+    <tr><td>CRM project team</td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="sub">Decisions on any Fail: write them in the Comment column or in the Open Questions sheet of the shared workbook.</p>
+</div>
+</body>
+</html>

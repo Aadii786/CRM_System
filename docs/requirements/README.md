@@ -1,6 +1,6 @@
 # IKL requirements workbook - how it is made
 
-`IKL_CRM_Progress_Report_and_Sprint_Plan.xlsx` is the **client-facing** workbook (Summary, Sprint 1 Report, Sprint Plan, Functional Checklist, Roles, Open Questions, Decisions & Services, Beyond BRD). The copy shared with IKL is a Google Drive file (see `CLAUDE.md`, section "Shared files"). This repo copy is the latest local master.
+`IKL_CRM_Progress_Report_and_Sprint_Plan.xlsx` is the **client-facing** workbook (Project Scope, Summary, Sprint 1-3 Reports, Sprint Plan, Functional Checklist, Roles, Open Questions, Decisions & Services, Beyond BRD). The copy shared with IKL is a Google Drive file (see `CLAUDE.md`, section "Shared files"). This repo copy is the latest local master.
 
 ## Rebuilding it
 
@@ -15,6 +15,7 @@ node diff_workbooks.js old.xlsx out.xlsx      # compare two workbooks cell by ce
 ```
 
 - `build_ikl_workbook.js`: sprint plan, function-to-sprint mapping (`SPRINT_FN`), roles matrix, open questions, decisions. **Edit the data here, then rebuild.**
+- `scope_sheet.js`: the printable "Project Scope" sheet (first tab, A4 portrait). Edit its text arrays, then rebuild.
 - `sprint1_sheet.js`: the "Sprint 1 Report" sheet and the list of functions turned Done in Sprint 1 (`DONE_NOW`). For a new sprint, add a similar report sheet and extend `DONE_NOW`.
 
 ## Publishing to the shared Google Drive file

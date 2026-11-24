@@ -11,7 +11,7 @@ import QuickCreateMenu from "./QuickCreateMenu";
 import NotificationsMenu from "./NotificationsMenu";
 import GlobalSearch from "./GlobalSearch";
 
-export default function Header({ user, notifications, unreadCount, onToggleMobileNav }) {
+export default function Header({ user, notifications, unreadCount, onToggleMobileNav, helpHref = "/demo-center" }) {
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
@@ -48,8 +48,8 @@ export default function Header({ user, notifications, unreadCount, onToggleMobil
         <NotificationsMenu notifications={notifications} unreadCount={unreadCount} />
 
         <Link
-          href="/demo-center"
-          title="Help & Demo Center"
+          href={helpHref}
+          title={helpHref === "/guide" ? "Help and guide" : "Help & Demo Center"}
           className="hidden sm:inline-flex rounded-md p-2 text-ink-secondary hover:bg-surface-alt focus-ring"
         >
           <HelpCircle className="size-[18px]" />

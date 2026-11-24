@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { listPrograms } from "@/lib/services/programService";
+import Button from "@/components/ui/Button";
 import PageHeader from "@/components/common/PageHeader";
 import FilterBar from "@/components/common/FilterBar";
 import SearchInput from "@/components/ui/SearchInput";
@@ -40,7 +41,7 @@ export default async function ProgramsPage({ searchParams }) {
       <PageHeader
         title="Programs"
         description="The program catalogue: what is offered, in which category, and when it runs next."
-        actions={canManage && <ProgramFormModal />}
+        actions={canManage && (<><Button href="/programs/import" variant="secondary">Import program data</Button><ProgramFormModal /></>)}
       />
 
       <FilterBar>

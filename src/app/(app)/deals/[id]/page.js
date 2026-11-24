@@ -18,6 +18,7 @@ import EngagementsPanel from "@/components/deals/EngagementsPanel";
 import DealProgramControl from "@/components/deals/DealProgramControl";
 import { listProgramOptions, listTrainers } from "@/lib/services/programService";
 import LogCallButton from "@/components/common/LogCallButton";
+import LogEmailButton from "@/components/common/LogEmailButton";
 import { formatCurrencyPKR, formatCurrencyFull, formatDate, formatDateTime } from "@/lib/utils/format";
 
 export async function generateMetadata({ params }) {
@@ -88,6 +89,7 @@ export default async function DealDetailPage({ params }) {
             <p className="text-xs text-ink-muted">{deal.probability}% probability</p>
           </div>
           {hasPermission(user, "deals.update") && <LogCallButton dealId={deal.id} revalidatePathValue={`/deals/${deal.id}`} />}
+          {hasPermission(user, "deals.update") && <LogEmailButton dealId={deal.id} revalidatePathValue={`/deals/${deal.id}`} />}
         </div>
       </div>
 

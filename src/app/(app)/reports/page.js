@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
+import { reportsFor } from "@/lib/services/reportService";
 import PageHeader from "@/components/common/PageHeader";
 import Card from "@/components/ui/Card";
 import {
@@ -39,10 +40,29 @@ const CATEGORIES = [
 export default async function ReportsPage() {
   const user = await requireUserWithPermission("reports.view");
   const visibleCategories = CATEGORIES.filter((c) => !c.requires || hasPermission(user, c.requires));
+  const programReports = reportsFor(user);
 
   return (
     <div>
       <PageHeader title="Reports" description="Every report category is backed by live database queries - filter, drill down and export from each area." />
+      {programReports.length > 0 && (
+        <>
+          <h2 className="text-sm font-semibold text-ink mb-2.5">Registrations, programs, sources and team</h2>
+          <p className="text-xs text-ink-muted mb-3">Choose a date range on each report. Head of Department and Marketing can export to Excel or PDF.</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {programReports.map((r) => (
+              <Link key={r.key} href={`/reports/view/${r.key}`} className="block">
+                <Card className="h-full hover:border-primary-border hover:shadow-md transition-all">
+                  <FileBarChart className="size-5 text-primary mb-3" />
+                  <h3 className="text-sm font-semibold text-ink mb-1">{r.title}</h3>
+                  <p className="text-xs text-ink-muted">{r.description}</p>
+                </Card>
+              </Link>
+            ))}
+          </div>
+          <h2 className="text-sm font-semibold text-ink mb-2.5">Other reports</h2>
+        </>
+      )}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleCategories.map((c) => (
           <Link key={c.key} href={c.href} className="block">

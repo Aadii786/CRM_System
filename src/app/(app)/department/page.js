@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { getDepartmentDashboard } from "@/lib/services/reportingService";
+import DateRangeFilter from "@/components/common/DateRangeFilter";
+import { resolveRange, toIsoDay } from "@/lib/utils/dateRange";
 import { listActivities } from "@/lib/services/activityService";
 import PageHeader from "@/components/common/PageHeader";
 import MetricCard from "@/components/ui/MetricCard";
@@ -15,8 +17,9 @@ import { departmentTone } from "@/lib/constants/moduleColors";
 
 export const metadata = { title: "Department Dashboard" };
 
-export default async function DepartmentDashboardPage() {
+export default async function DepartmentDashboardPage({ searchParams }) {
   const user = await requireUserWithPermission("dashboard.view");
+  const range = resolveRange(await searchParams);
   const deptName = user.department?.name || "My Department";
   const tone = departmentTone(user.department?.key);
 
@@ -38,7 +41,7 @@ export default async function DepartmentDashboardPage() {
   else if (!isHead && isMarketing && isSales) dashboardTitle = `${deptName} Marketing & Sales Dashboard`;
 
   const [stats, activitiesRaw] = await Promise.all([
-    getDepartmentDashboard(user),
+    getDepartmentDashboard(user, range),
     listActivities(user, { limit: 8 }),
   ]);
   const activities = activitiesRaw.data.map((a) => a.get({ plain: true }));
@@ -46,10 +49,11 @@ export default async function DepartmentDashboardPage() {
   return (
     <div>
       <PageHeader title={dashboardTitle} description={`Real-time overview of contacts, companies, deals and day-to-day work for ${deptName} - shared by everyone in the department.`} />
+      <DateRangeFilter preset={range.preset} from={toIsoDay(range.from)} to={toIsoDay(range.to)} label={range.label} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
         <MetricCard label="Total Contacts" value={formatNumber(stats.totalContacts)} icon={Users} href="/contacts" tone={tone} />
-        <MetricCard label="New (30 days)" value={formatNumber(stats.newContacts)} icon={UserPlus} tone={tone} />
+        <MetricCard label={range.active ? "New in period" : "New (30 days)"} value={formatNumber(stats.newContacts)} icon={UserPlus} tone={tone} />
         <MetricCard label="Companies" value={formatNumber(stats.companies)} icon={Building2} href="/companies" tone="cyan" />
         <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals" tone="cyan" />
         <MetricCard label="Won Deals" value={formatNumber(stats.wonDeals)} icon={Award} tone="green" />

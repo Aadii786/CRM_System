@@ -4,6 +4,7 @@ import { requirePermission, requireDepartmentAccess } from "@/lib/permissions/rb
 import { departmentByKey } from "./departmentService";
 import { saveFile, readFile, deleteFile } from "./fileStorage";
 import { recordAudit } from "./auditService";
+import { extractText } from "@/lib/documents/textExtract";
 
 const { Document, Contact, Company, Deal, Meeting, Department, User } = db;
 
@@ -37,7 +38,7 @@ export async function listDocuments(user, relatedType, relatedId) {
   });
 }
 
-export async function uploadDocument(user, { relatedType, relatedId, file, description }) {
+export async function uploadDocument(user, { relatedType, relatedId, file, description, title }) {
   requirePermission(user, MANAGE_PERMISSION[relatedType]);
   const entity = await loadRelatedEntity(relatedType, relatedId);
   requireDepartmentAccess(user, entity.Department?.key);
@@ -55,9 +56,15 @@ export async function uploadDocument(user, { relatedType, relatedId, file, descr
 
   const dept = entity.Department || (await departmentByKey(user.department?.key));
 
+  const { text, status } = extractText(buffer, file.name); // so the document can be found by what it says (CRM-5.5)
+
   const doc = await Document.create({
     name: file.name,
+    title: title || null,
     description: description || null,
+    contentText: text || null,
+    contentStatus: status,
+    indexedAt: new Date(),
     storedFileName,
     mimeType: file.type || null,
     fileSize: file.size,

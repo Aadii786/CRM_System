@@ -12,7 +12,7 @@ import { ROLES } from "@/lib/constants/guide";
  * First-login welcome: a short step-by-step tour for the person's role. It opens once per person
  * (remembered in this browser); "Take the tour" in the menu or the Guide page opens it again.
  */
-export default function WelcomeTour({ userId, userName, guideKey }) {
+export default function WelcomeTour({ userId, userName, guideKey, deliveryNotice = "demo" }) {
   const role = ROLES[guideKey] || ROLES.sales;
   const storageKey = `crm-tour-seen-${userId}`;
   const [open, setOpen] = useState(false);
@@ -42,7 +42,8 @@ export default function WelcomeTour({ userId, userName, guideKey }) {
         <div className="flex flex-col gap-3 text-sm text-ink-secondary">
           <p className="flex items-start gap-2"><Sparkles className="size-4 mt-0.5 text-primary shrink-0" /> {role.intro}</p>
           <p>This short tour shows what each part of the CRM is for. It takes about a minute. You can open it again any time from the <strong>Guide</strong> page.</p>
-          <p className="rounded-md border border-warning-border bg-warning-subtle px-3 py-2 text-ink">This is the demonstration environment: emails and WhatsApp messages are recorded but not really delivered until the IT department connects the real services.</p>
+          {deliveryNotice === "demo" && <p className="rounded-md border border-warning-border bg-warning-subtle px-3 py-2 text-ink">This is the demonstration environment: emails and WhatsApp messages are recorded but not really delivered until the IT department connects the real services.</p>}
+          {deliveryNotice === "services" && <p className="rounded-md border border-warning-border bg-warning-subtle px-3 py-2 text-ink">Emails and WhatsApp messages are recorded in the CRM but not yet delivered: they start going out when the IT department connects the real email and WhatsApp services.</p>}
         </div>
       ) : (
         <div className="flex flex-col gap-3 text-sm text-ink-secondary">

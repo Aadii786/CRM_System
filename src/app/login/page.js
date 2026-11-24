@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { GraduationCap, Users, LineChart, ShieldCheck, Sparkles } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/authService";
 import { loginDemoUsers } from "@/lib/constants/demoUsers";
+import { isLiveMode } from "@/lib/constants/appMode";
 import { demoLoginAction } from "@/actions/auth";
 import PasswordLoginForm from "@/components/auth/PasswordLoginForm";
 
@@ -54,6 +55,7 @@ export default async function LoginPage() {
   const existing = await getCurrentUser();
   if (existing) redirect("/dashboard");
   const demoUsers = loginDemoUsers();
+  const live = isLiveMode();
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -92,7 +94,7 @@ export default async function LoginPage() {
           </div>
         </div>
 
-        <p className="relative text-xs text-indigo-200/60">© {new Date().getFullYear()} University of Management &amp; Technology - Demo Platform</p>
+        <p className="relative text-xs text-indigo-200/60">© {new Date().getFullYear()} University of Management &amp; Technology{live ? "" : " - Demo Platform"}</p>
       </div>
 
       {/* Sign-in panel */}
@@ -108,12 +110,14 @@ export default async function LoginPage() {
           <div className="flex flex-col items-center text-center mb-6">
             <h2 className="text-xl font-semibold text-ink">Welcome back</h2>
             <p className="text-sm text-ink-muted mt-1">Sign in to continue to your dashboard.</p>
-            <span className="mt-3 inline-flex items-center rounded-full border border-warning-border bg-warning-subtle px-3 py-1 text-xs font-medium text-warning">
-              DEMO ENVIRONMENT - no real emails or messages are ever sent
-            </span>
+            {!live && (
+              <span className="mt-3 inline-flex items-center rounded-full border border-warning-border bg-warning-subtle px-3 py-1 text-xs font-medium text-warning">
+                DEMO ENVIRONMENT - no real emails or messages are ever sent
+              </span>
+            )}
           </div>
 
-          <div className="rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6 mb-5">
+          {demoUsers.length > 0 && <div className="rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6 mb-5">
             <h3 className="text-sm font-semibold text-ink mb-1">Choose your role</h3>
             <p className="text-xs text-ink-muted mb-4">
               One click signs you in. The menu and dashboards change with the role, so you can see what each person in the department sees.
@@ -131,9 +135,9 @@ export default async function LoginPage() {
                 </div>
               );
             })}
-          </div>
+          </div>}
 
-          <details className="group rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6">
+          <details open={live} className="group rounded-2xl border border-border bg-surface shadow-lg shadow-black/[0.03] p-5 sm:p-6">
             <summary className="cursor-pointer select-none text-sm font-medium text-ink-secondary hover:text-ink focus-ring rounded">
               Staff sign-in with email and password
             </summary>

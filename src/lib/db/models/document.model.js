@@ -10,7 +10,12 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       name: { type: DataTypes.STRING(255), allowNull: false },
+      title: DataTypes.STRING(255),
       description: DataTypes.STRING(500),
+      // Text found inside the file (PDF, Word, Excel, PowerPoint, text) so documents can be searched by content.
+      contentText: DataTypes.TEXT("long"),
+      contentStatus: DataTypes.STRING(20), // indexed | empty | unsupported | failed
+      indexedAt: DataTypes.DATE,
       storedFileName: { type: DataTypes.STRING(255), allowNull: false }, // unique name on disk
       mimeType: DataTypes.STRING(100),
       fileSize: DataTypes.INTEGER, // bytes

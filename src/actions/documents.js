@@ -3,17 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/requireUser";
 import * as documentService from "@/lib/services/documentService";
+import * as documentSearch from "@/lib/services/documentSearchService";
 
 export async function uploadDocumentAction(_prevState, formData) {
   const user = await requireUser();
   const relatedType = formData.get("relatedType");
   const relatedId = Number(formData.get("relatedId"));
   const description = formData.get("description")?.toString().trim();
+  const title = formData.get("title")?.toString().trim();
   const file = formData.get("file");
   const revalidateTarget = formData.get("revalidatePath")?.toString();
 
   try {
-    await documentService.uploadDocument(user, { relatedType, relatedId, file, description });
+    await documentService.uploadDocument(user, { relatedType, relatedId, file, description, title });
     if (revalidateTarget) revalidatePath(revalidateTarget);
     return { success: true };
   } catch (err) {
@@ -33,4 +35,15 @@ export async function deleteDocumentAction(formData) {
   const revalidateTarget = formData.get("revalidatePath")?.toString();
   await documentService.deleteDocument(user, id);
   if (revalidateTarget) revalidatePath(revalidateTarget);
+}
+
+export async function reindexDocumentsAction() {
+  const user = await requireUser();
+  try {
+    const result = await documentSearch.reindexDocuments(user);
+    revalidatePath("/documents");
+    return result;
+  } catch (err) {
+    return { error: err.message || "Could not read the documents." };
+  }
 }

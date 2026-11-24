@@ -1,4 +1,6 @@
 import Link from "next/link";
+import DateRangeFilter from "@/components/common/DateRangeFilter";
+import { resolveRange, toIsoDay } from "@/lib/utils/dateRange";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { getMarketingDashboard } from "@/lib/services/reportingService";
 import { listCampaigns } from "@/lib/services/campaignService";
@@ -13,10 +15,11 @@ import { formatNumber, formatPercent } from "@/lib/utils/format";
 
 export const metadata = { title: "Marketing Dashboard" };
 
-export default async function MarketingDashboardPage() {
+export default async function MarketingDashboardPage({ searchParams }) {
   const user = await requireUserWithPermission("dashboard.view");
+  const range = resolveRange(await searchParams);
   const [stats, campaignsRaw, automationsRaw, segmentsRaw] = await Promise.all([
-    getMarketingDashboard(user),
+    getMarketingDashboard(user, range),
     listCampaigns(user, { limit: 5 }),
     listAutomations(user),
     listSegments(user),
@@ -28,10 +31,11 @@ export default async function MarketingDashboardPage() {
   return (
     <div>
       <PageHeader title="Marketing Dashboard" description="Contact database, campaigns and lead nurturing performance." />
+      <DateRangeFilter preset={range.preset} from={toIsoDay(range.from)} to={toIsoDay(range.to)} label={range.label} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
         <MetricCard label="Total Contacts" value={formatNumber(stats.totalContacts)} icon={Users} href="/contacts" tone="blue" />
-        <MetricCard label="New (30 days)" value={formatNumber(stats.newContacts)} icon={UserPlus} tone="blue" />
+        <MetricCard label={range.active ? "New in period" : "New (30 days)"} value={formatNumber(stats.newContacts)} icon={UserPlus} tone="blue" />
         <MetricCard label="Active" value={formatNumber(stats.activeContacts)} icon={Activity} tone="green" />
         <MetricCard label="Inactive" value={formatNumber(stats.inactiveContacts)} icon={UserX} tone="neutral" />
         <MetricCard label="Campaigns" value={formatNumber(stats.campaigns)} icon={Megaphone} href="/campaigns" tone="purple" />

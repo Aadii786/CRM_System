@@ -1,4 +1,6 @@
 import Link from "next/link";
+import DateRangeFilter from "@/components/common/DateRangeFilter";
+import { resolveRange, toIsoDay } from "@/lib/utils/dateRange";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { getIklDashboard } from "@/lib/services/reportingService";
@@ -25,10 +27,11 @@ function dashboardIntro(user) {
   return { title: "IKL Sales Dashboard", description: "Your sales work: pipeline, proposals, invoices and leads." };
 }
 
-export default async function IklHsmDashboardPage() {
+export default async function IklHsmDashboardPage({ searchParams }) {
   const user = await requireUserWithPermission("dashboard.view");
+  const range = resolveRange(await searchParams);
   const [stats, dealsResult] = await Promise.all([
-    getIklDashboard(user),
+    getIklDashboard(user, range),
     getDeals(user, { limit: 6 }),
   ]);
   const recentDeals = dealsResult.data.map((d) => d.get({ plain: true }));
@@ -43,21 +46,24 @@ export default async function IklHsmDashboardPage() {
         actions={<Button href="/deals" variant="primary">View Pipeline</Button>}
       />
 
+      <DateRangeFilter preset={range.preset} from={toIsoDay(range.from)} to={toIsoDay(range.to)} label={range.label} />
+      {range.active && <p className="text-xs text-ink-muted -mt-3 mb-4">Companies, contacts, open deals and pipeline value are current totals. Won deals, proposals, money, leads and campaigns follow the chosen period.</p>}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
         <MetricCard label="Companies" value={formatNumber(stats.companies)} icon={Building2} href="/companies" tone="blue" />
         <MetricCard label="Contacts" value={formatNumber(stats.contacts)} icon={Users} tone="blue" />
         <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals" tone="cyan" />
-        <MetricCard label="Won Deals" value={formatNumber(stats.wonDeals)} icon={Trophy} tone="green" />
+        <MetricCard label={range.active ? "Won in period" : "Won Deals"} value={formatNumber(stats.wonDeals)} icon={Trophy} tone="green" />
         <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={Wallet} tone="cyan" />
-        <MetricCard label="Won Value" value={formatCurrencyPKR(stats.wonValue)} icon={Wallet} tone="green" />
-        <MetricCard label="Proposals Sent" value={formatNumber(stats.proposalsSent)} icon={FileText} tone="amber" />
+        <MetricCard label={range.active ? "Won value in period" : "Won Value"} value={formatCurrencyPKR(stats.wonValue)} icon={Wallet} tone="green" />
+        <MetricCard label={range.active ? "Proposals sent in period" : "Proposals Sent"} value={formatNumber(stats.proposalsSent)} icon={FileText} tone="amber" />
         <MetricCard label="Acceptance Rate" value={formatPercent(stats.proposalAcceptanceRate)} icon={CheckCircle2} tone="green" />
       </div>
 
       <h2 className="text-sm font-semibold text-ink mb-2.5">Leads</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-4">
-        <MetricCard label="Total leads" value={formatNumber(stats.leads.total)} icon={Users} tone="blue" href="/contacts" />
-        <MetricCard label="New in 30 days" value={formatNumber(stats.leads.newLast30)} icon={UserPlus} tone="cyan" />
+        <MetricCard label={range.active ? "Leads in period" : "Total leads"} value={formatNumber(stats.leads.total)} icon={Users} tone="blue" href="/contacts" />
+        <MetricCard label={range.active ? "New in period" : "New in 30 days"} value={formatNumber(stats.leads.newLast30)} icon={UserPlus} tone="cyan" />
         <MetricCard label="Active" value={formatNumber(stats.leads.active)} icon={Activity} tone="green" />
         <MetricCard label="Inactive" value={formatNumber(stats.leads.inactive)} icon={Users} tone="neutral" />
         <MetricCard label="Qualified" value={formatNumber(stats.leads.qualified)} icon={Star} tone="amber" href="/contacts?status=Qualified" />

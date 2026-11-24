@@ -6,7 +6,7 @@ import Header from "./Header";
 import DemoEnvironmentBanner from "./DemoEnvironmentBanner";
 import WelcomeTour from "./WelcomeTour";
 
-export default function AppShell({ user, navSections, notifications, unreadCount, guideKey, children }) {
+export default function AppShell({ user, navSections, notifications, unreadCount, guideKey, showDemoBanner = true, deliveryNotice = "demo", children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -26,10 +26,11 @@ export default function AppShell({ user, navSections, notifications, unreadCount
           notifications={notifications}
           unreadCount={unreadCount}
           onToggleMobileNav={() => setMobileOpen(true)}
+          helpHref={showDemoBanner ? "/demo-center" : "/guide"}
         />
-        <DemoEnvironmentBanner />
+        {showDemoBanner && <DemoEnvironmentBanner />}
         <main className="p-4 md:p-6 max-w-[1600px]">{children}</main>
-        <WelcomeTour userId={user.id} userName={user.name} guideKey={guideKey} />
+        <WelcomeTour userId={user.id} userName={user.name} guideKey={guideKey} deliveryNotice={deliveryNotice} />
       </div>
     </div>
   );

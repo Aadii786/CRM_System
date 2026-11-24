@@ -4,6 +4,7 @@ import { listForUser, unreadCount as getUnreadCount } from "@/lib/services/notif
 import { runAllDueThrottled } from "@/lib/services/schedulerService";
 import AppShell from "@/components/layout/AppShell";
 import { guideKeyFor } from "@/lib/utils/guideKey";
+import { isLiveMode, deliveryNotice } from "@/lib/constants/appMode";
 
 export default async function AppLayout({ children }) {
   const user = await requireUser();
@@ -37,7 +38,7 @@ export default async function AppLayout({ children }) {
   }));
 
   return (
-    <AppShell user={user} guideKey={guideKeyFor(user)} navSections={navSections} notifications={serializedNotifications} unreadCount={unread}>
+    <AppShell user={user} guideKey={guideKeyFor(user)} navSections={navSections} notifications={serializedNotifications} unreadCount={unread} showDemoBanner={!isLiveMode()} deliveryNotice={deliveryNotice()}>
       {children}
     </AppShell>
   );

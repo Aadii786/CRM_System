@@ -1,3 +1,5 @@
+import DateRangeFilter from "@/components/common/DateRangeFilter";
+import { resolveRange, toIsoDay, rangeQuery } from "@/lib/utils/dateRange";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { getRevenueDashboard, getRevenueOverTime } from "@/lib/services/reportingService";
 import PageHeader from "@/components/common/PageHeader";
@@ -11,9 +13,10 @@ import { formatCurrencyPKR, formatPercent } from "@/lib/utils/format";
 
 export const metadata = { title: "Revenue Report" };
 
-export default async function RevenueReportPage() {
+export default async function RevenueReportPage({ searchParams }) {
   const user = await requireUserWithPermission("reports.view");
-  const [revenue, revenueOverTime] = await Promise.all([getRevenueDashboard(user), getRevenueOverTime(6, user)]);
+  const range = resolveRange(await searchParams);
+  const [revenue, revenueOverTime] = await Promise.all([getRevenueDashboard(user, range), getRevenueOverTime(6, user)]);
 
   return (
     <div>
@@ -22,6 +25,7 @@ export default async function RevenueReportPage() {
         title="Revenue Report"
         description="Pipeline value, won revenue and payments received for your department."
       />
+      <DateRangeFilter preset={range.preset} from={toIsoDay(range.from)} to={toIsoDay(range.to)} label={range.label} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 mb-6">
         <MetricCard label="Total Pipeline Value" value={formatCurrencyPKR(revenue.pipelineValue)} icon={Handshake} />
