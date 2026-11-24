@@ -41,7 +41,7 @@ export default async function ProgramsPage({ searchParams }) {
       <PageHeader
         title="Programs"
         description="The program catalogue: what is offered, in which category, and when it runs next."
-        actions={canManage && (<><Button href="/programs/import" variant="secondary">Import program data</Button><ProgramFormModal /></>)}
+        actions={canManage && (<>{hasPermission(user, "contacts.import") && <Button href="/programs/import" variant="secondary">Import program data</Button>}<ProgramFormModal /></>)}
       />
 
       <FilterBar>
