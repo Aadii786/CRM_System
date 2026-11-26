@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Field, { Input, Select } from "@/components/ui/Field";
 import Button from "@/components/ui/Button";
 import { createCompanyAction, updateCompanyAction } from "@/actions/companies";
-import { ORGANIZATION_TYPES, LEAD_SOURCES, COMPANY_SIZES } from "@/lib/constants/crm";
+import { ORGANIZATION_TYPES, LEAD_SOURCES, COMPANY_SIZES, COMPANY_INDUSTRIES } from "@/lib/constants/crm";
 import { useToast } from "@/components/ui/Toast";
 
 const initialState = { error: null };
@@ -38,7 +38,12 @@ export default function CompanyForm({ company }) {
           </Select>
         </Field>
         <Field label="Industry" htmlFor="industry">
-          <Input id="industry" name="industry" defaultValue={company?.industry} />
+          <Select id="industry" name="industry" defaultValue={company?.industry || ""}>
+            <option value="">Select an industry</option>
+            {/* an industry typed before the list existed stays selectable */}
+            {company?.industry && !COMPANY_INDUSTRIES.includes(company.industry) && <option value={company.industry}>{company.industry}</option>}
+            {COMPANY_INDUSTRIES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </Select>
         </Field>
       </div>
       <Field label="Company Size" htmlFor="companySize">

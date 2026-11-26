@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
-import { getContactById, getContactTimeline, getContactRelated } from "@/lib/services/contactService";
+import { getContactById, getContactTimeline, getContactRelated, getContactProposals } from "@/lib/services/contactService";
 import { listDocuments } from "@/lib/services/documentService";
-import { getListsForContact, listLists } from "@/lib/services/listService";
 import { listNotes } from "@/lib/services/noteService";
 import NotesPanel from "@/components/common/NotesPanel";
 import ContactProgramsPanel from "@/components/contacts/ContactProgramsPanel";
+import ContactProposals from "@/components/contacts/ContactProposals";
 import { listContactInterests, listContactOrganizations, listProgramOptions } from "@/lib/services/programService";
 import { listCompanyOptions } from "@/lib/services/companyService";
 import { getContactProgramHistory } from "@/lib/services/registrationService";
@@ -20,7 +20,6 @@ import ContactOverview from "@/components/contacts/ContactOverview";
 import ContactEngagement from "@/components/contacts/ContactEngagement";
 import ContactTimeline from "@/components/contacts/ContactTimeline";
 import ContactRelated from "@/components/contacts/ContactRelated";
-import ContactListsPanel from "@/components/contacts/ContactListsPanel";
 import DocumentsPanel from "@/components/documents/DocumentsPanel";
 
 export async function generateMetadata({ params }) {
@@ -36,7 +35,6 @@ export default async function ContactDetailPage({ params }) {
   if (!contactRaw) notFound();
   const contact = contactRaw.get({ plain: true });
 
-  const canSeeLists = hasPermission(user, "lists.view");
   const canSeePrograms = hasPermission(user, "programs.view");
   const [interests, organizations, programOptions, companyOptions, programHistory] = await Promise.all([
     canSeePrograms ? listContactInterests(user, id) : Promise.resolve([]),
@@ -45,13 +43,12 @@ export default async function ContactDetailPage({ params }) {
     canSeePrograms && hasPermission(user, "companies.view") ? listCompanyOptions(user) : Promise.resolve([]),
     canSeePrograms ? getContactProgramHistory(user, id) : Promise.resolve({ registrations: [], inhouse: [], inquiries: [] }),
   ]);
-  const [notesRaw, timelineRaw, related, documentsRaw, memberLists, allListsRaw] = await Promise.all([
+  const [notesRaw, timelineRaw, related, documentsRaw, proposals] = await Promise.all([
     listNotes(user, "contact", id),
     getContactTimeline(user, id),
     getContactRelated(user, id),
     listDocuments(user, "contact", id),
-    canSeeLists ? getListsForContact(user, id) : Promise.resolve([]),
-    canSeeLists ? listLists(user) : Promise.resolve([]),
+    hasPermission(user, "deals.view") ? getContactProposals(user, id) : Promise.resolve([]),
   ]);
   const notes = notesRaw.map((n) => n.get({ plain: true }));
   const timeline = timelineRaw.map((a) => a.get({ plain: true }));
@@ -61,8 +58,6 @@ export default async function ContactDetailPage({ params }) {
   const campaignRecipients = related.campaignRecipients.map((r) => r.get({ plain: true }));
   const conversation = related.conversation ? related.conversation.get({ plain: true }) : null;
   const documents = documentsRaw.map((d) => d.get({ plain: true }));
-  const allLists = allListsRaw.map((l) => l.get({ plain: true }));
-  const memberListsPlain = memberLists.map((l) => l.get({ plain: true }));
 
   return (
     <div>
@@ -92,32 +87,35 @@ export default async function ContactDetailPage({ params }) {
         tabs={[
           { key: "overview", label: "Overview" },
           { key: "notes", label: "Notes", count: notes.length },
-          ...(canSeePrograms ? [{ key: "programs", label: "Programs & organizations", count: interests.length + organizations.length }] : []),
-          ...(canSeePrograms ? [{ key: "history", label: "Program history", count: programHistory.registrations.length + programHistory.inhouse.length + programHistory.inquiries.length }] : []),
+          ...(canSeePrograms ? [{ key: "programs", label: "Proposals & Programs", count: interests.length + proposals.length + programHistory.registrations.length + programHistory.inhouse.length + programHistory.inquiries.length }] : []),
           { key: "engagement", label: "Engagement" },
           { key: "timeline", label: "Timeline", count: timeline.length },
           { key: "related", label: "Related" },
-          { key: "lists", label: "Lists", count: memberListsPlain.length },
           { key: "documents", label: "Documents", count: documents.length },
         ]}
       >
         <ContactOverview contact={contact} />
         <NotesPanel relatedType="contact" relatedId={contact.id} notes={notes} canAdd={hasPermission(user, "contacts.update")} />
         {canSeePrograms && (
-          <ContactProgramsPanel
-            contact={contact}
-            interests={interests}
-            programs={programOptions}
-            organizations={organizations}
-            companies={companyOptions}
-            canEdit={hasPermission(user, "contacts.update")}
-          />
+          <div className="flex flex-col gap-6">
+            <ContactProgramsPanel
+              contact={contact}
+              interests={interests}
+              programs={programOptions}
+              organizations={organizations}
+              companies={companyOptions}
+              canEdit={hasPermission(user, "contacts.update")}
+            />
+            <ContactProposals proposals={proposals} />
+            <section>
+              <h3 className="text-sm font-semibold text-ink mb-2">Program history</h3>
+              <ProgramHistory history={programHistory} />
+            </section>
+          </div>
         )}
-        {canSeePrograms && <ProgramHistory history={programHistory} />}
         <ContactEngagement contact={contact} campaignRecipients={campaignRecipients} />
         <ContactTimeline activities={timeline} />
         <ContactRelated deals={deals} tasks={tasks} meetings={meetings} conversation={conversation} />
-        <ContactListsPanel contactId={contact.id} memberLists={memberListsPlain} allLists={allLists} canManage={hasPermission(user, "lists.update")} />
         <DocumentsPanel
           relatedType="contact"
           relatedId={contact.id}

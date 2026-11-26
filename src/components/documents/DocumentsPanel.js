@@ -85,7 +85,6 @@ export default function DocumentsPanel({ relatedType, relatedId, documents, canM
             </Button>
           </div>
           <Input name="title" placeholder="Optional title (shown in document search)" className="h-8 text-xs" />
-          <Input name="description" placeholder="Optional description (e.g. Meeting minutes - 12 Aug)" className="h-8 text-xs" />
           {error && <p className="text-xs text-danger">{error}</p>}
           <p className="text-[11px] text-ink-muted">PDF, Word, Excel, PowerPoint, images, text or CSV - up to 15MB.</p>
         </form>

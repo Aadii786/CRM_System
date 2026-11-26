@@ -12,7 +12,11 @@ import { formatDate, formatNumber } from "@/lib/utils/format";
 import { bulkUpdateContactStatusAction } from "@/actions/contacts";
 import { useToast } from "@/components/ui/Toast";
 
-export default function ContactsTable({ contacts, canEdit }) {
+// Column headers that can be sorted (ascending / descending) and the sort key each one uses.
+const COLUMNS = [["Name", "firstName"], ["Company", "company"], ["Status", "status"], ["Engagement", "engagementStatus"], ["Source", "source"], ["Score", "leadScore"], ["Owner", "owner"], ["Last Activity", "lastActivityAt"]];
+
+export default function ContactsTable({ contacts, canEdit, sortBase = "", sort, dir = "desc" }) {
+  const sortHref = (key) => `/contacts?${sortBase ? `${sortBase}&` : ""}sort=${key}&dir=${sort === key && dir === "asc" ? "desc" : "asc"}`;
   const [selected, setSelected] = useState(new Set());
   const { push } = useToast();
   const router = useRouter();
@@ -79,14 +83,14 @@ export default function ContactsTable({ contacts, canEdit }) {
                   <Checkbox checked={allChecked} onChange={(e) => toggleAll(e.target.checked)} aria-label="Select all" />
                 </th>
               )}
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Name</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Company</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Status</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Engagement</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Source</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Score</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Owner</th>
-              <th className="px-4 py-2.5 text-left font-medium border-b border-border">Last Activity</th>
+              {COLUMNS.map(([label, key]) => (
+                <th key={key} className="px-4 py-2.5 text-left font-medium border-b border-border">
+                  <Link href={sortHref(key)} className="inline-flex items-center gap-1 hover:text-ink" aria-label={`Sort by ${label}`}>
+                    {label}
+                    <span aria-hidden="true" className={sort === key ? "text-primary" : "opacity-40"}>{sort === key ? (dir === "asc" ? "\u25B2" : "\u25BC") : "\u2195"}</span>
+                  </Link>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

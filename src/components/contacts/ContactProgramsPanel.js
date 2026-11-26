@@ -71,7 +71,7 @@ export default function ContactProgramsPanel({ contact, interests, programs, org
             <Field label="Add a program" htmlFor="int-program">
               <Select id="int-program" name="programId" defaultValue="">
                 <option value="">Choose a program...</option>
-                {programs.map((p) => <option key={p.id} value={p.id}>{p.title}{p.category ? ` (${p.category})` : ""}</option>)}
+                {programs.map((p) => <option key={p.id} value={p.id}>{p.title}{p.code ? ` (${p.code})` : ""}</option>)}
               </Select>
             </Field>
             <Field label="or a whole category" htmlFor="int-category">

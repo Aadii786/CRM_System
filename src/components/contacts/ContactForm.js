@@ -8,10 +8,7 @@ import Field, { Input, Select, Checkbox } from "@/components/ui/Field";
 import Button from "@/components/ui/Button";
 import { createContactAction, updateContactAction } from "@/actions/contacts";
 import CompanyCombobox from "@/components/contacts/CompanyCombobox";
-import {
-  LEAD_SOURCES, CONTACT_STATUSES, CONTACT_TIMEZONES, DETECTED_LANGUAGES,
-  DOUBLE_OPT_IN_OPTIONS, OPT_IN_OPTIONS, CONTACT_TYPES,
-} from "@/lib/constants/crm";
+import { LEAD_SOURCES, CONTACT_STATUSES, CONTACT_TYPES } from "@/lib/constants/crm";
 import { useToast } from "@/components/ui/Toast";
 
 const initialState = { error: null };
@@ -150,41 +147,16 @@ export default function ContactForm({ departments, contact, companies = [], owne
           <Input id="externalId" name="externalId" defaultValue={contact?.externalId} />
         </Field>
       </div>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted -mb-2">Address</h3>
+      <Field label="Address" htmlFor="address">
+        <Input id="address" name="address" placeholder="Street, area" defaultValue={contact?.address} />
+      </Field>
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="City" htmlFor="city">
           <Input id="city" name="city" defaultValue={contact?.city} />
         </Field>
         <Field label="Country" htmlFor="country">
           <Input id="country" name="country" defaultValue={contact?.country || "Pakistan"} />
-        </Field>
-      </div>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <Field label="Contact Timezone" htmlFor="timezone">
-          <Select id="timezone" name="timezone" defaultValue={contact?.timezone || ""}>
-            <option value="">Select a timezone</option>
-            {CONTACT_TIMEZONES.map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
-          </Select>
-        </Field>
-        <Field label="LinkedIn" htmlFor="linkedin">
-          <Input id="linkedin" name="linkedin" placeholder="linkedin.com/in/..." defaultValue={contact?.linkedin} />
-        </Field>
-      </div>
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Field label="Detected Language" htmlFor="detectedLanguage">
-          <Select id="detectedLanguage" name="detectedLanguage" defaultValue={contact?.detectedLanguage || ""}>
-            <option value="">Select an option</option>
-            {DETECTED_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-          </Select>
-        </Field>
-        <Field label="Double Opt-In" htmlFor="doubleOptIn">
-          <Select id="doubleOptIn" name="doubleOptIn" defaultValue={contact?.doubleOptIn || "No"}>
-            {DOUBLE_OPT_IN_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-          </Select>
-        </Field>
-        <Field label="Opt-In" htmlFor="optIn">
-          <Select id="optIn" name="optIn" defaultValue={contact?.optIn || "Unknown"}>
-            {OPT_IN_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-          </Select>
         </Field>
       </div>
 

@@ -38,7 +38,13 @@ export default async function ContactsPage({ searchParams }) {
     createdTo: sp.createdTo || undefined,
     activityFrom: sp.activityFrom || undefined,
     activityTo: sp.activityTo || undefined,
+    sortBy: sp.sort || undefined,
+    sortDir: sp.dir === "asc" ? "ASC" : sp.dir === "desc" ? "DESC" : undefined,
   };
+  // Header links keep the current filters and only change the sort.
+  const sortParams = new URLSearchParams();
+  for (const k of ["q", "status", "source", "engagement", "company", "program", "programRole", "createdFrom", "createdTo", "activityFrom", "activityTo"]) if (sp[k]) sortParams.set(k, sp[k]);
+  const sortBase = sortParams.toString();
 
   const [{ data: rawContacts, pagination }, stats, companyOptions, programOptions] = await Promise.all([
     getContacts(user, filters),
@@ -56,7 +62,7 @@ export default async function ContactsPage({ searchParams }) {
     if (filters.status) params.set("status", filters.status);
     if (filters.source) params.set("source", filters.source);
     if (filters.engagementStatus) params.set("engagement", filters.engagementStatus);
-    for (const k of ["company", "program", "programRole", "createdFrom", "createdTo", "activityFrom", "activityTo"]) if (sp[k]) params.set(k, sp[k]);
+    for (const k of ["company", "program", "programRole", "createdFrom", "createdTo", "activityFrom", "activityTo", "sort", "dir"]) if (sp[k]) params.set(k, sp[k]);
     params.set("page", String(Math.max(1, targetPage)));
     return `/contacts?${params.toString()}`;
   }
@@ -140,7 +146,7 @@ export default async function ContactsPage({ searchParams }) {
       </FilterBar>
 
       <Suspense fallback={<div className="h-96 rounded-lg border border-border bg-surface animate-pulse" />}>
-        <ContactsTable contacts={contacts} canEdit={hasPermission(user, "contacts.update")} />
+        <ContactsTable contacts={contacts} canEdit={hasPermission(user, "contacts.update")} sortBase={sortBase} sort={sp.sort} dir={sp.dir === "asc" ? "asc" : "desc"} />
       </Suspense>
 
       <Pagination page={pagination.page} totalPages={pagination.totalPages} total={pagination.total} limit={pagination.limit} buildHref={buildHref} />

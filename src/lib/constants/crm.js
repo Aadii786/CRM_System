@@ -68,6 +68,29 @@ const CONTACT_TIMEZONES = [
 ];
 
 const DETECTED_LANGUAGES = ["English", "Urdu", "Arabic", "French", "Chinese", "Other"];
+// Industry list supplied by IKL (CRM Changes, 26 Nov 2026). The list had "Manufacturing & Industrial Production" twice; it is kept once.
+const COMPANY_INDUSTRIES = [
+  "Pharmaceuticals & Biotechnology",
+  "Healthcare & Medical Services",
+  "Textile & Apparel",
+  "Leather & Footwear",
+  "Oil & Gas / Energy",
+  "Chemicals, Petrochemicals",
+  "Manufacturing & Industrial Production",
+  "Banking & Financial Services",
+  "IT & Telecom",
+  "Hospitality & Media",
+  "Professional & Business Services",
+  "Retail & E-commerce",
+  "Govt. & Public Administration",
+  "FMCG / Food & Beverages",
+  "Cement",
+  "Appliances",
+];
+
+// Names an opportunity can have (IKL's three program kinds).
+const OPPORTUNITY_NAMES = ["Customized Program", "Outbound Program", "Open Enrollment Program"];
+
 const COMPANY_SIZES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"];
 const CONTACT_TYPES = ["Lead", "Prospect", "Customer", "Partner", "Other"];
 const DOUBLE_OPT_IN_OPTIONS = ["Yes", "No"];
@@ -127,7 +150,7 @@ module.exports = {
   DETECTED_LANGUAGES,
   DOUBLE_OPT_IN_OPTIONS,
   OPT_IN_OPTIONS,
-  COMPANY_SIZES,
+  COMPANY_SIZES, COMPANY_INDUSTRIES, OPPORTUNITY_NAMES,
   CONTACT_TYPES,
   TRAINING_TYPES,
   ORGANIZATION_TYPES,

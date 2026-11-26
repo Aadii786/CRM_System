@@ -333,7 +333,7 @@ export async function getRevenueDashboard(user, range = null) {
     paidRevenue: Number(paidAgg?.paid || 0),
     averageDealSize: wonCount ? Number(wonAgg?.sum || 0) / wonCount : 0,
     conversionRate: dealCount ? (wonCount / dealCount) * 100 : 0,
-    byTrainingType: revenueByType.map((r) => ({ label: r.trainingType || "Consultancy", value: Number(r.revenue) || 0 })),
+    byTrainingType: revenueByType.map((r) => ({ label: r.trainingType || "Not set", value: Number(r.revenue) || 0 })),
     byCompany: revenueByCompany.map((r) => ({ label: r.companyName || "Unknown", value: Number(r.revenue) || 0 })),
     byOwner: revenueByOwner.map((r) => ({ label: r.ownerName || "Unassigned", value: Number(r.revenue) || 0 })),
   };

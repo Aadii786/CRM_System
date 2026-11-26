@@ -51,8 +51,10 @@ export async function convertContactToDealAction(_prev, formData) {
   const user = await requireUser();
   const contactId = formData.get("contactId");
   try {
+    const kind = formData.get("opportunityKind")?.toString();
+    const who = formData.get("who")?.toString().trim();
     const deal = await dealService.convertContactToDeal(user, contactId, {
-      name: formData.get("name")?.toString(),
+      name: kind ? (who ? `${kind} - ${who}` : kind) : formData.get("name")?.toString(),
       trainingType: formData.get("trainingType")?.toString() || null,
       value: formData.get("value")?.toString(),
       expectedCloseDate: formData.get("expectedCloseDate")?.toString() || null,

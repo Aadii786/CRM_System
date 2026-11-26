@@ -60,7 +60,7 @@ async function scopedDepartmentIds(user) {
   return departmentIdsForKeys(keys);
 }
 
-export async function getCompanies(user, { page = 1, limit = 25, q = "", organizationType, status } = {}) {
+export async function getCompanies(user, { page = 1, limit = 25, q = "", organizationType, status, industry, sort, dir } = {}) {
   requirePermission(user, "companies.view");
   const deptIds = await scopedDepartmentIds(user);
   if (deptIds.length === 0) return { data: [], pagination: { page, limit, total: 0, totalPages: 0 } };
@@ -68,12 +68,27 @@ export async function getCompanies(user, { page = 1, limit = 25, q = "", organiz
   const where = { departmentId: { [Op.in]: deptIds } };
   if (organizationType) where.organizationType = organizationType;
   if (status) where.status = status;
+  if (industry) where.industry = industry;
   if (q) where.name = { [Op.like]: `%${q}%` };
+
+  // Column sorting (ascending / descending) from the list headers.
+  const direction = dir === "asc" ? "ASC" : "DESC";
+  const ORDER = {
+    name: [["name", direction]],
+    type: [["organizationType", direction], ["name", "ASC"]],
+    industry: [["industry", direction], ["name", "ASC"]],
+    location: [["city", direction], ["name", "ASC"]],
+    status: [["status", direction], ["name", "ASC"]],
+    contacts: [[db.sequelize.literal("(SELECT COUNT(*) FROM contacts c WHERE c.company_id = `Company`.`id` AND c.deleted_at IS NULL)"), direction], ["name", "ASC"]],
+    deals: [[db.sequelize.literal("(SELECT COUNT(*) FROM deals d WHERE d.company_id = `Company`.`id` AND d.status = 'open' AND d.deleted_at IS NULL)"), direction], ["name", "ASC"]],
+    owner: [[{ model: User, as: "owner" }, "name", direction], ["name", "ASC"]],
+    activity: [["lastActivityAt", direction], ["name", "ASC"]],
+  };
 
   const { rows, count } = await Company.findAndCountAll({
     where,
     include: [{ model: User, as: "owner", attributes: ["id", "name", "avatarColor"] }],
-    order: [["updatedAt", "DESC"]],
+    order: ORDER[sort] || [["updatedAt", "DESC"]],
     limit,
     offset: (page - 1) * limit,
   });

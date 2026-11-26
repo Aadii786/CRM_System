@@ -20,6 +20,8 @@ function toPayload(formData) {
     doubleOptIn: formData.get("doubleOptIn")?.toString() || null,
     optIn: formData.get("optIn")?.toString() || null,
     jobTitle: formData.get("jobTitle")?.toString().trim() || null,
+    // address is only sent by the form; when it is absent the saved value is kept
+    address: formData.has("address") ? formData.get("address")?.toString().trim() || null : undefined,
     city: formData.get("city")?.toString().trim() || null,
     country: formData.get("country")?.toString().trim() || "Pakistan",
     companyId: formData.get("companyId")?.toString() || null,

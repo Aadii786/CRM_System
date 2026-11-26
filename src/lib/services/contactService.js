@@ -100,8 +100,10 @@ export async function getContacts(user, {
     ];
   }
 
-  const SORTABLE = new Set(["createdAt", "updatedAt", "leadScore", "lastActivityAt", "firstName", "status"]);
+  const SORTABLE = new Set(["createdAt", "updatedAt", "leadScore", "lastActivityAt", "firstName", "status", "source", "engagementStatus", "company", "owner"]);
   const orderField = SORTABLE.has(sortBy) ? sortBy : "createdAt";
+  const orderDir = sortDir === "ASC" ? "ASC" : "DESC";
+  const order = orderField === "company" ? [[Company, "name", orderDir]] : orderField === "owner" ? [[{ model: User, as: "owner" }, "name", orderDir]] : orderField === "firstName" ? [["firstName", orderDir], ["lastName", orderDir]] : [[orderField, orderDir]];
 
   const { rows, count } = await Contact.findAndCountAll({
     where,
@@ -109,7 +111,7 @@ export async function getContacts(user, {
       { model: Company, attributes: ["id", "name"] },
       { model: User, as: "owner", attributes: ["id", "name", "avatarColor"] },
     ],
-    order: [[orderField, sortDir === "ASC" ? "ASC" : "DESC"]],
+    order,
     limit,
     offset: (page - 1) * limit,
   });
@@ -118,6 +120,19 @@ export async function getContacts(user, {
     data: rows,
     pagination: { page, limit, total: count, totalPages: Math.ceil(count / limit) || 1 },
   };
+}
+
+/** Proposals on the deals of one contact, newest first (the Proposals & Programs tab). */
+export async function getContactProposals(user, contactId) {
+  requirePermission(user, "contacts.view");
+  const contact = await Contact.findByPk(contactId, { include: [Department] });
+  if (!contact) return [];
+  requireDepartmentAccess(user, contact.Department?.key);
+  const rows = await db.Proposal.findAll({
+    include: [{ model: Deal, attributes: ["id", "name", "referenceNumber"], where: { contactId }, required: true }],
+    order: [["createdAt", "DESC"]],
+  });
+  return rows.map((r) => r.get({ plain: true }));
 }
 
 export async function getContactStats(user, departmentKey) {
@@ -227,6 +242,7 @@ export async function createContact(user, payload) {
     optIn: payload.optIn || "Unknown",
     contactType: payload.contactType || "Lead",
     jobTitle: payload.jobTitle || null,
+    address: payload.address || null,
     city: payload.city || null,
     country: payload.country || "Pakistan",
     companyId: payload.companyId || null,
@@ -278,6 +294,7 @@ export async function updateContact(user, id, payload) {
     optIn: payload.optIn ?? contact.optIn,
     contactType: payload.contactType ?? contact.contactType,
     jobTitle: payload.jobTitle ?? contact.jobTitle,
+    address: payload.address === undefined ? contact.address : payload.address,
     city: payload.city ?? contact.city,
     country: payload.country ?? contact.country,
     companyId: payload.companyId ?? contact.companyId,

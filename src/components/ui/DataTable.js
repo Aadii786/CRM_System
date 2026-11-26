@@ -1,3 +1,4 @@
+import Link from "next/link";
 import EmptyState from "./EmptyState";
 
 /**
@@ -8,7 +9,7 @@ import EmptyState from "./EmptyState";
  *
  * columns: [{ key, header, className, render?(row) }]
  */
-export default function DataTable({ columns, rows, keyField = "id", emptyState, footer }) {
+export default function DataTable({ columns, rows, keyField = "id", emptyState, footer, sort, dir, sortHref }) {
   if (!rows || rows.length === 0) {
     return emptyState || <EmptyState title="No records found" description="Try adjusting your filters." />;
   }
@@ -20,7 +21,12 @@ export default function DataTable({ columns, rows, keyField = "id", emptyState, 
           <tr>
             {columns.map((col) => (
               <th key={col.key} className={["px-4 py-2.5 text-left font-medium border-b border-border", col.className || ""].join(" ")}>
-                {col.header}
+                {col.sortKey && sortHref ? (
+                  <Link href={sortHref(col.sortKey)} className="inline-flex items-center gap-1 hover:text-ink" aria-label={`Sort by ${col.header}`}>
+                    {col.header}
+                    <span aria-hidden="true" className={sort === col.sortKey ? "text-primary" : "opacity-40"}>{sort === col.sortKey ? (dir === "asc" ? "\u25B2" : "\u25BC") : "\u2195"}</span>
+                  </Link>
+                ) : col.header}
               </th>
             ))}
           </tr>

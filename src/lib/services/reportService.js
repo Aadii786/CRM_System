@@ -246,7 +246,7 @@ async function revenueReport(user, range) {
   const won = between("COALESCE(dl.closed_at, dl.updated_at)", range, rep, "w");
   const base = `FROM deals dl WHERE dl.department_id IN (:d) AND dl.deleted_at IS NULL AND dl.status = 'won'${won}`;
   const [byType, byCompany, byOwner, money] = await Promise.all([
-    q(`SELECT COALESCE(dl.training_type, 'Consultancy') AS name, COUNT(*) AS deals, COALESCE(SUM(dl.value), 0) AS value ${base} GROUP BY COALESCE(dl.training_type, 'Consultancy') ORDER BY value DESC`, rep),
+    q(`SELECT COALESCE(dl.training_type, 'Not set') AS name, COUNT(*) AS deals, COALESCE(SUM(dl.value), 0) AS value ${base} GROUP BY COALESCE(dl.training_type, 'Not set') ORDER BY value DESC`, rep),
     q(`SELECT COALESCE(co.name, 'No company') AS name, COUNT(*) AS deals, COALESCE(SUM(dl.value), 0) AS value FROM deals dl LEFT JOIN companies co ON co.id = dl.company_id WHERE dl.department_id IN (:d) AND dl.deleted_at IS NULL AND dl.status = 'won'${won} GROUP BY co.id, co.name ORDER BY value DESC LIMIT 25`, rep),
     q(`SELECT COALESCE(u.name, 'Unassigned') AS name, COUNT(*) AS deals, COALESCE(SUM(dl.value), 0) AS value FROM deals dl LEFT JOIN users u ON u.id = dl.owner_id WHERE dl.department_id IN (:d) AND dl.deleted_at IS NULL AND dl.status = 'won'${won} GROUP BY u.id, u.name ORDER BY value DESC`, rep),
     q(`SELECT (SELECT COALESCE(SUM(i.amount), 0) FROM invoices i JOIN deals dl ON dl.id = i.deal_id WHERE dl.department_id IN (:d)${between("i.issue_date", range, rep, "mi")}) AS invoiced,

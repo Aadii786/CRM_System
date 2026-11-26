@@ -9,8 +9,7 @@ import Modal from "@/components/ui/Modal";
 import Field, { Input, Select } from "@/components/ui/Field";
 import { convertContactToDealAction } from "@/actions/deals";
 import { useToast } from "@/components/ui/Toast";
-import { TRAINING_TYPES } from "@/lib/constants/crm";
-import ProgramSelect from "@/components/deals/ProgramSelect";
+import { OPPORTUNITY_NAMES } from "@/lib/constants/crm";
 
 /** One-click lead -> opportunity: opens a deal in the first pipeline stage and marks the lead Qualified. */
 export default function ConvertToOpportunityButton({ contact, programs = [] }) {
@@ -22,7 +21,7 @@ export default function ConvertToOpportunityButton({ contact, programs = [] }) {
   const router = useRouter();
 
   const fullName = `${contact.firstName} ${contact.lastName}`;
-  const suggested = `${contact.Company?.name || fullName} - Training`;
+  const who = contact.Company?.name || fullName;
 
   function submit(formData) {
     startTransition(async () => {
@@ -46,21 +45,25 @@ export default function ConvertToOpportunityButton({ contact, programs = [] }) {
       <Modal open={open} onClose={() => setOpen(false)} title="Convert to opportunity" description={`${fullName} becomes a Qualified lead with an open deal.`}>
         <form action={submit} className="flex flex-col gap-4">
           <input type="hidden" name="contactId" value={contact.id} />
-          <Field label="Opportunity name" htmlFor="cv-name" required>
-            <Input id="cv-name" name="name" defaultValue={suggested} required />
+          <Field label="Opportunity name" htmlFor="cv-name" required hint={`Saved as "name - ${who}" so deals are easy to tell apart.`}>
+            <Select id="cv-name" name="opportunityKind" defaultValue={OPPORTUNITY_NAMES[0]} required>
+              {OPPORTUNITY_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+            </Select>
           </Field>
+          <input type="hidden" name="who" value={who} />
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Training type" htmlFor="cv-type">
-              <Select id="cv-type" name="trainingType" defaultValue="">
-                <option value="">Not decided yet</option>
-                {TRAINING_TYPES.map((t) => <option key={t.key} value={t.key}>{t.name}</option>)}
-              </Select>
-            </Field>
+            {programs.length > 0 && (
+              <Field label="Program" htmlFor="cv-program">
+                <Select id="cv-program" name="programId" defaultValue="">
+                  <option value="">Not linked to a program</option>
+                  {programs.map((p) => <option key={p.id} value={p.id}>{p.title}{p.code ? ` (${p.code})` : ""}</option>)}
+                </Select>
+              </Field>
+            )}
             <Field label="Expected value (PKR)" htmlFor="cv-value">
               <Input id="cv-value" name="value" type="number" min="0" step="1000" placeholder="0" />
             </Field>
           </div>
-          {programs.length > 0 && <ProgramSelect programs={programs} idPrefix="cv" />}
           <Field label="Expected close date" htmlFor="cv-close">
             <Input id="cv-close" name="expectedCloseDate" type="date" />
           </Field>

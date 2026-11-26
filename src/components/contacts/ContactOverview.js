@@ -17,14 +17,15 @@ export default function ContactOverview({ contact }) {
       <div className="rounded-lg border border-border bg-surface p-5">
         <h3 className="text-sm font-semibold text-ink mb-1">Contact Information</h3>
         <div className="mt-2">
-          <Row label="Email">{contact.email}</Row>
-          <Row label="Phone">{contact.phone || "—"}</Row>
-          <Row label="WhatsApp">{contact.whatsappNumber || "—"}</Row>
-          <Row label="Job Title">{contact.jobTitle || "—"}</Row>
-          <Row label="Location">{[contact.city, contact.country].filter(Boolean).join(", ") || "—"}</Row>
           <Row label="Company">
             {contact.Company ? <Link href={`/companies/${contact.Company.id}`} className="text-primary hover:underline">{contact.Company.name}</Link> : "—"}
           </Row>
+          <Row label="Job Title">{contact.jobTitle || "—"}</Row>
+          <Row label="Phone">{contact.phone || "—"}</Row>
+          <Row label="Email">{contact.email}</Row>
+          <Row label="WhatsApp">{contact.whatsappNumber || "—"}</Row>
+          <Row label="Address">{contact.address || "—"}</Row>
+          <Row label="Location">{[contact.city, contact.country].filter(Boolean).join(", ") || "—"}</Row>
         </div>
       </div>
       <div className="rounded-lg border border-border bg-surface p-5">
@@ -32,7 +33,6 @@ export default function ContactOverview({ contact }) {
         <div className="mt-2">
           <Row label="Status"><Badge status={contact.status} /></Row>
           <Row label="Engagement"><Badge tone="neutral">{contact.engagementStatus}</Badge></Row>
-          <Row label="Lead Score">{contact.leadScore} / 100</Row>
           <Row label="Source">{contact.source}</Row>
           <Row label="Department">{contact.Department ? <Badge department={contact.Department.key}>{contact.Department.name}</Badge> : "—"}</Row>
           <Row label="Owner">{contact.owner?.name || "Unassigned"}</Row>

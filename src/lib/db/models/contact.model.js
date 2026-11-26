@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       phone: DataTypes.STRING(40),
       whatsappNumber: DataTypes.STRING(40),
       landlineNumber: DataTypes.STRING(40),
+      address: DataTypes.STRING(255),
       // Brevo-style external system id, for de-duplicating contacts on
       // re-import from a source system - not enforced unique, since the
       // same contact can legitimately carry different ids across imports.

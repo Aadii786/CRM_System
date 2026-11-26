@@ -6,7 +6,7 @@ import Field, { Input, Select } from "@/components/ui/Field";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { createCompanyAction } from "@/actions/companies";
-import { COMPANY_SIZES } from "@/lib/constants/crm";
+import { COMPANY_INDUSTRIES } from "@/lib/constants/crm";
 
 /**
  * Searchable company picker with an inline "+ Create New Company" step, so
@@ -129,18 +129,10 @@ function QuickCreateCompanyModal({ open, onClose, initialName, onCreated }) {
           <Input id="qc-name" name="name" required defaultValue={initialName} autoFocus />
         </Field>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Company Website" htmlFor="qc-website">
-            <Input id="qc-website" name="website" placeholder="https://..." />
-          </Field>
           <Field label="Company Industry" htmlFor="qc-industry">
-            <Input id="qc-industry" name="industry" />
-          </Field>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Company Size" htmlFor="qc-size">
-            <Select id="qc-size" name="companySize" defaultValue="">
-              <option value="">Select a size</option>
-              {COMPANY_SIZES.map((s) => <option key={s} value={s}>{s} employees</option>)}
+            <Select id="qc-industry" name="industry" defaultValue="">
+              <option value="">Select an industry</option>
+              {COMPANY_INDUSTRIES.map((s) => <option key={s} value={s}>{s}</option>)}
             </Select>
           </Field>
           <Field label="Company Location" htmlFor="qc-city">
