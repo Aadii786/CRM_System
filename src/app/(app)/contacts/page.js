@@ -109,7 +109,7 @@ export default async function ContactsPage({ searchParams }) {
       <FilterBar>
         <SearchInput placeholder="Search name, email, phone..." />
         <UrlSelect paramName="status" allLabel="All statuses" options={CONTACT_STATUSES.map((s) => ({ value: s, label: s }))} className="w-40" />
-        <UrlSelect paramName="engagement" allLabel="All engagement" options={ENGAGEMENT_STATUSES.map((s) => ({ value: s, label: s }))} className="w-44" />
+        <UrlSelect paramName="engagement" allLabel="All engagement" options={[{ value: "active", label: "Active (any engagement)" }, { value: "notactive", label: "Inactive, bounced or unsubscribed" }, ...ENGAGEMENT_STATUSES.map((s) => ({ value: s, label: s }))]} className="w-44" />
         <UrlSelect paramName="source" allLabel="All sources" options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))} className="w-40" />
         {companyOptions.length > 0 && (
           <UrlSelect paramName="company" allLabel="All organizations" options={companyOptions.map((c) => ({ value: String(c.id), label: c.name }))} className="w-56" />

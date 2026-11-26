@@ -68,23 +68,23 @@ export default async function ExecutiveDashboardPage({ searchParams }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3.5 mb-6">
         <MetricCard label="Total Contacts" value={formatNumber(overview.totalContacts)} icon={Users} href="/contacts" tone="blue" />
-        <MetricCard label="New Leads" value={formatNumber(overview.newLeads)} icon={UserPlus} tone="blue" />
-        <MetricCard label="Qualified Leads" value={formatNumber(overview.qualifiedLeads)} icon={Award} tone="purple" />
-        <MetricCard label="Active Opportunities" value={formatNumber(overview.activeDeals)} icon={Handshake} href="/deals" tone="cyan" />
-        <MetricCard label="Conversion Rate" value={formatPercent(overview.conversionRate)} icon={TrendingUp} tone="green" />
+        <MetricCard label="New Leads" value={formatNumber(overview.newLeads)} icon={UserPlus} href="/contacts?status=New" tone="blue" />
+        <MetricCard label="Qualified Leads" value={formatNumber(overview.qualifiedLeads)} icon={Award} href="/contacts?status=Qualified" tone="purple" />
+        <MetricCard label="Active Opportunities" value={formatNumber(overview.activeDeals)} icon={Handshake} href="/deals?status=open" tone="cyan" />
+        <MetricCard label="Conversion Rate" value={formatPercent(overview.conversionRate)} icon={TrendingUp} href="/contacts?status=Converted" tone="green" />
         <MetricCard label="Campaigns" value={formatNumber(overview.campaigns)} icon={Megaphone} href="/campaigns" tone="purple" />
-        <MetricCard label="Emails Sent" value={formatNumber(overview.emailsSent)} icon={Mail} tone="purple" />
-        <MetricCard label="Open Rate" value={formatPercent(overview.openRate)} icon={Eye} tone="green" />
-        <MetricCard label="Click Rate" value={formatPercent(overview.clickRate)} icon={MousePointerClick} tone="green" />
-        <MetricCard label="Engagement Rate" value={formatPercent(overview.engagementRate)} icon={Activity} tone="green" />
+        <MetricCard label="Emails Sent" value={formatNumber(overview.emailsSent)} icon={Mail} href="/campaigns" tone="purple" />
+        <MetricCard label="Open Rate" value={formatPercent(overview.openRate)} icon={Eye} href="/campaigns" tone="green" />
+        <MetricCard label="Click Rate" value={formatPercent(overview.clickRate)} icon={MousePointerClick} href="/campaigns" tone="green" />
+        <MetricCard label="Engagement Rate" value={formatPercent(overview.engagementRate)} icon={Activity} href="/contacts?engagement=engaged" tone="green" />
         <MetricCard label="WhatsApp Activity" value={formatNumber(overview.whatsappActivity)} icon={MessageCircle} href="/conversations" tone="teal" />
         <MetricCard label="B2B Opportunities" value={formatNumber(overview.b2bOpportunities)} icon={Briefcase} href="/deals" tone="cyan" />
-        <MetricCard label="Proposals" value={formatNumber(overview.proposals)} icon={FileText} tone="amber" />
-        <MetricCard label="Accepted Proposals" value={formatNumber(overview.acceptedProposals)} icon={CheckCircle2} tone="green" />
-        <MetricCard label="Training Programs" value={formatNumber(overview.trainingPrograms)} icon={GraduationCap} tone="cyan" />
+        <MetricCard label="Proposals" value={formatNumber(overview.proposals)} icon={FileText} href="/deals?proposal=sent" tone="amber" />
+        <MetricCard label="Accepted Proposals" value={formatNumber(overview.acceptedProposals)} icon={CheckCircle2} href="/deals?proposal=accepted" tone="green" />
+        <MetricCard label="Training Programs" value={formatNumber(overview.trainingPrograms)} icon={GraduationCap} href="/programs" tone="cyan" />
         <MetricCard label="Revenue" value={formatCurrencyPKR(overview.revenue)} icon={Wallet} href="/reports/revenue" tone="green" />
-        <MetricCard label="Pending Payments" value={formatCurrencyPKR(overview.pendingPayments)} icon={Clock} tone="amber" />
-        <MetricCard label="Completed Programs" value={formatNumber(overview.completedPrograms)} icon={School} tone="indigo" />
+        <MetricCard label="Pending Payments" value={formatCurrencyPKR(overview.pendingPayments)} icon={Clock} href="/reports/revenue" tone="amber" />
+        <MetricCard label="Completed Programs" value={formatNumber(overview.completedPrograms)} icon={School} href="/programs" tone="indigo" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

@@ -60,3 +60,14 @@ export function rangeQuery(range) {
   if (range.to) p.push(`to=${toIsoDay(range.to)}`);
   return p.join("&");
 }
+
+/** Date (YYYY-MM-DD) n days before today, counting today as day 1 (so 30 gives the "last 30 days" start). */
+export function daysAgoIso(n) {
+  return toIsoDay(new Date(Date.now() - (n - 1) * DAY));
+}
+
+/** Query string "createdFrom=...&createdTo=..." for a tile that opens the contacts created in the range (default: last 30 days). */
+export function createdQuery(range) {
+  if (range && range.active) return [range.from ? `createdFrom=${toIsoDay(range.from)}` : "", range.to ? `createdTo=${toIsoDay(range.to)}` : ""].filter(Boolean).join("&");
+  return `createdFrom=${daysAgoIso(30)}`;
+}

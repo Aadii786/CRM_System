@@ -49,9 +49,14 @@ export async function getContacts(user, {
     const dept = await departmentByKey(departmentKey);
     if (dept && deptIds.includes(dept.id)) where.departmentId = dept.id;
   }
-  if (status) where.status = status;
+  if (status === "engaged_plus") where.status = { [Op.in]: ["Engaged", "Interested", "Qualified", "Converted"] }; // funnel "Engaged"
+  else if (status === "qualified_plus") where.status = { [Op.in]: ["Qualified", "Converted"] }; // funnel "Qualified"
+  else if (status) where.status = status;
   if (source) where.source = source;
-  if (engagementStatus) where.engagementStatus = engagementStatus;
+  if (engagementStatus === "active") where.engagementStatus = { [Op.notIn]: ["Inactive", "Bounced", "Unsubscribed"] }; // dashboard "Active"
+  else if (engagementStatus === "notactive") where.engagementStatus = { [Op.in]: ["Inactive", "Bounced", "Unsubscribed"] }; // dashboard "Inactive"
+  else if (engagementStatus === "engaged") where.engagementStatus = { [Op.in]: ["Engaged", "Opened", "Clicked"] }; // marketing dashboard "Active"
+  else if (engagementStatus) where.engagementStatus = engagementStatus;
 
   // Organization filter (MIR-5.2): the main organization or any extra link.
   const and = [];

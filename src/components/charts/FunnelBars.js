@@ -1,4 +1,10 @@
+import Link from "next/link";
 import { CHART_PALETTE } from "./formatters";
+
+function Wrapper({ href, children }) {
+  if (!href) return <div>{children}</div>;
+  return <Link href={href} className="block rounded-md -mx-2 px-2 py-1 hover:bg-surface-alt transition-colors">{children}</Link>;
+}
 
 // A deliberately simple, highly readable funnel: horizontal bars scaled to
 // the first stage, with the raw count and conversion % from the previous
@@ -8,6 +14,7 @@ import { CHART_PALETTE } from "./formatters";
 // Each stage takes the next color in the shared chart palette, so the
 // funnel reads as a gradient of progress rather than one flat bar repeated.
 export default function FunnelBars({ stages }) {
+  // A stage can carry an href: its row then opens the list behind the number.
   const max = stages[0]?.value || 1;
   return (
     <div className="flex flex-col gap-3">
@@ -16,7 +23,7 @@ export default function FunnelBars({ stages }) {
         const prevValue = i > 0 ? stages[i - 1].value : null;
         const stepRate = prevValue ? Math.round((stage.value / prevValue) * 100) : null;
         return (
-          <div key={stage.label}>
+          <Wrapper key={stage.label} href={stage.href}>
             <div className="flex items-baseline justify-between text-sm mb-1">
               <span className="font-medium text-ink">{stage.label}</span>
               <span className="text-ink-muted tabular-nums">
@@ -30,7 +37,7 @@ export default function FunnelBars({ stages }) {
                 style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: CHART_PALETTE[i % CHART_PALETTE.length] }}
               />
             </div>
-          </div>
+          </Wrapper>
         );
       })}
     </div>

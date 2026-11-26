@@ -1,6 +1,6 @@
 import Link from "next/link";
 import DateRangeFilter from "@/components/common/DateRangeFilter";
-import { resolveRange, toIsoDay } from "@/lib/utils/dateRange";
+import { resolveRange, toIsoDay, createdQuery } from "@/lib/utils/dateRange";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { getMarketingDashboard } from "@/lib/services/reportingService";
 import { listCampaigns } from "@/lib/services/campaignService";
@@ -35,17 +35,17 @@ export default async function MarketingDashboardPage({ searchParams }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
         <MetricCard label="Total Contacts" value={formatNumber(stats.totalContacts)} icon={Users} href="/contacts" tone="blue" />
-        <MetricCard label={range.active ? "New in period" : "New (30 days)"} value={formatNumber(stats.newContacts)} icon={UserPlus} tone="blue" />
-        <MetricCard label="Active" value={formatNumber(stats.activeContacts)} icon={Activity} tone="green" />
-        <MetricCard label="Inactive" value={formatNumber(stats.inactiveContacts)} icon={UserX} tone="neutral" />
+        <MetricCard label={range.active ? "New in period" : "New (30 days)"} value={formatNumber(stats.newContacts)} icon={UserPlus} href={`/contacts?${createdQuery(range)}`} tone="blue" />
+        <MetricCard label="Active" value={formatNumber(stats.activeContacts)} icon={Activity} href="/contacts?engagement=engaged" tone="green" />
+        <MetricCard label="Inactive" value={formatNumber(stats.inactiveContacts)} icon={UserX} href="/contacts?engagement=Inactive" tone="neutral" />
         <MetricCard label="Campaigns" value={formatNumber(stats.campaigns)} icon={Megaphone} href="/campaigns" tone="purple" />
-        <MetricCard label="Emails Sent" value={formatNumber(stats.emailsSent)} icon={Mail} tone="purple" />
-        <MetricCard label="Open Rate" value={formatPercent(stats.openRate)} icon={TrendingUp} tone="green" />
-        <MetricCard label="Click Rate" value={formatPercent(stats.clickRate)} icon={MousePointerClick} tone="green" />
-        <MetricCard label="Bounce Rate" value={formatPercent(stats.bounceRate)} icon={UserX} tone="amber" />
-        <MetricCard label="Unsubscribe Rate" value={formatPercent(stats.unsubscribeRate)} icon={UserX} tone="red" />
-        <MetricCard label="Qualified Leads" value={formatNumber(stats.qualifiedLeads)} icon={Award} tone="purple" />
-        <MetricCard label="Conversions" value={formatNumber(stats.conversions)} icon={CheckCircle2} tone="green" />
+        <MetricCard label="Emails Sent" value={formatNumber(stats.emailsSent)} icon={Mail} href="/campaigns" tone="purple" />
+        <MetricCard label="Open Rate" value={formatPercent(stats.openRate)} icon={TrendingUp} href="/campaigns" tone="green" />
+        <MetricCard label="Click Rate" value={formatPercent(stats.clickRate)} icon={MousePointerClick} href="/campaigns" tone="green" />
+        <MetricCard label="Bounce Rate" value={formatPercent(stats.bounceRate)} icon={UserX} href="/contacts?engagement=Bounced" tone="amber" />
+        <MetricCard label="Unsubscribe Rate" value={formatPercent(stats.unsubscribeRate)} icon={UserX} href="/contacts?engagement=Unsubscribed" tone="red" />
+        <MetricCard label="Qualified Leads" value={formatNumber(stats.qualifiedLeads)} icon={Award} href="/contacts?status=Qualified" tone="purple" />
+        <MetricCard label="Conversions" value={formatNumber(stats.conversions)} icon={CheckCircle2} href="/contacts?status=Converted" tone="green" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

@@ -1,5 +1,5 @@
 import "server-only";
-import { Op } from "sequelize";
+import { Op, literal } from "sequelize";
 import db from "@/lib/db";
 import { requirePermission, requireDepartmentAccess, getAccessibleDepartmentKeys, hasPermission } from "@/lib/permissions/rbac";
 import { departmentIdsForKeys, allDepartmentKeys } from "./departmentService";
@@ -54,7 +54,7 @@ export async function listPipelines(user) {
 
 /** Deals grouped by stage for the Kanban board (requirements #32-#33). */
 /** Search + filters for the deals board: keyword, program, organization, owner, status and created-date range. */
-function boardFilters({ q, programId, companyId, ownerId, status, createdFrom, createdTo } = {}) {
+function boardFilters({ q, programId, companyId, ownerId, status, createdFrom, createdTo, proposal, proposalFrom, proposalTo, closedFrom, closedTo } = {}) {
   const where = {};
   const day = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || "") ? new Date(`${s}T00:00:00`) : null);
   if (q) where[Op.or] = [{ name: { [Op.like]: `%${q}%` } }, { referenceNumber: { [Op.like]: `%${q}%` } }];
@@ -64,6 +64,20 @@ function boardFilters({ q, programId, companyId, ownerId, status, createdFrom, c
   if (["open", "won", "lost"].includes(status)) where.status = status;
   const a = day(createdFrom), b = day(createdTo);
   if (a || b) where.createdAt = { ...(a ? { [Op.gte]: a } : {}), ...(b ? { [Op.lt]: new Date(b.getTime() + 86400000) } : {}) };
+  // Dashboard tiles: deals that have a proposal sent (or accepted) in a period, and deals won in a period.
+  const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
+  const ands = [];
+  if (proposal === "sent" || proposal === "accepted") {
+    const st = proposal === "accepted" ? "('Accepted')" : "('Sent','Accepted','Rejected')";
+    const range = (isDay(proposalFrom) ? ` AND p.sent_date >= '${proposalFrom}'` : "") + (isDay(proposalTo) ? ` AND p.sent_date <= '${proposalTo}'` : "");
+    ands.push(literal(`\`Deal\`.\`id\` IN (SELECT p.deal_id FROM proposals p WHERE p.status IN ${st}${range})`));
+  }
+  if (isDay(closedFrom) || isDay(closedTo)) {
+    const col = "COALESCE(`Deal`.`closed_at`, `Deal`.`updated_at`)";
+    if (isDay(closedFrom)) ands.push(literal(`${col} >= '${closedFrom} 00:00:00'`));
+    if (isDay(closedTo)) ands.push(literal(`${col} <= '${closedTo} 23:59:59'`));
+  }
+  if (ands.length) where[Op.and] = ands;
   return where;
 }
 

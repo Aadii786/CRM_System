@@ -1,6 +1,6 @@
 import Link from "next/link";
 import DateRangeFilter from "@/components/common/DateRangeFilter";
-import { resolveRange, toIsoDay } from "@/lib/utils/dateRange";
+import { resolveRange, toIsoDay, daysAgoIso } from "@/lib/utils/dateRange";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { hasPermission } from "@/lib/permissions/rbac";
 import { getIklDashboard } from "@/lib/services/reportingService";
@@ -27,6 +27,14 @@ function dashboardIntro(user) {
   return { title: "IKL Sales Dashboard", description: "Your sales work: pipeline, proposals, invoices and leads." };
 }
 
+/** /path?a=b&c=d without empty values: every dashboard tile opens the list behind its number. */
+function to(path, params = {}) {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) p.set(k, v);
+  const s = p.toString();
+  return s ? `${path}?${s}` : path;
+}
+
 export default async function IklHsmDashboardPage({ searchParams }) {
   const user = await requireUserWithPermission("dashboard.view");
   const range = resolveRange(await searchParams);
@@ -37,6 +45,10 @@ export default async function IklHsmDashboardPage({ searchParams }) {
   const recentDeals = dealsResult.data.map((d) => d.get({ plain: true }));
   const intro = dashboardIntro(user);
   const canSeeFinance = hasPermission(user, "invoices.manage");
+  const from = range.from ? toIsoDay(range.from) : undefined, until = range.to ? toIsoDay(range.to) : undefined;
+  const last30 = daysAgoIso(30);
+  const leadDates = { createdFrom: from, createdTo: until };
+  const funnel = stats.funnel.map((s, i) => ({ ...s, href: to("/contacts", { ...leadDates, status: [undefined, "engaged_plus", "qualified_plus", "Converted"][i] }) }));
 
   return (
     <div>
@@ -51,27 +63,27 @@ export default async function IklHsmDashboardPage({ searchParams }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
         <MetricCard label="Companies" value={formatNumber(stats.companies)} icon={Building2} href="/companies" tone="blue" />
-        <MetricCard label="Contacts" value={formatNumber(stats.contacts)} icon={Users} tone="blue" />
-        <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals" tone="cyan" />
-        <MetricCard label={range.active ? "Won in period" : "Won Deals"} value={formatNumber(stats.wonDeals)} icon={Trophy} tone="green" />
-        <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={Wallet} tone="cyan" />
-        <MetricCard label={range.active ? "Won value in period" : "Won Value"} value={formatCurrencyPKR(stats.wonValue)} icon={Wallet} tone="green" />
-        <MetricCard label={range.active ? "Proposals sent in period" : "Proposals Sent"} value={formatNumber(stats.proposalsSent)} icon={FileText} tone="amber" />
-        <MetricCard label="Acceptance Rate" value={formatPercent(stats.proposalAcceptanceRate)} icon={CheckCircle2} tone="green" />
+        <MetricCard label="Contacts" value={formatNumber(stats.contacts)} icon={Users} href="/contacts" tone="blue" />
+        <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals?status=open" tone="cyan" />
+        <MetricCard label={range.active ? "Won in period" : "Won Deals"} value={formatNumber(stats.wonDeals)} icon={Trophy} href={to("/deals", { status: "won", closedFrom: from, closedTo: until })} tone="green" />
+        <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={Wallet} href="/deals?status=open" tone="cyan" />
+        <MetricCard label={range.active ? "Won value in period" : "Won Value"} value={formatCurrencyPKR(stats.wonValue)} icon={Wallet} href={to("/deals", { status: "won", closedFrom: from, closedTo: until })} tone="green" />
+        <MetricCard label={range.active ? "Proposals sent in period" : "Proposals Sent"} value={formatNumber(stats.proposalsSent)} icon={FileText} href={to("/deals", { proposal: "sent", proposalFrom: from, proposalTo: until })} tone="amber" />
+        <MetricCard label="Acceptance Rate" value={formatPercent(stats.proposalAcceptanceRate)} icon={CheckCircle2} href={to("/deals", { proposal: "accepted", proposalFrom: from, proposalTo: until })} tone="green" />
       </div>
 
       <h2 className="text-sm font-semibold text-ink mb-2.5">Leads</h2>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-4">
-        <MetricCard label={range.active ? "Leads in period" : "Total leads"} value={formatNumber(stats.leads.total)} icon={Users} tone="blue" href="/contacts" />
-        <MetricCard label={range.active ? "New in period" : "New in 30 days"} value={formatNumber(stats.leads.newLast30)} icon={UserPlus} tone="cyan" />
-        <MetricCard label="Active" value={formatNumber(stats.leads.active)} icon={Activity} tone="green" />
-        <MetricCard label="Inactive" value={formatNumber(stats.leads.inactive)} icon={Users} tone="neutral" />
-        <MetricCard label="Qualified" value={formatNumber(stats.leads.qualified)} icon={Star} tone="amber" href="/contacts?status=Qualified" />
+        <MetricCard label={range.active ? "Leads in period" : "Total leads"} value={formatNumber(stats.leads.total)} icon={Users} tone="blue" href={to("/contacts", leadDates)} />
+        <MetricCard label={range.active ? "New in period" : "New in 30 days"} value={formatNumber(stats.leads.newLast30)} icon={UserPlus} tone="cyan" href={range.active ? to("/contacts", leadDates) : to("/contacts", { createdFrom: last30 })} />
+        <MetricCard label="Active" value={formatNumber(stats.leads.active)} icon={Activity} tone="green" href={to("/contacts", { ...leadDates, engagement: "active" })} />
+        <MetricCard label="Inactive" value={formatNumber(stats.leads.inactive)} icon={Users} tone="neutral" href={to("/contacts", { ...leadDates, engagement: "notactive" })} />
+        <MetricCard label="Qualified" value={formatNumber(stats.leads.qualified)} icon={Star} tone="amber" href={to("/contacts", { ...leadDates, status: "Qualified" })} />
       </div>
       <Card className="mb-6">
         <h3 className="text-sm font-semibold text-ink mb-1">From contact to converted</h3>
         <p className="text-xs text-ink-muted mb-4">How many contacts reached each step: engaged, qualified and converted into a client.</p>
-        <FunnelBars stages={stats.funnel} />
+        <FunnelBars stages={funnel} />
       </Card>
 
       {stats.campaignPanel && (
@@ -79,11 +91,11 @@ export default async function IklHsmDashboardPage({ searchParams }) {
           <h2 className="text-sm font-semibold text-ink mb-2.5">Campaigns</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3.5 mb-6">
             <MetricCard label="Campaigns" value={formatNumber(stats.campaignPanel.campaigns)} icon={Megaphone} tone="purple" href="/campaigns" />
-            <MetricCard label="Emails sent" value={formatNumber(stats.campaignPanel.emailsSent)} icon={Send} tone="blue" />
-            <MetricCard label="Open rate" value={formatPercent(stats.campaignPanel.openRate)} icon={Eye} tone="green" />
-            <MetricCard label="Click rate" value={formatPercent(stats.campaignPanel.clickRate)} icon={MousePointerClick} tone="cyan" />
-            <MetricCard label="Bounce rate" value={formatPercent(stats.campaignPanel.bounceRate)} icon={MailX} tone="amber" />
-            <MetricCard label="Unsubscribe rate" value={formatPercent(stats.campaignPanel.unsubscribeRate)} icon={MailX} tone="neutral" />
+            <MetricCard label="Emails sent" value={formatNumber(stats.campaignPanel.emailsSent)} icon={Send} href="/campaigns" tone="blue" />
+            <MetricCard label="Open rate" value={formatPercent(stats.campaignPanel.openRate)} icon={Eye} href="/campaigns" tone="green" />
+            <MetricCard label="Click rate" value={formatPercent(stats.campaignPanel.clickRate)} icon={MousePointerClick} href="/campaigns" tone="cyan" />
+            <MetricCard label="Bounce rate" value={formatPercent(stats.campaignPanel.bounceRate)} icon={MailX} href="/campaigns" tone="amber" />
+            <MetricCard label="Unsubscribe rate" value={formatPercent(stats.campaignPanel.unsubscribeRate)} icon={MailX} href="/campaigns" tone="neutral" />
           </div>
         </>
       )}
@@ -107,9 +119,9 @@ export default async function IklHsmDashboardPage({ searchParams }) {
         {canSeeFinance && <Card>
           <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2"><Receipt className="size-4" /> Financials</h3>
           <div className="flex flex-col gap-3">
-            <FinRow label="Total Invoiced" value={formatCurrencyPKR(stats.totalInvoiced)} />
-            <FinRow label="Total Paid" value={formatCurrencyPKR(stats.totalPaid)} />
-            <FinRow label="Outstanding" value={formatCurrencyPKR(Math.max(stats.totalInvoiced - stats.totalPaid, 0))} />
+            <FinRow href="/reports/revenue" label="Total Invoiced" value={formatCurrencyPKR(stats.totalInvoiced)} />
+            <FinRow href="/reports/revenue" label="Total Paid" value={formatCurrencyPKR(stats.totalPaid)} />
+            <FinRow href="/reports/revenue" label="Outstanding" value={formatCurrencyPKR(Math.max(stats.totalInvoiced - stats.totalPaid, 0))} />
           </div>
         </Card>}
       </div>
@@ -117,11 +129,11 @@ export default async function IklHsmDashboardPage({ searchParams }) {
   );
 }
 
-function FinRow({ label, value }) {
+function FinRow({ label, value, href }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-border last:border-0 text-sm">
+    <Link href={href} className="flex items-center justify-between py-2 border-b border-border last:border-0 text-sm hover:bg-surface-alt rounded-sm px-1 -mx-1">
       <span className="text-ink-muted">{label}</span>
       <span className="font-semibold text-ink tabular-nums">{value}</span>
-    </div>
+    </Link>
   );
 }

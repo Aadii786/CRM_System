@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUserWithPermission } from "@/lib/auth/requireUser";
 import { getDepartmentDashboard } from "@/lib/services/reportingService";
 import DateRangeFilter from "@/components/common/DateRangeFilter";
-import { resolveRange, toIsoDay } from "@/lib/utils/dateRange";
+import { resolveRange, toIsoDay, createdQuery } from "@/lib/utils/dateRange";
 import { listActivities } from "@/lib/services/activityService";
 import PageHeader from "@/components/common/PageHeader";
 import MetricCard from "@/components/ui/MetricCard";
@@ -53,14 +53,14 @@ export default async function DepartmentDashboardPage({ searchParams }) {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
         <MetricCard label="Total Contacts" value={formatNumber(stats.totalContacts)} icon={Users} href="/contacts" tone={tone} />
-        <MetricCard label={range.active ? "New in period" : "New (30 days)"} value={formatNumber(stats.newContacts)} icon={UserPlus} tone={tone} />
+        <MetricCard label={range.active ? "New in period" : "New (30 days)"} value={formatNumber(stats.newContacts)} icon={UserPlus} href={`/contacts?${createdQuery(range)}`} tone={tone} />
         <MetricCard label="Companies" value={formatNumber(stats.companies)} icon={Building2} href="/companies" tone="cyan" />
         <MetricCard label="Open Deals" value={formatNumber(stats.openDeals)} icon={Handshake} href="/deals" tone="cyan" />
-        <MetricCard label="Won Deals" value={formatNumber(stats.wonDeals)} icon={Award} tone="green" />
-        <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={TrendingUp} tone="green" />
+        <MetricCard label="Won Deals" value={formatNumber(stats.wonDeals)} icon={Award} href={`/deals?status=won${range.active && range.from ? `&closedFrom=${toIsoDay(range.from)}` : ""}${range.active && range.to ? `&closedTo=${toIsoDay(range.to)}` : ""}`} tone="green" />
+        <MetricCard label="Pipeline Value" value={formatCurrencyPKR(stats.pipelineValue)} icon={TrendingUp} href="/deals?status=open" tone="green" />
         <MetricCard label="Campaigns" value={formatNumber(stats.campaigns)} icon={Megaphone} href="/campaigns" tone="purple" />
         <MetricCard label="Open Tasks" value={formatNumber(stats.openTasks)} icon={CheckSquare} href="/tasks" tone="amber" />
-        <MetricCard label="Overdue Tasks" value={formatNumber(stats.overdueTasks)} icon={AlertTriangle} tone="red" />
+        <MetricCard label="Overdue Tasks" value={formatNumber(stats.overdueTasks)} icon={AlertTriangle} href="/tasks?status=Overdue" tone="red" />
         <MetricCard label="Upcoming Meetings" value={formatNumber(stats.upcomingMeetings)} icon={CalendarDays} href="/meetings" tone="teal" />
       </div>
 

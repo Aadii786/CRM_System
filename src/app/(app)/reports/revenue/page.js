@@ -28,12 +28,12 @@ export default async function RevenueReportPage({ searchParams }) {
       <DateRangeFilter preset={range.preset} from={toIsoDay(range.from)} to={toIsoDay(range.to)} label={range.label} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 mb-6">
-        <MetricCard label="Total Pipeline Value" value={formatCurrencyPKR(revenue.pipelineValue)} icon={Handshake} />
-        <MetricCard label="Won Value" value={formatCurrencyPKR(revenue.wonValue)} icon={Trophy} />
-        <MetricCard label="Pending Payments" value={formatCurrencyPKR(revenue.pendingPayments)} icon={Clock} />
-        <MetricCard label="Paid Revenue" value={formatCurrencyPKR(revenue.paidRevenue)} icon={Wallet} />
-        <MetricCard label="Average Deal Size" value={formatCurrencyPKR(revenue.averageDealSize)} icon={TrendingUp} />
-        <MetricCard label="Conversion Rate" value={formatPercent(revenue.conversionRate)} icon={Percent} />
+        <MetricCard label="Total Pipeline Value" value={formatCurrencyPKR(revenue.pipelineValue)} icon={Handshake} href="/deals?status=open" />
+        <MetricCard label="Won Value" value={formatCurrencyPKR(revenue.wonValue)} icon={Trophy} href="/deals?status=won" />
+        <MetricCard label="Pending Payments" value={formatCurrencyPKR(revenue.pendingPayments)} icon={Clock} href="/reports/view/revenue" />
+        <MetricCard label="Paid Revenue" value={formatCurrencyPKR(revenue.paidRevenue)} icon={Wallet} href="/reports/view/revenue" />
+        <MetricCard label="Average Deal Size" value={formatCurrencyPKR(revenue.averageDealSize)} icon={TrendingUp} href="/deals?status=won" />
+        <MetricCard label="Conversion Rate" value={formatPercent(revenue.conversionRate)} icon={Percent} href="/deals" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

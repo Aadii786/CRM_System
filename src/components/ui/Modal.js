@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /**
@@ -18,9 +19,14 @@ export default function Modal({ open, onClose, title, description, children, foo
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // The dialog is rendered into document.body, not where the button is. Many modals live inside a form (for
+  // example "Create new company" inside the contact form); a form inside a form is invalid HTML and made the
+  // inner Create button do nothing.
+  if (!open || typeof document === "undefined") return null;
+
   const widths = { sm: "max-w-sm", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
 
-  return (
+  return createPortal(
     <dialog
       ref={dialogRef}
       onClose={onClose}
@@ -60,6 +66,7 @@ export default function Modal({ open, onClose, title, description, children, foo
           {footer && <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3.5">{footer}</div>}
         </div>
       )}
-    </dialog>
+    </dialog>,
+    document.body
   );
 }

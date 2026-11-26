@@ -34,7 +34,7 @@ export default async function DealsPage({ searchParams }) {
   const pipelines = pipelinesRaw.map((p) => p.get({ plain: true }));
   const selectedId = sp.pipeline ? Number(sp.pipeline) : pipelines.find((p) => p.isDefault)?.id || pipelines[0].id;
 
-  const filters = { q: sp.q || "", programId: sp.program, companyId: sp.company, ownerId: sp.owner, status: sp.status, createdFrom: sp.createdFrom, createdTo: sp.createdTo };
+  const filters = { q: sp.q || "", programId: sp.program, companyId: sp.company, ownerId: sp.owner, status: sp.status, createdFrom: sp.createdFrom, createdTo: sp.createdTo, proposal: sp.proposal, proposalFrom: sp.proposalFrom, proposalTo: sp.proposalTo, closedFrom: sp.closedFrom, closedTo: sp.closedTo };
   const filtered = Object.values(filters).some(Boolean);
   const [board, programOptions, companyOptions, owners] = await Promise.all([
     getPipelineBoard(user, selectedId, filters),
